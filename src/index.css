@@ -4,44 +4,32 @@
 
 @layer base {
   html {
-    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-    color: #14171A;
-    background-color: #FBFBF9;
+    font-family: 'Manrope', system-ui, -apple-system, sans-serif;
+    color: #0F1115;
+    background-color: #FFFFFF;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   h1, h2, h3, h4 {
-    font-family: 'Space Grotesk', 'Plus Jakarta Sans', system-ui, sans-serif;
-    letter-spacing: -0.025em;
+    font-family: 'Manrope', system-ui, -apple-system, sans-serif;
+    letter-spacing: -0.022em;
   }
 }
 
-.bg-architectural-grid {
-  background-size: 36px 36px;
-  background-image:
-    linear-gradient(to right, rgba(20, 23, 26, 0.045) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(20, 23, 26, 0.045) 1px, transparent 1px);
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
 }
 
-.bg-blueprint-dark {
-  background-size: 32px 32px;
+.bg-subtle-grid {
+  background-size: 40px 40px;
   background-image:
-    linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    linear-gradient(to right, rgba(15, 17, 21, 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(15, 17, 21, 0.035) 1px, transparent 1px);
 }
 
-/* 3M / Henkel style signature multi-division chromatic rule */
-.brand-chromatic-bar {
-  background: linear-gradient(
-    90deg,
-    #E04819 0%,
-    #E04819 28%,
-    #C81E1E 28%,
-    #C81E1E 50%,
-    #D97706 50%,
-    #D97706 70%,
-    #047857 70%,
-    #047857 86%,
-    #14171A 86%,
-    #14171A 100%
-  );
+/* Signature Black & Red Architectural Top Rule */
+.insultherm-accent-bar {
+  background: linear-gradient(90deg, #0F1115 0%, #0F1115 62%, #DC2626 62%, #DC2626 100%);
 }

@@ -7,13 +7,19 @@ import { OrderCartDrawer } from './components/OrderCartDrawer';
 import { ImageLightbox, LightboxImagePayload } from './components/ImageLightbox';
 import { HomePage } from './pages/HomePage';
 import { ProductsPage } from './pages/ProductsPage';
+import { QuotePage } from './pages/QuotePage';
 import { AboutPage } from './pages/AboutPage';
 import { ContactPage } from './pages/ContactPage';
 
 const ScrollToTop: React.FC = () => {
   const { pathname, hash } = useLocation();
   useEffect(() => {
-    if (!hash) {
+    if (hash) {
+      setTimeout(() => {
+        const el = document.getElementById(hash.replace('#', ''));
+        el?.scrollIntoView({ behavior: 'smooth' });
+      }, 80);
+    } else {
       window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
     }
   }, [pathname, hash]);
@@ -27,12 +33,13 @@ export const App: React.FC = () => {
     <BrowserRouter>
       <OrderCartProvider>
         <ScrollToTop />
-        <div className="min-h-screen flex flex-col bg-[#FBFBF9] text-[#14171A]">
+        <div className="min-h-screen flex flex-col bg-white text-[#0F1115]">
           <Navbar />
           <main className="flex-1">
             <Routes>
               <Route path="/" element={<HomePage onOpenLightbox={setLightboxImage} />} />
               <Route path="/products" element={<ProductsPage onOpenLightbox={setLightboxImage} />} />
+              <Route path="/quote" element={<QuotePage />} />
               <Route path="/about" element={<AboutPage onOpenLightbox={setLightboxImage} />} />
               <Route path="/contact" element={<ContactPage />} />
               <Route path="*" element={<HomePage onOpenLightbox={setLightboxImage} />} />

@@ -1,233 +1,213 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   ArrowRight,
-  Upload,
+  ChevronLeft,
+  ChevronRight,
+  Search,
   FileDown,
   Maximize2,
   ShoppingBag,
-  Sparkles,
-  CheckCircle2,
-  Layers,
-  Zap,
-  Wrench,
-  GraduationCap,
+  Tag,
+  Upload,
 } from 'lucide-react';
 import {
-  BRAND_DIVISIONS,
+  PORTFOLIOS,
   PRODUCTS,
-  APPLICATION_CHALLENGES,
-  PRO_BENCH_PACKS,
+  MARKETS,
   RND_KITS,
+  VALIDATION_PLATES,
 } from '../data/companyData';
-import { calculatePartPrice } from '../utils/pricingEngine';
+import { CHECKOUT_COUPONS } from '../utils/couponEngine';
 import { useOrderCart } from '../context/OrderCartContext';
-import { CadQuoteEngine } from '../components/CadQuoteEngine';
-import { ValidationShowcase } from '../components/ValidationShowcase';
 import { LightboxImagePayload } from '../components/ImageLightbox';
 
 interface HomePageProps {
   onOpenLightbox: (img: LightboxImagePayload) => void;
 }
 
-const CUTAWAY_CALLOUTS = [
+const HERO_SLIDES = [
   {
-    code: '01 • TOP COLLECTOR',
-    productId: 'insultherm-shield' as const,
-    name: 'InsulTherm Shield™ (SHIELD-FOLD™)',
-    metric: '28–32 kV/mm • 0.43 mm Folded Origami',
-    price: '₹45 / 100 cm² proto • ₹0.30/cm² vol',
-    detail: 'Ships flat, folds by hand over 1,500V DC copper busbars—replaces ₹6L+ injection molds.',
+    eyebrow: 'SANAND GIDC DIGITAL CONVERTING • ₹0 TOOLING NRE',
+    title: 'Custom Thermal, Fire & Dielectric Parts in 48 Hours',
+    description:
+      'Upload .DXF or .STEP geometry for precision CNC-converted thermal pads, runaway barriers, and folded busbar shrouds—priced transparently by part area with zero steel-die fees.',
+    ctaPrimaryLabel: 'Instant CAD Quote',
+    ctaPrimaryLink: '/quote',
+    ctaSecondaryLabel: 'Explore Products',
+    ctaSecondaryLink: '/products',
+    image: '/assets/validation/pack-cutaway-studio.jpg',
+    imageCaption: 'Integrated Module Cutaway: Shield™ Shroud + Barrier™ Walls + Core™ Base Pad',
   },
   {
-    code: '02 • INTER-CELL WALLS',
-    productId: 'insultherm-barrier' as const,
-    name: 'InsulTherm Barrier™ (PYROBLOCK™)',
-    metric: 'k = 0.018 W/m·K • >1,100°C Mica-Aerogel',
-    price: '₹110 / 100 cm² proto • ₹0.85/cm² vol',
-    detail: 'Holds neighbor cells to 74.189°C during a 400°C adjacent cell thermal runaway event.',
+    eyebrow: 'THERMAL RUNAWAY CONTAINMENT • AIS-156 & UL 9540A',
+    title: 'Arrest 1,100°C Cell Propagation in 1.50 mm',
+    description:
+      'InsulTherm Barrier™ pairs calcined Phlogopite Mica with nanoporous Silica Aerogel (0.018 W/m·K), holding neighboring cells to 74.2°C during adjacent cell thermal runaway.',
+    ctaPrimaryLabel: 'View Barrier™ Specs',
+    ctaPrimaryLink: '/products#insultherm-barrier',
+    ctaSecondaryLabel: 'Inspect 4-Quadrant FEA',
+    ctaSecondaryLink: '/about',
+    image: '/assets/products/insultherm-barrier.jpg',
+    imageCaption: 'InsulTherm Barrier™ — ₹110 / custom proto sheet (100 cm² ref) | ₹85 volume',
   },
   {
-    code: '03 • COLD-PLATE BASE',
-    productId: 'insultherm-core' as const,
-    name: 'InsulTherm Core™ (TROPICORE™)',
-    metric: '3.0 W/m·K • 40 Shore 00 • 50°C Anti-Bleed',
-    price: '₹80 / 100 cm² custom • ₹20 std 50×50mm',
-    detail: 'Silane-passivated alumina + E-glass scrim drains cell heat with zero tropical oil bleed.',
+    eyebrow: 'DEFENSE, SPACETECH & HIGH-DENSITY ELECTRONICS',
+    title: '1,500 W/m·K Lateral Cooling With Zero Outgassing',
+    description:
+      'InsulTherm Graphite-Flex™ encapsulates pyrolytic graphite beneath an edge-sealed Kapton® dielectric cap and ASTM E595 silicone-free PSA—at 24% the weight of copper.',
+    ctaPrimaryLabel: 'Calculate Area Price',
+    ctaPrimaryLink: '/quote',
+    ctaSecondaryLabel: 'View Graphite-Flex™',
+    ctaSecondaryLink: '/products#insultherm-graphite-flex',
+    image: '/assets/products/insultherm-graphite-flex.jpg',
+    imageCaption: 'InsulTherm Graphite-Flex™ — Area-indexed prototype & ₹3.20/cm² volume rate',
+  },
+  {
+    eyebrow: 'B2B R&D LABS & INDIVIDUAL PROTOTYPERS',
+    title: 'Turnkey Qualification Kits & Starter Packs From ₹999',
+    description:
+      'Order <₹15,000 petty-cash R&D kits or compact ₹999–₹3,499 starter packs online—and apply B2B or first-order coupons directly at checkout.',
+    ctaPrimaryLabel: 'Browse Kits & Packs',
+    ctaPrimaryLink: '/products#rnd-kits',
+    ctaSecondaryLabel: 'View Checkout Offers',
+    ctaSecondaryLink: '/quote',
+    image: '/assets/products/thermafix-bench-pack.jpg',
+    imageCaption: 'Ready-to-ship evaluation boxes and starter prototyping strip packs',
   },
 ];
 
 export const HomePage: React.FC<HomePageProps> = ({ onOpenLightbox }) => {
-  const { openConfigurator, addItem } = useOrderCart();
-  const [activeCutawayIdx, setActiveCutawayIdx] = useState(0);
-  const [selectedChallengeId, setSelectedChallengeId] = useState(APPLICATION_CHALLENGES[0].id);
+  const navigate = useNavigate();
+  const { openConfigurator, openCheckout } = useOrderCart();
+  const [slideIdx, setSlideIdx] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeMarketId, setActiveMarketId] = useState(MARKETS[0].id);
 
-  const activeChallenge =
-    APPLICATION_CHALLENGES.find((c) => c.id === selectedChallengeId) || APPLICATION_CHALLENGES[0];
-  const recommendedProduct =
-    PRODUCTS.find((p) => p.id === activeChallenge.recommendedProductId) || PRODUCTS[0];
+  const slide = HERO_SLIDES[slideIdx];
+  const activeMarket = MARKETS.find((m) => m.id === activeMarketId) || MARKETS[0];
 
-  const challengePrice = calculatePartPrice({
-    productId: recommendedProduct.id,
-    lengthMm: activeChallenge.suggestedFootprint.lengthMm,
-    widthMm: activeChallenge.suggestedFootprint.widthMm,
-    quantity: activeChallenge.suggestedFootprint.qty,
-    thicknessMm: recommendedProduct.defaultThicknessMm,
-  });
+  const searchMatches = searchQuery.trim()
+    ? PRODUCTS.filter((p) => {
+        const q = searchQuery.toLowerCase();
+        return (
+          p.trademarkName.toLowerCase().includes(q) ||
+          p.category.toLowerCase().includes(q) ||
+          p.thermalConductivity.toLowerCase().includes(q) ||
+          p.dielectricStrength.toLowerCase().includes(q) ||
+          p.oneLineSummary.toLowerCase().includes(q) ||
+          p.applications.some((a) => a.toLowerCase().includes(q)) ||
+          p.standards.some((s) => s.toLowerCase().includes(q))
+        );
+      })
+    : [];
 
   return (
-    <div className="space-y-0">
-      {/* 1. DAYLIGHT INDUSTRIAL-EDITORIAL HERO (Henkel + 3M Benchmark) */}
-      <section className="relative bg-[#FBFBF9] bg-architectural-grid border-b border-[#E2E0D8]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-            {/* Left 6 Cols: Editorial Copy */}
+    <div>
+      {/* SECTION 1: LAIRD-INSPIRED INTERACTIVE SPOTLIGHT HERO (Black & Red Theme) */}
+      <section className="bg-[#0F1115] text-white border-b border-gray-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 lg:py-20">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
+            {/* Left 6 Cols */}
             <div className="lg:col-span-6 space-y-6">
-              <div className="inline-flex flex-wrap items-center gap-2 px-3 py-1.5 rounded bg-white border border-[#E2E0D8] shadow-sm text-xs font-mono">
-                <span className="w-2 h-2 rounded-full bg-[#E04819]" />
-                <span className="font-semibold text-[#14171A]">SANAND GIDC, GUJARAT</span>
-                <span className="text-slate-400">|</span>
-                <span className="text-[#E04819] font-semibold">₹0 TOOLING NRE • 24–48H DISPATCH</span>
+              <div className="inline-flex items-center gap-2 text-xs font-bold tracking-wider uppercase text-[#DC2626]">
+                <span className="w-2 h-2 rounded-full bg-[#DC2626]" />
+                {slide.eyebrow}
               </div>
 
-              <h1 className="text-4xl sm:text-5xl lg:text-[54px] font-display font-bold text-[#14171A] leading-[1.06] tracking-tight">
-                Thermal, Fire & Dielectric Materials.{' '}
-                <span className="font-serif italic font-normal text-[#E04819]">
-                  Engineered to Fit.
-                </span>
+              <h1 className="text-3xl sm:text-5xl font-extrabold text-white leading-[1.12] tracking-tight">
+                {slide.title}
               </h1>
 
-              <p className="text-base sm:text-lg text-slate-700 leading-relaxed max-w-xl">
-                India’s multi-platform advanced materials house—combining{' '}
-                <strong className="text-[#14171A]">5 proprietary industrial laminates</strong>,
-                custom digital CNC converting priced transparently per{' '}
-                <strong className="font-mono text-[#14171A]">cm²</strong> with zero steel-die fees,
-                and ready-to-ship <strong className="text-[#14171A]">ThermaFix™ Pro-Bench</strong>{' '}
-                packs.
+              <p className="text-base sm:text-lg text-gray-300 leading-relaxed max-w-xl">
+                {slide.description}
               </p>
 
-              <div className="flex flex-wrap gap-3 pt-1">
-                <button
-                  type="button"
-                  onClick={() => openConfigurator('insultherm-graphite-flex')}
-                  className="inline-flex items-center gap-2 px-5 py-3.5 rounded bg-[#E04819] hover:bg-[#BF360C] text-white text-sm font-bold shadow-md transition-all"
-                >
-                  <Upload className="w-4 h-4" />
-                  Upload Custom CAD & Instant ₹/cm² Quote
-                </button>
+              <div className="flex flex-wrap items-center gap-3 pt-2">
                 <Link
-                  to="/products"
-                  className="inline-flex items-center gap-2 px-5 py-3.5 rounded bg-[#14171A] hover:bg-slate-800 text-white text-sm font-bold transition-colors"
+                  to={slide.ctaPrimaryLink}
+                  className="inline-flex items-center gap-2 px-6 py-3.5 rounded-lg bg-[#DC2626] hover:bg-[#B91C1C] text-white text-sm font-bold transition-colors"
                 >
-                  Explore All 5 Sub-Brands
+                  {slide.ctaPrimaryLabel}
                   <ArrowRight className="w-4 h-4" />
+                </Link>
+                <Link
+                  to={slide.ctaSecondaryLink}
+                  className="inline-flex items-center gap-2 px-6 py-3.5 rounded-lg bg-white/10 hover:bg-white/15 text-white text-sm font-semibold transition-colors"
+                >
+                  {slide.ctaSecondaryLabel}
                 </Link>
               </div>
 
-              {/* Key Trust Metrics */}
-              <div className="grid grid-cols-3 gap-3 pt-4 border-t border-[#E2E0D8]">
-                <div>
-                  <div className="text-2xl font-display font-bold text-[#14171A]">₹0 NRE</div>
-                  <div className="text-xs text-slate-600">Saves ₹40k–₹8L die/mold cost</div>
+              {/* Clean Slide Controls (1 / 4) */}
+              <div className="pt-6 flex items-center gap-4 border-t border-gray-800/90">
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    aria-label="Previous spotlight"
+                    onClick={() =>
+                      setSlideIdx((prev) => (prev - 1 + HERO_SLIDES.length) % HERO_SLIDES.length)
+                    }
+                    className="p-2 rounded-lg border border-gray-800 hover:border-gray-600 text-gray-300 hover:text-white transition-colors"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Next spotlight"
+                    onClick={() => setSlideIdx((prev) => (prev + 1) % HERO_SLIDES.length)}
+                    className="p-2 rounded-lg border border-gray-800 hover:border-gray-600 text-gray-300 hover:text-white transition-colors"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
                 </div>
-                <div>
-                  <div className="text-2xl font-display font-bold text-[#E04819]">24–48 hrs</div>
-                  <div className="text-xs text-slate-600">CAD-to-part CNC dispatch</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-display font-bold text-[#14171A]">100% DVA</div>
-                  <div className="text-xs text-slate-600">Sovereign domestic supply</div>
+
+                <span className="text-xs font-mono text-gray-400 tabular-nums">
+                  {slideIdx + 1} / {HERO_SLIDES.length}
+                </span>
+
+                <div className="flex gap-1.5 flex-1 max-w-[180px]">
+                  {HERO_SLIDES.map((_, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      aria-label={`Slide ${i + 1}`}
+                      onClick={() => setSlideIdx(i)}
+                      className={`h-1.5 rounded-full transition-all flex-1 ${
+                        i === slideIdx ? 'bg-[#DC2626]' : 'bg-gray-700 hover:bg-gray-500'
+                      }`}
+                    />
+                  ))}
                 </div>
               </div>
             </div>
 
-            {/* Right 6 Cols: Interactive Module Cutaway Showcase */}
+            {/* Right 6 Cols: Clean Uncropped Spotlight Visual */}
             <div className="lg:col-span-6">
-              <div className="bg-white border border-[#E2E0D8] rounded-md shadow-md overflow-hidden">
-                <div className="px-4 py-3 bg-[#14171A] text-white flex items-center justify-between text-xs">
-                  <span className="font-mono uppercase tracking-wider text-amber-300 font-semibold">
-                    Inside Hardware: Tri-Material Module Cutaway
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      onOpenLightbox({
-                        src: '/assets/validation/pack-cutaway-studio.jpg',
-                        title: 'Integrated EV / BESS Prismatic Module Hardware Cutaway',
-                        subtitle: 'Shield™ Top Shroud + Barrier™ Cell Firewalls + Core™ Cold-Plate TIM',
-                        dimensions: '1408 × 768 px (Full Studio Cutaway)',
-                        badge: 'Tri-Material Stack',
-                        description:
-                          'Physical hardware assembly demonstrating how InsulTherm Shield™, Barrier™, and Core™ integrate inside a liquid-cooled aluminum battery module with zero tooling delay.',
-                      })
-                    }
-                    className="inline-flex items-center gap-1 font-mono text-slate-200 hover:text-[#E04819]"
-                  >
-                    <Maximize2 className="w-3.5 h-3.5" />
-                    HD Full View
-                  </button>
-                </div>
-
-                <div
-                  onClick={() =>
-                    onOpenLightbox({
-                      src: '/assets/validation/pack-cutaway-studio.jpg',
-                      title: 'Integrated EV / BESS Prismatic Module Hardware Cutaway',
-                      subtitle: 'Shield™ Top Shroud + Barrier™ Cell Firewalls + Core™ Cold-Plate TIM',
-                      dimensions: '1408 × 768 px',
-                      badge: 'Tri-Material Stack',
-                    })
-                  }
-                  className="relative bg-[#F6F5F1] p-3 cursor-zoom-in"
-                >
+              <div
+                onClick={() =>
+                  onOpenLightbox({
+                    src: slide.image,
+                    title: slide.title,
+                    description: slide.description,
+                    badge: 'InsulTherm Spotlight',
+                  })
+                }
+                className="group bg-[#181B22] border border-gray-800 rounded-xl p-4 cursor-zoom-in transition-colors hover:border-gray-700"
+              >
+                <div className="relative bg-black/40 rounded-lg overflow-hidden flex items-center justify-center min-h-[280px] sm:min-h-[340px] p-2">
                   <img
-                    src="/assets/validation/pack-cutaway-studio.jpg"
-                    alt="Prismatic Battery Module Cutaway with Shield, Barrier and Core"
-                    className="w-full h-auto max-h-[340px] object-contain mx-auto rounded"
+                    src={slide.image}
+                    alt={slide.title}
+                    className="max-h-[340px] w-auto max-w-full object-contain rounded"
                   />
+                  <span className="absolute top-3 right-3 p-2 rounded-lg bg-black/70 text-gray-200 group-hover:bg-[#DC2626] group-hover:text-white transition-colors">
+                    <Maximize2 className="w-4 h-4" />
+                  </span>
                 </div>
-
-                {/* Interactive Layer Selector Tabs */}
-                <div className="grid grid-cols-3 border-t border-b border-[#E2E0D8] bg-[#F6F5F1]">
-                  {CUTAWAY_CALLOUTS.map((c, idx) => (
-                    <button
-                      key={c.code}
-                      type="button"
-                      onClick={() => setActiveCutawayIdx(idx)}
-                      className={`p-2.5 text-left border-r last:border-r-0 border-[#E2E0D8] transition-colors ${
-                        activeCutawayIdx === idx
-                          ? 'bg-white border-b-2 border-b-[#E04819]'
-                          : 'hover:bg-white/60'
-                      }`}
-                    >
-                      <div className="text-[10px] font-mono font-bold text-[#E04819]">{c.code}</div>
-                      <div className="text-xs font-bold text-[#14171A] truncate mt-0.5">
-                        {c.name.split(' (')[0]}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-
-                {/* Active Layer Detail Bar */}
-                <div className="p-4 bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="space-y-0.5">
-                    <div className="text-xs font-mono font-bold text-[#14171A]">
-                      {CUTAWAY_CALLOUTS[activeCutawayIdx].metric} •{' '}
-                      <span className="text-emerald-700">
-                        {CUTAWAY_CALLOUTS[activeCutawayIdx].price}
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-600">
-                      {CUTAWAY_CALLOUTS[activeCutawayIdx].detail}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => openConfigurator(CUTAWAY_CALLOUTS[activeCutawayIdx].productId)}
-                    className="px-3.5 py-2 rounded bg-[#14171A] hover:bg-[#E04819] text-white text-xs font-bold shrink-0 transition-colors"
-                  >
-                    Price Custom Size →
-                  </button>
+                <div className="mt-3 px-1 flex items-center justify-between gap-2 text-xs text-gray-400">
+                  <span>{slide.imageCaption}</span>
+                  <span className="text-gray-300 font-semibold shrink-0">Full View →</span>
                 </div>
               </div>
             </div>
@@ -235,290 +215,219 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenLightbox }) => {
         </div>
       </section>
 
-      {/* 2. MULTI-DIVISION BRAND ARCHITECTURE RIBBON (3M & Henkel Ecosystem Model) */}
-      <section className="bg-white border-b border-[#E2E0D8] py-12">
+      {/* SECTION 2: LAIRD-STYLE QUICK PRODUCT & PROPERTY FINDER BAR */}
+      <section className="bg-white border-b border-gray-200 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
-            <div>
-              <div className="text-xs font-mono uppercase tracking-widest text-[#E04819] font-semibold">
-                One Converting Platform • Three Commercial Divisions
+          <div className="relative max-w-4xl mx-auto">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <div className="relative flex-1">
+                <Search className="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Find materials by property or application (e.g., 5.5 W/mK, AIS-156, busbar, silicone-free, BMS)..."
+                  className="w-full pl-11 pr-4 py-3 rounded-lg border border-gray-300 focus:border-[#0F1115] focus:outline-none text-sm"
+                />
               </div>
-              <h2 className="text-2xl sm:text-3xl font-display font-bold text-[#14171A] mt-1">
-                Built Like a Modern Industrial Materials House
-              </h2>
+              <button
+                type="button"
+                onClick={() => openConfigurator()}
+                className="px-5 py-3 rounded-lg bg-[#0F1115] hover:bg-[#DC2626] text-white text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 shrink-0 transition-colors"
+              >
+                <Upload className="w-4 h-4 text-[#DC2626] group-hover:text-white" />
+                Upload CAD for Quote
+              </button>
             </div>
-            <p className="text-sm text-slate-600 max-w-md">
-              From utility-scale 314Ah BESS containers and LEO satellite avionics to benchtop SSD & repair-lab packs—all cut on the same zero-tooling CNC architecture.
+
+            {/* Quick Filter Suggestions */}
+            <div className="flex flex-wrap items-center gap-2 mt-3 text-xs">
+              <span className="text-gray-400 font-medium">Quick filters:</span>
+              {['AIS-156', 'Silicone-Free', 'Busbar', '5.5 W/m·K', '1,500 W/m·K', '50×50mm'].map(
+                (chip) => (
+                  <button
+                    key={chip}
+                    type="button"
+                    onClick={() => setSearchQuery(chip === searchQuery ? '' : chip)}
+                    className={`px-2.5 py-1 rounded-md border transition-colors ${
+                      searchQuery === chip
+                        ? 'bg-[#DC2626] text-white border-[#DC2626]'
+                        : 'bg-[#F7F8FA] text-gray-600 border-gray-200 hover:border-gray-400'
+                    }`}
+                  >
+                    {chip}
+                  </button>
+                )
+              )}
+            </div>
+
+            {/* Instant Auto-Complete Dropdown */}
+            {searchQuery.trim() !== '' && (
+              <div className="mt-3 bg-white border border-gray-200 rounded-xl shadow-lg divide-y divide-gray-100 overflow-hidden">
+                {searchMatches.length === 0 ? (
+                  <div className="p-4 text-sm text-gray-500 flex items-center justify-between">
+                    <span>No exact catalog match for “{searchQuery}”.</span>
+                    <button
+                      type="button"
+                      onClick={() => navigate('/contact')}
+                      className="text-xs font-bold text-[#DC2626] hover:underline"
+                    >
+                      Ask Engineering →
+                    </button>
+                  </div>
+                ) : (
+                  searchMatches.map((m) => (
+                    <div
+                      key={m.id}
+                      className="p-4 hover:bg-[#F7F8FA] flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                    >
+                      <div>
+                        <div className="text-sm font-bold text-[#0F1115]">{m.trademarkName}</div>
+                        <div className="text-xs text-gray-500 mt-0.5">
+                          {m.thermalConductivity} • {m.dielectricStrength} • {m.protoPriceLabel}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Link
+                          to={`/products#${m.id}`}
+                          onClick={() => setSearchQuery('')}
+                          className="px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-semibold text-[#0F1115] hover:border-[#0F1115]"
+                        >
+                          Specs
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSearchQuery('');
+                            openConfigurator(m.id);
+                          }}
+                          className="px-3 py-1.5 rounded-lg bg-[#DC2626] text-white text-xs font-bold"
+                        >
+                          Configure
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 3: OUR PORTFOLIOS (Laird.com 3-Pillar Architecture) */}
+      <section className="bg-[#F7F8FA] border-b border-gray-200 py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-2xl mb-12">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#DC2626]">
+              Our Portfolios
+            </span>
+            <h2 className="text-3xl font-extrabold text-[#0F1115] mt-1">
+              Engineered Protection & Thermal Control
+            </h2>
+            <p className="text-base text-gray-600 mt-2">
+              Three focused capabilities built around rapid digital converting and verified material
+              performance.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {BRAND_DIVISIONS.map((div) => (
-              <div
-                key={div.code}
-                className="bg-[#FBFBF9] border border-[#E2E0D8] rounded-md p-6 flex flex-col justify-between hover:shadow-md transition-shadow relative overflow-hidden"
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-7">
+            {PORTFOLIOS.map((item) => (
+              <Link
+                key={item.id}
+                to={item.link}
+                className="group bg-white border border-gray-200 hover:border-[#0F1115] rounded-xl p-7 flex flex-col justify-between shadow-sm transition-all"
               >
-                <div
-                  className="absolute top-0 left-0 right-0 h-1.5"
-                  style={{ backgroundColor: div.colorHex }}
-                />
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-[11px] font-mono font-bold text-slate-500">
-                      {div.code}
-                    </span>
-                    <div className="flex flex-wrap gap-1">
-                      {div.subBrands.map((sb) => (
-                        <span
-                          key={sb}
-                          className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-white border border-[#E2E0D8] text-[#14171A]"
-                        >
-                          {sb}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                  <h3 className="text-xl font-display font-bold text-[#14171A] mb-2">
-                    {div.name}
+                <div className="space-y-3">
+                  <span className="inline-block text-xs font-mono font-semibold text-[#DC2626]">
+                    {item.metric}
+                  </span>
+                  <h3 className="text-xl font-bold text-[#0F1115] group-hover:text-[#DC2626] transition-colors">
+                    {item.title}
                   </h3>
-                  <p className="text-sm text-slate-600 leading-relaxed mb-5">{div.summary}</p>
+                  <div className="text-xs font-semibold text-gray-500">{item.subtitle}</div>
+                  <p className="text-sm text-gray-600 leading-relaxed pt-1">{item.description}</p>
                 </div>
-                <Link
-                  to={div.ctaTarget}
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-[#14171A] hover:text-[#E04819] transition-colors"
-                >
-                  Explore Division SKUs & Pricing <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
+
+                <div className="pt-6 mt-6 border-t border-gray-100 inline-flex items-center gap-1.5 text-xs font-bold text-[#0F1115] group-hover:text-[#DC2626]">
+                  Explore Portfolio <ArrowRight className="w-3.5 h-3.5" />
+                </div>
+              </Link>
             ))}
           </div>
         </div>
       </section>
 
-      {/* 3. HENKEL-STYLE INTERACTIVE "SOLVE BY THERMAL/ELECTRICAL CHALLENGE" SELECTOR */}
-      <section className="bg-[#F6F5F1] border-b border-[#E2E0D8] py-14">
+      {/* SECTION 4: OUR PRODUCTS (Clean, Spacious 5-Product Grid) */}
+      <section className="bg-white border-b border-gray-200 py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="mb-8">
-            <div className="text-xs font-mono uppercase tracking-widest text-[#E04819] font-semibold">
-              30-Second Application Wizard
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-display font-bold text-[#14171A] mt-1">
-              Select Your Engineering Bottleneck → Get Exact Material & Area Cost
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Challenge Buttons */}
-            <div className="lg:col-span-5 space-y-2.5">
-              {APPLICATION_CHALLENGES.map((ch) => {
-                const active = ch.id === activeChallenge.id;
-                return (
-                  <button
-                    key={ch.id}
-                    type="button"
-                    onClick={() => setSelectedChallengeId(ch.id)}
-                    className={`w-full text-left p-4 rounded-md border transition-all ${
-                      active
-                        ? 'bg-[#14171A] text-white border-[#14171A] shadow-md'
-                        : 'bg-white text-[#14171A] border-[#E2E0D8] hover:border-slate-400'
-                    }`}
-                  >
-                    <div
-                      className={`text-[10px] font-mono uppercase tracking-wider font-bold mb-1 ${
-                        active ? 'text-[#E04819]' : 'text-slate-500'
-                      }`}
-                    >
-                      {ch.sectorTag}
-                    </div>
-                    <div className="text-sm font-display font-bold leading-snug">
-                      {ch.problemTitle}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Recommended Solution Panel */}
-            <div className="lg:col-span-7 bg-white border border-[#E2E0D8] rounded-md p-6 sm:p-7 flex flex-col justify-between shadow-sm">
-              <div className="space-y-4">
-                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E2E0D8] pb-4">
-                  <div>
-                    <span className="text-[11px] font-mono uppercase text-[#E04819] font-bold">
-                      Recommended Platform • {recommendedProduct.subBrandCode}
-                    </span>
-                    <h3 className="text-2xl font-display font-bold text-[#14171A]">
-                      {recommendedProduct.trademarkName}
-                    </h3>
-                  </div>
-                  <a
-                    href={recommendedProduct.tdsUrl}
-                    download
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#F6F5F1] hover:bg-[#14171A] hover:text-white border border-[#E2E0D8] text-xs font-mono font-semibold transition-colors"
-                  >
-                    <FileDown className="w-3.5 h-3.5 text-[#E04819]" />
-                    2-Page TDS PDF
-                  </a>
-                </div>
-
-                <div className="bg-[#FFF3EE] border border-[#E04819]/25 rounded p-3.5 text-xs text-slate-800">
-                  <strong className="text-[#14171A]">Failure Mode Addressed: </strong>
-                  {activeChallenge.symptom}
-                </div>
-
-                <p className="text-sm text-slate-700 leading-relaxed">
-                  <strong className="text-[#14171A]">Engineering Mechanism: </strong>
-                  {activeChallenge.whyItWorks}
-                </p>
-
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-1">
-                  <div className="p-3 rounded bg-[#F6F5F1] border border-[#E2E0D8]">
-                    <div className="text-[10px] font-mono uppercase text-slate-500">Thermal / Arc</div>
-                    <div className="text-xs font-mono font-bold text-[#14171A] mt-0.5">
-                      {recommendedProduct.thermalConductivity}
-                    </div>
-                  </div>
-                  <div className="p-3 rounded bg-[#F6F5F1] border border-[#E2E0D8]">
-                    <div className="text-[10px] font-mono uppercase text-slate-500">
-                      Sample Run ({activeChallenge.suggestedFootprint.lengthMm}×
-                      {activeChallenge.suggestedFootprint.widthMm}mm)
-                    </div>
-                    <div className="text-xs font-mono font-bold text-[#E04819] mt-0.5">
-                      ₹{challengePrice.unitPriceInr}/pc ({challengePrice.areaCm2} cm²)
-                    </div>
-                  </div>
-                  <div className="p-3 rounded bg-[#F6F5F1] border border-[#E2E0D8] col-span-2 sm:col-span-1">
-                    <div className="text-[10px] font-mono uppercase text-slate-500">
-                      Volume Area Rate
-                    </div>
-                    <div className="text-xs font-mono font-bold text-emerald-800 mt-0.5">
-                      {recommendedProduct.volumePriceLabel}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-5 mt-5 border-t border-[#E2E0D8] flex flex-wrap items-center justify-between gap-3">
-                <button
-                  type="button"
-                  onClick={() =>
-                    addItem(
-                      {
-                        sku: recommendedProduct.keyGrades[0].split(' ')[0],
-                        productId: recommendedProduct.id,
-                        title: `${recommendedProduct.trademarkName} (Suggested Sample Run)`,
-                        itemType: 'custom-cad',
-                        dimensionsLabel: `${activeChallenge.suggestedFootprint.lengthMm} × ${activeChallenge.suggestedFootprint.widthMm} × ${recommendedProduct.defaultThicknessMm} mm (${challengePrice.areaCm2} cm²)`,
-                        areaCm2: challengePrice.areaCm2,
-                        unitPriceInr: challengePrice.unitPriceInr,
-                        quantity: activeChallenge.suggestedFootprint.qty,
-                        formulaNote: challengePrice.formulaExplanation,
-                      },
-                      true
-                    )
-                  }
-                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded bg-[#E04819] hover:bg-[#BF360C] text-white text-xs font-bold shadow-sm transition-colors"
-                >
-                  <ShoppingBag className="w-4 h-4" />
-                  Add {activeChallenge.suggestedFootprint.qty}-pc Sample Run (₹
-                  {challengePrice.lineSubtotalInr.toLocaleString('en-IN')})
-                </button>
-                <button
-                  type="button"
-                  onClick={() => openConfigurator(recommendedProduct.id)}
-                  className="text-xs font-bold text-[#14171A] hover:text-[#E04819] underline"
-                >
-                  Or Enter Custom Dimensions & Upload .DXF →
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 4. ALL 5 CORE INDUSTRIAL SUB-BRANDS (Crystal-Clear Area Pricing + Uncropped Clickable Photos) */}
-      <section className="bg-white border-b border-[#E2E0D8] py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-12">
             <div>
-              <div className="text-xs font-mono uppercase tracking-widest text-[#E04819] font-semibold">
-                5 Proprietary Material Platforms • 100% Area-Transparent Pricing
-              </div>
-              <h2 className="text-3xl font-display font-bold text-[#14171A] mt-1">
-                Core Industrial & Defense Material Portfolio
+              <span className="text-xs font-bold uppercase tracking-wider text-[#DC2626]">
+                Our Products
+              </span>
+              <h2 className="text-3xl font-extrabold text-[#0F1115] mt-1">
+                5 Core Material Platforms
               </h2>
             </div>
             <Link
               to="/products"
-              className="inline-flex items-center gap-1.5 text-sm font-bold text-[#E04819] hover:underline"
+              className="inline-flex items-center gap-1.5 text-sm font-bold text-[#DC2626] hover:underline"
             >
-              View Full Layer Stackups & Comparison Matrix <ArrowRight className="w-4 h-4" />
+              Compare Full Technical Specifications <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7">
             {PRODUCTS.map((product) => (
               <div
                 key={product.id}
-                className="bg-[#FBFBF9] border border-[#E2E0D8] rounded-md overflow-hidden flex flex-col justify-between hover:shadow-lg transition-all group"
+                className="bg-white border border-gray-200 rounded-xl overflow-hidden flex flex-col justify-between hover:shadow-md transition-shadow"
               >
                 <div>
-                  {/* Uncropped / Expandable Product Studio Image */}
                   <div
                     onClick={() =>
                       onOpenLightbox({
                         src: product.heroImage,
-                        title: `${product.trademarkName} (${product.subBrandCode})`,
-                        subtitle: product.shortTagline,
-                        badge: product.category,
+                        title: product.trademarkName,
                         description: product.summary,
-                        metrics: [
-                          { label: 'Thermal k', value: product.thermalConductivity.split(' (')[0] },
-                          { label: 'Dielectric', value: product.dielectricStrength.split(' (')[0] },
-                          { label: 'Proto Rate', value: product.protoPriceLabel },
-                        ],
+                        badge: product.category,
                       })
                     }
-                    className="relative h-52 bg-white border-b border-[#E2E0D8] p-2 flex items-center justify-center cursor-zoom-in overflow-hidden"
+                    className="h-52 bg-[#F7F8FA] border-b border-gray-100 p-4 flex items-center justify-center cursor-zoom-in"
                   >
                     <img
                       src={product.heroImage}
                       alt={product.trademarkName}
-                      className="max-h-full max-w-full object-contain group-hover:scale-[1.03] transition-transform duration-300"
+                      className="max-h-full max-w-full object-contain"
                     />
-                    <span
-                      className={`absolute top-3 left-3 text-[10px] font-mono font-bold px-2 py-0.5 rounded ${product.badgeColor}`}
-                    >
-                      {product.subBrandCode}
-                    </span>
-                    <span className="absolute bottom-2.5 right-2.5 p-1.5 rounded bg-[#14171A]/80 text-white opacity-80 group-hover:bg-[#E04819]">
-                      <Maximize2 className="w-3.5 h-3.5" />
-                    </span>
                   </div>
 
-                  <div className="p-5 space-y-3">
-                    <div>
-                      <h3 className="text-xl font-display font-bold text-[#14171A]">
-                        {product.trademarkName}
-                      </h3>
-                      <p className="text-xs font-medium text-[#E04819] mt-0.5">
-                        {product.shortTagline}
-                      </p>
-                    </div>
-
-                    <p className="text-xs text-slate-600 leading-relaxed line-clamp-3">
-                      {product.summary}
+                  <div className="p-6 space-y-3">
+                    <div className="text-xs font-semibold text-[#DC2626]">{product.category}</div>
+                    <h3 className="text-xl font-bold text-[#0F1115]">{product.trademarkName}</h3>
+                    <p className="text-sm text-gray-600 leading-relaxed">
+                      {product.oneLineSummary}
                     </p>
 
-                    <div className="bg-white border border-[#E2E0D8] rounded p-3 space-y-1.5 text-xs font-mono">
-                      <div className="flex justify-between gap-2">
-                        <span className="text-slate-500">Proto (₹0 NRE):</span>
-                        <span className="font-bold text-[#14171A] text-right">
+                    <div className="pt-3 border-t border-gray-100 space-y-1.5 text-xs tabular-nums">
+                      <div className="flex justify-between text-gray-600">
+                        <span>Key Rating:</span>
+                        <span className="font-semibold text-[#0F1115]">
+                          {product.category === 'Dielectric Origami'
+                            ? product.dielectricStrength.split(' (')[0]
+                            : product.thermalConductivity.split(' (')[0]}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-gray-600">
+                        <span>Prototype:</span>
+                        <span className="font-semibold text-[#0F1115]">
                           {product.protoPriceLabel}
                         </span>
                       </div>
-                      <div className="flex justify-between gap-2">
-                        <span className="text-slate-500">Volume (100+):</span>
-                        <span className="font-bold text-emerald-800 text-right">
+                      <div className="flex justify-between text-gray-600">
+                        <span>Volume:</span>
+                        <span className="font-semibold text-[#DC2626]">
                           {product.volumePriceLabel}
                         </span>
                       </div>
@@ -526,64 +435,58 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenLightbox }) => {
                   </div>
                 </div>
 
-                <div className="px-5 pb-5 pt-2 flex items-center gap-2">
+                <div className="px-6 pb-6 flex items-center gap-2.5">
                   <button
                     type="button"
                     onClick={() => openConfigurator(product.id)}
-                    className="flex-1 py-2.5 px-3 rounded bg-[#14171A] hover:bg-[#E04819] text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors"
+                    className="flex-1 py-2.5 px-4 rounded-lg bg-[#0F1115] hover:bg-[#DC2626] text-white text-xs font-bold inline-flex items-center justify-center gap-1.5 transition-colors"
                   >
                     <ShoppingBag className="w-3.5 h-3.5" />
-                    Price by cm² & Order
+                    Configure & Buy
                   </button>
+                  <Link
+                    to={`/products#${product.id}`}
+                    className="py-2.5 px-3.5 rounded-lg border border-gray-200 hover:border-[#0F1115] text-xs font-semibold text-[#0F1115]"
+                  >
+                    Details
+                  </Link>
                   <a
                     href={product.tdsUrl}
                     download
-                    className="py-2.5 px-3 rounded border border-[#E2E0D8] bg-white hover:border-[#14171A] text-xs font-mono font-semibold text-[#14171A] inline-flex items-center gap-1"
+                    title="Download 2-Page TDS PDF"
+                    className="p-2.5 rounded-lg border border-gray-200 hover:border-[#DC2626] text-gray-700 hover:text-[#DC2626]"
                   >
-                    <FileDown className="w-3.5 h-3.5 text-[#E04819]" />
-                    TDS
+                    <FileDown className="w-4 h-4" />
                   </a>
                 </div>
               </div>
             ))}
 
-            {/* 6th Card: Turnkey <₹15k R&D Homologation Bundles */}
-            <div className="bg-[#14171A] text-white border border-[#14171A] rounded-md p-6 flex flex-col justify-between">
+            {/* 6th Card: R&D & Prototyping Kits Summary Card */}
+            <div className="bg-[#0F1115] text-white rounded-xl p-7 flex flex-col justify-between">
               <div className="space-y-4">
-                <span className="inline-flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider px-2.5 py-1 rounded bg-[#E04819] text-white font-bold">
-                  <Sparkles className="w-3 h-3" />
-                  Bypass 60-Day Vendor Onboarding
+                <span className="inline-block text-xs font-bold uppercase tracking-wider text-[#DC2626]">
+                  Fast Evaluation & Starter Packs
                 </span>
-                <h3 className="text-2xl font-display font-bold leading-snug">
-                  4 Turnkey &lt; ₹15,000 R&D Qualification Kits
+                <h3 className="text-2xl font-bold leading-snug">
+                  &lt; ₹15,000 R&D Kits & Prototyping Packs
                 </h3>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  Engineered specifically under corporate petty-cash limits so Battery, Inverter, and Defense Lead Engineers can test custom-cut multi-material stacks in 48 hours via UPI or Lab Card.
+                <p className="text-sm text-gray-300 leading-relaxed">
+                  Skip 60-day vendor onboarding with turnkey R&D kits (₹7,500–₹14,500) or compact
+                  starter packs (₹999–₹3,499) for individual builders and student teams.
                 </p>
-                <div className="space-y-2 pt-1">
+
+                <div className="space-y-2 pt-2 text-xs tabular-nums">
                   {RND_KITS.map((k) => (
                     <div
                       key={k.id}
-                      className="flex items-center justify-between gap-2 p-2.5 rounded bg-slate-900 border border-slate-800 text-xs"
+                      className="flex items-center justify-between py-2 border-b border-gray-800"
                     >
-                      <span className="truncate text-slate-200 font-medium">{k.name}</span>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          addItem({
-                            sku: k.sku,
-                            title: k.name,
-                            itemType: 'kit-bundle',
-                            dimensionsLabel: 'Turnkey Engineering Kit',
-                            unitPriceInr: k.priceInr,
-                            quantity: 1,
-                            formulaNote: k.leadTime,
-                          })
-                        }
-                        className="font-mono font-bold text-[#E04819] hover:text-orange-300 shrink-0"
-                      >
-                        + {k.priceLabel}
-                      </button>
+                      <span className="text-gray-300 truncate pr-2">{k.sector}</span>
+                      <span className="font-mono font-bold text-white shrink-0">
+                        {k.starterPriceInr ? `₹${k.starterPriceInr} / ` : ''}
+                        {k.priceLabel}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -591,171 +494,191 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenLightbox }) => {
 
               <Link
                 to="/products#rnd-kits"
-                className="mt-5 w-full py-2.5 px-4 rounded bg-white text-[#14171A] hover:bg-[#E04819] hover:text-white text-xs font-bold text-center transition-colors"
+                className="mt-6 w-full py-3 px-4 rounded-lg bg-[#DC2626] hover:bg-[#B91C1C] text-white text-xs font-bold text-center transition-colors"
               >
-                Inspect All R&D Kit Contents →
+                View Kits & Starter Packs →
               </Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 5. FULL-VISIBILITY 4-QUADRANT FEA & 3D CAD SHOWCASE */}
-      <section className="bg-[#F6F5F1] border-b border-[#E2E0D8] py-16">
+      {/* SECTION 5: OUR MARKETS (Clean Laird-Style Tabbed Showcase — Zero Clutter) */}
+      <section className="bg-[#F7F8FA] border-b border-gray-200 py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <ValidationShowcase
-            onOpenLightbox={onOpenLightbox}
-            onOrderKit={() =>
-              addItem({
-                sku: RND_KITS[0].sku,
-                title: RND_KITS[0].name,
-                itemType: 'kit-bundle',
-                dimensionsLabel: 'Core™ + Barrier™ + Shield™ Pack Kit',
-                unitPriceInr: RND_KITS[0].priceInr,
-                quantity: 1,
-                formulaNote: '48-Hour Custom Homologation Dispatch',
-              })
-            }
-          />
-        </div>
-      </section>
+          <div className="max-w-2xl mb-8">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#DC2626]">
+              Our Markets
+            </span>
+            <h2 className="text-3xl font-extrabold text-[#0F1115] mt-1">
+              Applications Across Critical Industries
+            </h2>
+          </div>
 
-      {/* 6. LIVE AREA (cm²) PRICING & CUSTOM CAD UPLOAD ENGINE */}
-      <section className="bg-white border-b border-[#E2E0D8] py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <CadQuoteEngine />
-        </div>
-      </section>
-
-      {/* 7. 3M-INSPIRED "THERMAFIX™ PRO-BENCH" & UNIVERSITY CO-DESIGN ECOSYSTEM */}
-      <section className="bg-[#FBFBF9] py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-            <div className="lg:col-span-5 space-y-4">
-              <div className="inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider px-2.5 py-1 rounded bg-emerald-100 text-emerald-900 font-bold">
-                <Wrench className="w-3.5 h-3.5" />
-                Division 03 • ThermaFix™ Pro-Bench Direct
-              </div>
-              <h2 className="text-3xl font-display font-bold text-[#14171A] leading-tight">
-                Industrial-Grade Thermal Science—Packaged for Every Workbench.
-              </h2>
-              <p className="text-sm text-slate-600 leading-relaxed">
-                Inspired by 3M’s industrial-to-prosumer model, we precision-slit our cleanroom CNC nesting stock into affordable, off-the-shelf strip & washer packs (<strong className="text-[#14171A]">₹499 – ₹1,199</strong>) for workstation builders, GPU repair centers, drone teams, and university labs.
-              </p>
-              <div
-                onClick={() =>
-                  onOpenLightbox({
-                    src: '/assets/products/thermafix-bench-pack.jpg',
-                    title: 'ThermaFix™ Pro-Bench & Maker Pre-Cut Strip Series',
-                    subtitle: 'Precision CNC-Slit Core™, Ultra™, Graphite-Flex™ & Shield™ Benchtop Packs',
-                    dimensions: '1408 × 768 px',
-                    badge: 'Direct Bench Line',
-                  })
-                }
-                className="rounded-md overflow-hidden border border-[#E2E0D8] bg-white p-2 cursor-zoom-in shadow-sm"
+          {/* Clean Sector Tabs */}
+          <div className="flex flex-wrap gap-2 mb-8">
+            {MARKETS.map((mkt) => (
+              <button
+                key={mkt.id}
+                type="button"
+                onClick={() => setActiveMarketId(mkt.id)}
+                className={`px-4 py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-all ${
+                  mkt.id === activeMarket.id
+                    ? 'bg-[#0F1115] text-white shadow-sm'
+                    : 'bg-white text-gray-700 border border-gray-200 hover:border-gray-400'
+                }`}
               >
+                {mkt.name}
+              </button>
+            ))}
+          </div>
+
+          {/* Single Focused Market Panel */}
+          <div className="bg-white border border-gray-200 rounded-xl p-6 sm:p-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center shadow-sm">
+            <div className="lg:col-span-5">
+              <div className="bg-[#F7F8FA] border border-gray-100 rounded-xl p-4 flex items-center justify-center h-64">
                 <img
-                  src="/assets/products/thermafix-bench-pack.jpg"
-                  alt="ThermaFix Pro-Bench Electronics Thermal Packs"
-                  className="w-full h-auto object-contain rounded"
+                  src={activeMarket.image}
+                  alt={activeMarket.name}
+                  className="max-h-full max-w-full object-contain rounded"
                 />
               </div>
             </div>
 
-            <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {PRO_BENCH_PACKS.map((pack) => (
-                <div
-                  key={pack.id}
-                  className="bg-white border border-[#E2E0D8] rounded-md p-5 flex flex-col justify-between hover:border-emerald-600 transition-colors"
-                >
-                  <div className="space-y-2.5">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-[10px] font-mono uppercase font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                        {pack.brandLine}
-                      </span>
-                      <span className="text-xs font-mono text-slate-400">{pack.sku}</span>
-                    </div>
-                    <h3 className="text-base font-display font-bold text-[#14171A] leading-snug">
-                      {pack.name}
-                    </h3>
-                    <div className="text-xs font-mono text-slate-600">{pack.packCountLabel}</div>
-                    <ul className="space-y-1 text-xs text-slate-600 pt-1">
-                      {pack.includes.slice(0, 2).map((inc, i) => (
-                        <li key={i} className="flex items-start gap-1.5">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
-                          <span>{inc}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+            <div className="lg:col-span-7 space-y-4">
+              <div className="text-xs font-mono font-semibold text-[#DC2626]">
+                {activeMarket.standards}
+              </div>
+              <h3 className="text-2xl font-bold text-[#0F1115] leading-snug">
+                {activeMarket.headline}
+              </h3>
+              <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
+                {activeMarket.description}
+              </p>
 
-                  <div className="pt-4 mt-4 border-t border-[#E2E0D8] flex items-center justify-between">
-                    <div>
-                      <div className="text-lg font-mono font-bold text-[#14171A]">
-                        ₹{pack.priceInr}
-                      </div>
-                      <div className="text-[10px] font-mono text-slate-500">Ships in 24h</div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        addItem({
-                          sku: pack.sku,
-                          title: pack.name,
-                          itemType: 'pro-bench',
-                          dimensionsLabel: pack.packCountLabel,
-                          unitPriceInr: pack.priceInr,
-                          quantity: 1,
-                          formulaNote: `${pack.brandLine} Direct Pack`,
-                        })
-                      }
-                      className="px-3.5 py-2 rounded bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-colors"
+              <div className="px-4 py-3 rounded-lg bg-[#F7F8FA] border border-gray-200 text-xs sm:text-sm text-[#0F1115]">
+                <strong>Validated Benchmark:</strong> {activeMarket.keyOutcome}
+              </div>
+
+              <div className="pt-2 flex flex-wrap items-center gap-2.5">
+                {activeMarket.recommendedProducts.map((pid) => {
+                  const pr = PRODUCTS.find((x) => x.id === pid);
+                  if (!pr) return null;
+                  return (
+                    <Link
+                      key={pid}
+                      to={`/products#${pid}`}
+                      className="px-3.5 py-2 rounded-lg border border-gray-200 hover:border-[#DC2626] text-xs font-bold text-[#0F1115] hover:text-[#DC2626] transition-colors"
                     >
-                      <ShoppingBag className="w-3.5 h-3.5" />
-                      Add to Order
-                    </button>
+                      {pr.trademarkName} →
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 6: ENGINEERING VALIDATION HIGHLIGHTS & CHECKOUT OFFERS BANNER */}
+      <section className="bg-white py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
+          {/* 3 Clean Engineering Highlights (Laird "Latest / Case Studies" Pattern) */}
+          <div>
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-[#DC2626]">
+                  Validation & Engineering Proof
+                </span>
+                <h2 className="text-3xl font-extrabold text-[#0F1115] mt-1">
+                  Full-Frame Simulation & CAD Architecture
+                </h2>
+              </div>
+              <Link
+                to="/about"
+                className="inline-flex items-center gap-1.5 text-sm font-bold text-[#DC2626] hover:underline"
+              >
+                Open All 8 Validation Plates <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-7">
+              {[VALIDATION_PLATES[0], VALIDATION_PLATES[4], VALIDATION_PLATES[7]].map((plate) => (
+                <div
+                  key={plate.id}
+                  onClick={() => onOpenLightbox(plate)}
+                  className="group bg-white border border-gray-200 hover:border-[#0F1115] rounded-xl overflow-hidden cursor-zoom-in flex flex-col justify-between transition-all"
+                >
+                  <div>
+                    <div className="h-52 bg-[#F7F8FA] border-b border-gray-100 p-3 flex items-center justify-center relative">
+                      <img
+                        src={plate.src}
+                        alt={plate.title}
+                        className="max-h-full max-w-full object-contain"
+                      />
+                      <span className="absolute bottom-2.5 right-2.5 p-1.5 rounded-lg bg-[#0F1115]/80 text-white group-hover:bg-[#DC2626] transition-colors">
+                        <Maximize2 className="w-3.5 h-3.5" />
+                      </span>
+                    </div>
+                    <div className="p-6 space-y-2">
+                      <div className="text-xs font-semibold text-[#DC2626]">{plate.category}</div>
+                      <h3 className="text-base font-bold text-[#0F1115] leading-snug">
+                        {plate.title}
+                      </h3>
+                      <p className="text-xs text-gray-600 leading-relaxed line-clamp-3">
+                        {plate.description}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="px-6 pb-5 text-xs font-bold text-[#0F1115] group-hover:text-[#DC2626]">
+                    Click to Expand Uncropped Plate →
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Grounded Ecosystem Programs Strip (Rapid-Cut Toll Service + University Formula EV Program) */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 pt-4 border-t border-[#E2E0D8]">
-            <div className="bg-white border border-[#E2E0D8] rounded-md p-5 flex items-start gap-3.5">
-              <Layers className="w-7 h-7 text-[#E04819] shrink-0 mt-0.5" />
-              <div>
-                <h4 className="text-sm font-display font-bold text-[#14171A]">
-                  Rapid-Cut™ Custom Toll Converting
-                </h4>
-                <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                  Already sourced specialty gaskets, EMI absorbers, or VHB™ tapes? Ship rolls/sheets to our Sanand CNC table for 48-hour tool-free digital cutting.
-                </p>
+          {/* Clean Black & Red Checkout Offers Banner */}
+          <div className="bg-[#0F1115] text-white rounded-2xl p-8 sm:p-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            <div className="lg:col-span-7 space-y-3">
+              <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#DC2626]">
+                <Tag className="w-4 h-4" />
+                Direct Checkout Privileges — B2B & Prototyping
+              </div>
+              <h3 className="text-2xl sm:text-3xl font-extrabold">
+                Transparent Base Pricing + 4 Instant Checkout Coupons
+              </h3>
+              <p className="text-sm text-gray-300 leading-relaxed max-w-2xl">
+                Whether you are ordering a ₹999 starter pack or a ₹35,000+ OEM pilot batch, apply
+                unlocked offers directly inside the Order Cart without altering standard catalog
+                rates.
+              </p>
+              <div className="flex flex-wrap gap-2 pt-2">
+                {CHECKOUT_COUPONS.map((c) => (
+                  <span
+                    key={c.code}
+                    className="px-3 py-1.5 rounded-lg bg-white/10 border border-white/10 text-xs font-mono"
+                  >
+                    <strong className="text-[#DC2626]">{c.code}</strong>: {c.badge}
+                  </span>
+                ))}
               </div>
             </div>
 
-            <div className="bg-white border border-[#E2E0D8] rounded-md p-5 flex items-start gap-3.5">
-              <Zap className="w-7 h-7 text-amber-600 shrink-0 mt-0.5" />
-              <div>
-                <h4 className="text-sm font-display font-bold text-[#14171A]">
-                  Thermal & Dielectric DFM Co-Design
-                </h4>
-                <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                  Send your 3D battery module `.STEP` assembly—our team unfolds busbar origami shrouds and optimizes nesting yield to cut part cost by 18–25%.
-                </p>
-              </div>
-            </div>
-
-            <div className="bg-white border border-[#E2E0D8] rounded-md p-5 flex items-start gap-3.5">
-              <GraduationCap className="w-7 h-7 text-emerald-700 shrink-0 mt-0.5" />
-              <div>
-                <h4 className="text-sm font-display font-bold text-[#14171A]">
-                  Formula Bharat, BAJA & IIT Robotics Desk
-                </h4>
-                <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                  Student EV accumulator & UAV teams receive academic discounts on AIS-156 Barrier™ firewalls and Shield™ accumulator liners.
-                </p>
-              </div>
+            <div className="lg:col-span-5 flex flex-wrap lg:justify-end gap-3">
+              <Link
+                to="/quote"
+                className="px-6 py-3.5 rounded-lg bg-[#DC2626] hover:bg-[#B91C1C] text-white text-sm font-bold transition-colors"
+              >
+                Calculate Custom Part
+              </Link>
+              <button
+                type="button"
+                onClick={openCheckout}
+                className="px-6 py-3.5 rounded-lg bg-white text-[#0F1115] hover:bg-gray-100 text-sm font-bold transition-colors"
+              >
+                Open Order Cart
+              </button>
             </div>
           </div>
         </div>

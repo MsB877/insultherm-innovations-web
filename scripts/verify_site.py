@@ -55,7 +55,7 @@ def main():
     errors = []
 
     # 1. Check Root & SPA Routes
-    for route in ["/", "/products", "/about", "/contact"]:
+    for route in ["/", "/products", "/quote", "/about", "/contact"]:
         status, _, body = fetch(BASE_URL + route)
         text = body.decode("utf-8", errors="ignore")
         if status != 200 or '<div id="root"></div>' not in text:
@@ -82,7 +82,10 @@ def main():
             "manav.sb@inslthrm.in",
             "manavsb9719@gmail.com",
             "Sanand GIDC",
-            "ThermaFix",
+            "PROTO10",
+            "RNDKIT1000",
+            "MULTISTACK8",
+            "PILOT12",
         ]:
             if required_literal in js_text:
                 print(f"  [PASS] Bundle literal verified: '{required_literal}'")

@@ -1,54 +1,51 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import {
-  Cpu,
-  ShieldCheck,
   Maximize2,
   CheckCircle2,
   Mail,
-  Upload,
-  Award,
-  TrendingUp,
+  ArrowRight,
 } from 'lucide-react';
-import { COMPANY_INFO, SECTORS } from '../data/companyData';
+import { COMPANY_INFO } from '../data/companyData';
 import { ValidationShowcase } from '../components/ValidationShowcase';
 import { LightboxImagePayload } from '../components/ImageLightbox';
-import { useOrderCart } from '../context/OrderCartContext';
 
 interface AboutPageProps {
   onOpenLightbox: (img: LightboxImagePayload) => void;
 }
 
 export const AboutPage: React.FC<AboutPageProps> = ({ onOpenLightbox }) => {
-  const { openConfigurator } = useOrderCart();
-
   return (
-    <div className="bg-[#FBFBF9] pb-20">
-      {/* Editorial Header */}
-      <section className="bg-white bg-architectural-grid border-b border-[#E2E0D8] py-14">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+    <div className="bg-[#F7F8FA] pb-24">
+      {/* Clean Header Section */}
+      <section className="bg-white border-b border-gray-200 py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
           <div className="lg:col-span-6 space-y-5">
-            <div className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#E04819] font-bold">
-              <Cpu className="w-4 h-4" />
-              Sanand GIDC Industrial Corridor • Ahmedabad, Gujarat
-            </div>
-            <h1 className="text-3xl sm:text-5xl font-display font-bold text-[#14171A] leading-tight">
-              Replacing 8-Week Tooling Freezes with{' '}
-              <span className="font-serif italic font-normal text-[#E04819]">
-                48-Hour Digital Precision.
-              </span>
+            <span className="text-xs font-bold uppercase tracking-wider text-[#DC2626]">
+              Manufacturing & Engineering Validation
+            </span>
+            <h1 className="text-3xl sm:text-5xl font-extrabold text-[#0F1115] leading-tight tracking-tight">
+              Precision Materials Science Meets Zero-Tooling Digital Converting
             </h1>
-            <p className="text-base text-slate-600 leading-relaxed">
-              InsulTherm Innovations was founded on a first-principles observation across India’s EV, BESS, power electronics, and defense labs: hardware teams lose months—and ₹40,000 to ₹8 Lakh per revision—waiting on imported thermal sheets, steel rule dies, and injection-molded busbar covers.
+            <p className="text-base text-gray-600 leading-relaxed">
+              Operating from the Sanand GIDC industrial corridor near Ahmedabad, Gujarat,{' '}
+              <strong className="text-[#0F1115]">InsulTherm Innovations</strong> eliminates the
+              8-week import and tooling bottleneck faced by hardware teams—delivering custom
+              thermal, fire-barrier, and dielectric parts in 24–48 hours.
             </p>
-            <div className="flex flex-wrap gap-3 pt-1">
-              <button
-                type="button"
-                onClick={() => openConfigurator()}
-                className="inline-flex items-center gap-2 px-5 py-3 rounded bg-[#E04819] hover:bg-[#BF360C] text-white text-xs sm:text-sm font-bold shadow-sm"
+            <div className="pt-1 flex flex-wrap gap-3">
+              <Link
+                to="/quote"
+                className="inline-flex items-center gap-2 px-5 py-3 rounded-lg bg-[#DC2626] hover:bg-[#B91C1C] text-white text-sm font-bold transition-colors"
               >
-                <Upload className="w-4 h-4" />
-                Send Custom .DXF / .STEP to Sanand CNC Cell
-              </button>
+                Calculate Custom Part <ArrowRight className="w-4 h-4" />
+              </Link>
+              <Link
+                to="/contact"
+                className="inline-flex items-center gap-2 px-5 py-3 rounded-lg border border-gray-300 hover:border-[#0F1115] text-[#0F1115] text-sm font-semibold transition-colors"
+              >
+                Contact Engineering
+              </Link>
             </div>
           </div>
 
@@ -57,25 +54,23 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenLightbox }) => {
               onClick={() =>
                 onOpenLightbox({
                   src: '/assets/facility/cnc-converting-lab.jpg',
-                  title: 'InsulTherm Digital Oscillating-Knife & Crease-Scoring CNC Cell',
-                  subtitle: 'Sanand GIDC Advanced Converting Wing, Ahmedabad, Gujarat',
-                  dimensions: '1408 × 768 px',
-                  badge: 'Zero-Tooling CNC Lab',
+                  title: 'Digital CNC Oscillating-Knife & Crease-Scoring Cell',
+                  badge: 'Sanand GIDC Facility',
                   description:
-                    'High-precision vacuum-bed digital CNC oscillating-knife and 50%-depth crease-wheel workcell converting soft 35 Shore 00 TIM pads, aerogel-mica firewalls, and 3D dielectric origami from raw CAD files.',
+                    'Precision digital CNC converting cell cutting custom TIM pads, aerogel-mica sheets, and 50%-depth living-hinge dielectric shrouds directly from .DXF / .STEP files.',
                 })
               }
-              className="bg-white border border-[#E2E0D8] rounded-md p-3 shadow-sm cursor-zoom-in group"
+              className="group bg-[#F7F8FA] border border-gray-200 rounded-xl p-3 cursor-zoom-in"
             >
               <img
                 src="/assets/facility/cnc-converting-lab.jpg"
-                alt="InsulTherm Digital CNC Converting Cell"
-                className="w-full h-auto object-contain rounded"
+                alt="InsulTherm Digital CNC Converting Lab"
+                className="w-full h-auto object-contain rounded-lg"
               />
-              <div className="mt-2.5 flex items-center justify-between text-xs font-mono text-slate-600 px-1">
-                <span>Digital CNC Oscillating-Knife & Z-Depth Scoring Cell</span>
-                <span className="inline-flex items-center gap-1 text-[#E04819] font-bold">
-                  <Maximize2 className="w-3.5 h-3.5" /> Expand HD
+              <div className="mt-3 px-1 flex items-center justify-between text-xs text-gray-600">
+                <span>Digital CNC Oscillating-Knife & Living-Hinge Scoring Cell</span>
+                <span className="inline-flex items-center gap-1 font-bold text-[#DC2626]">
+                  <Maximize2 className="w-3.5 h-3.5" /> Full View
                 </span>
               </div>
             </div>
@@ -83,41 +78,46 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenLightbox }) => {
         </div>
       </section>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 space-y-16">
-        {/* Full Uncropped 4-Quadrant FEA & 3D CAD Dossier */}
-        <section className="space-y-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 space-y-20">
+        {/* Section 2: Full Uncropped 8-Plate Validation Showcase */}
+        <section>
           <ValidationShowcase onOpenLightbox={onOpenLightbox} />
         </section>
 
-        {/* Competitive Landscape Matrix (Uncropped Full Plate) */}
-        <section className="bg-white border border-[#E2E0D8] rounded-md p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+        {/* Section 3: Strategic Benchmark (Clean 2-Col) */}
+        <section className="bg-white border border-gray-200 rounded-xl p-7 sm:p-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center shadow-sm">
           <div className="lg:col-span-5 space-y-4">
-            <div className="text-xs font-mono uppercase tracking-widest text-[#E04819] font-bold">
-              Strategic Positioning
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-display font-bold text-[#14171A]">
-              Why Hardware Teams Switch from Legacy Import Distributors
+            <span className="text-xs font-bold uppercase tracking-wider text-[#DC2626]">
+              Why InsulTherm
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0F1115]">
+              Bridging the Gap Between Slow Imports & Unverified Commodity Sheets
             </h2>
-            <p className="text-sm text-slate-600 leading-relaxed">
-              Multinational catalogs enforce high MOQs, 6–10 week sea/air lead times, and ₹35,000–₹50,000 steel-die charges—while unbranded commodity traders ship unverified sheets prone to silicone oil bleed and zero ASTM traceability.
+            <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
+              Legacy multinational distributors require high MOQs, 6–10 week lead times, and costly
+              steel dies—while unbranded commodity traders lack anti-bleed stability and ASTM
+              compliance.
             </p>
-            <ul className="space-y-2 text-xs sm:text-sm text-slate-700">
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+            <ul className="space-y-2.5 text-sm text-gray-700 pt-1">
+              <li className="flex items-start gap-2.5">
+                <CheckCircle2 className="w-4 h-4 text-[#DC2626] shrink-0 mt-1" />
                 <span>
-                  <strong>MOQ = 1 Piece</strong> with transparent area-based (cm²) prototype & volume pricing.
+                  <strong className="text-[#0F1115]">MOQ 1 Piece & ₹0 NRE:</strong> Iterate geometry
+                  freely during R&D without paying ₹40,000+ per die revision.
                 </span>
               </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+              <li className="flex items-start gap-2.5">
+                <CheckCircle2 className="w-4 h-4 text-[#DC2626] shrink-0 mt-1" />
                 <span>
-                  <strong>ASTM D5470, D149 & E595</strong> batch-traceable engineering certificates.
+                  <strong className="text-[#0F1115]">Verified ASTM Standards:</strong> D5470 thermal
+                  impedance, D149 dielectric breakdown, and E595 outgassing traceability.
                 </span>
               </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+              <li className="flex items-start gap-2.5">
+                <CheckCircle2 className="w-4 h-4 text-[#DC2626] shrink-0 mt-1" />
                 <span>
-                  <strong>100% Domestic Value Addition (DVA)</strong> for Defense PSU & PLI-linked EV tenders.
+                  <strong className="text-[#0F1115]">100% Domestic Supply:</strong> Sovereign Indian
+                  converting for EV PLI and Defense PSU programs.
                 </span>
               </li>
             </ul>
@@ -129,137 +129,101 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenLightbox }) => {
                 onOpenLightbox({
                   src: '/assets/validation/competitor-benchmark.jpg',
                   title: 'InsulTherm vs. Multinational Imports & Commodity Traders',
-                  subtitle: 'Uncropped Strategic Benchmark Matrix',
-                  dimensions: '1325 × 675 px',
-                  badge: 'Market Benchmark',
+                  badge: 'Benchmark Matrix',
                 })
               }
-              className="bg-[#F6F5F1] border border-[#E2E0D8] rounded-md p-3 cursor-zoom-in"
+              className="bg-[#F7F8FA] border border-gray-200 rounded-xl p-4 cursor-zoom-in"
             >
               <img
                 src="/assets/validation/competitor-benchmark.jpg"
-                alt="InsulTherm Competitive Benchmark"
-                className="w-full h-auto object-contain rounded bg-white"
+                alt="InsulTherm Benchmark Comparison"
+                className="w-full h-auto object-contain rounded-lg bg-white"
               />
-              <div className="mt-2 text-right text-xs font-mono text-[#E04819] font-semibold">
-                Click to Open Full-Resolution Matrix →
+              <div className="mt-2.5 text-right text-xs font-bold text-[#DC2626]">
+                Click to Expand Full Matrix →
               </div>
             </div>
           </div>
         </section>
 
-        {/* 3-Stage Manufacturing Scale Architecture */}
-        <section className="space-y-6">
-          <div>
-            <div className="inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-widest text-[#E04819] font-bold">
-              <TrendingUp className="w-3.5 h-3.5" />
-              Capital-Efficient Industrial Roadmap
-            </div>
-            <h2 className="text-3xl font-display font-bold text-[#14171A] mt-1">
-              From 1-Piece R&D Agility to Million-Part OEM Blanket Supply
+        {/* Section 4: 3-Phase Scale Architecture */}
+        <section className="space-y-8">
+          <div className="max-w-2xl">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#DC2626]">
+              Scale Roadmap
+            </span>
+            <h2 className="text-3xl font-extrabold text-[#0F1115] mt-1">
+              Seamless Transition From 1-Piece Prototype to OEM Volume
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-7">
+            {[
+              {
+                phase: 'Stage 01 • Rapid Prototyping',
+                title: 'Digital CNC Converting',
+                desc: 'Oscillating-knife and Z-depth crease-scoring cells cut parts directly from .DXF / .STEP files in 24–48 hours with zero tooling fees.',
+                metric: '1–99 pcs • 24–48h Dispatch',
+              },
+              {
+                phase: 'Stage 02 • Pilot & Production',
+                title: 'High-Speed Nested Converting',
+                desc: 'Once part geometry freezes, orders scale smoothly to nested sheet and kiss-cut roll converting at low ₹/cm² production rates.',
+                metric: '100–50,000+ pcs • Kiss-Cut Rolls',
+              },
+              {
+                phase: 'Stage 03 • Blanket OEM Supply',
+                title: 'Dedicated Sovereign Supply',
+                desc: 'Scheduled lot traceability, custom laminate thickness builds, and blanket commercial agreements for EV, BESS, and Defense lines.',
+                metric: 'Annual Schedules • CoC Traceability',
+              },
+            ].map((s) => (
+              <div
+                key={s.phase}
+                className="bg-white border border-gray-200 rounded-xl p-7 flex flex-col justify-between shadow-sm"
+              >
+                <div className="space-y-3">
+                  <span className="text-xs font-bold text-[#DC2626]">{s.phase}</span>
+                  <h3 className="text-xl font-bold text-[#0F1115]">{s.title}</h3>
+                  <p className="text-sm text-gray-600 leading-relaxed">{s.desc}</p>
+                </div>
+                <div className="pt-5 mt-5 border-t border-gray-100 text-xs font-mono font-bold text-[#0F1115]">
+                  {s.metric}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Section 5: Founding Leadership */}
+        <section className="bg-[#0F1115] text-white rounded-2xl p-8 sm:p-10 space-y-8">
+          <div className="max-w-2xl">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#DC2626]">
+              Leadership Team
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-extrabold mt-1">
+              Direct Engineering & Commercial Ownership
             </h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
-              {
-                stage: 'PHASE 01 • ACTIVE TODAY',
-                title: 'Digital CNC Converting & Spec-In Wedge',
-                desc: 'Oscillating-knife & living-hinge crease-scoring cells convert qualified master laminates directly from customer .DXF/.STEP files in 24–48 hours with ₹0 NRE.',
-                kpi: 'MOQ: 1 pc • 24–48h SLA • 60%+ Blended GM',
-              },
-              {
-                stage: 'PHASE 02 • VOLUME RAMP',
-                title: 'High-Speed Rotary Kiss-Cut & Nesting Automation',
-                desc: 'Once an OEM battery or inverter geometry freezes past 10,000+ pcs/month, production transitions seamlessly onto high-speed rotary kiss-cut rolls at pure nested ₹/cm² rates.',
-                kpi: '10k–250k pcs/mo • Automated Peel-Tab Rolls',
-              },
-              {
-                stage: 'PHASE 03 • VERTICAL INTEGRATION',
-                title: 'Sovereign Slurry Coating & Composite Lamination',
-                desc: 'In-house silane-passivated ceramic dispersion, aerogel-mica encapsulation, and siloxane-free elastomer coating in Gujarat SEZ/GIDC.',
-                kpi: 'IATF 16949 & AS9100D Qualification Track',
-              },
-            ].map((p) => (
-              <div
-                key={p.stage}
-                className="bg-white border border-[#E2E0D8] rounded-md p-6 flex flex-col justify-between"
-              >
-                <div className="space-y-3">
-                  <span className="text-[11px] font-mono font-bold text-[#E04819]">{p.stage}</span>
-                  <h3 className="text-lg font-display font-bold text-[#14171A]">{p.title}</h3>
-                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">{p.desc}</p>
-                </div>
-                <div className="mt-5 pt-3 border-t border-[#E2E0D8] text-xs font-mono font-bold text-[#14171A]">
-                  {p.kpi}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Target Industry Verticals */}
-        <section className="space-y-6">
-          <h2 className="text-2xl sm:text-3xl font-display font-bold text-[#14171A]">
-            Industries & Standards Qualified
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {SECTORS.map((sec) => (
-              <div key={sec.title} className="bg-white border border-[#E2E0D8] rounded-md p-6 space-y-2.5">
-                <div className="text-xs font-mono font-bold text-[#E04819]">{sec.standards}</div>
-                <h3 className="text-lg font-display font-bold text-[#14171A]">{sec.title}</h3>
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">{sec.painSolved}</p>
-                <div className="flex flex-wrap gap-1.5 pt-2">
-                  {sec.products.map((pr) => (
-                    <span
-                      key={pr}
-                      className="px-2.5 py-0.5 rounded bg-[#F6F5F1] border border-[#E2E0D8] text-[11px] font-mono font-semibold text-[#14171A]"
-                    >
-                      {pr}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Founding Leadership */}
-        <section className="bg-[#14171A] text-white rounded-md p-6 sm:p-8 space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-            <div>
-              <div className="inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-widest text-[#E04819] font-bold">
-                <Award className="w-4 h-4" />
-                Founding Engineering & Commercial Leadership
-              </div>
-              <h2 className="text-2xl sm:text-3xl font-display font-bold mt-1">
-                Direct Founder Access for Every OEM & R&D Account
-              </h2>
-            </div>
-            <div className="inline-flex items-center gap-2 text-xs font-mono text-emerald-400">
-              <ShieldCheck className="w-4 h-4" />
-              Mutual NDA Signed Within 2 Hours
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {COMPANY_INFO.founders.map((f) => (
               <div
                 key={f.name}
-                className="bg-slate-900 border border-slate-800 rounded-md p-5 flex flex-col justify-between"
+                className="bg-white/5 border border-white/10 rounded-xl p-6 flex flex-col justify-between"
               >
-                <div className="space-y-2">
-                  <div className="w-10 h-10 rounded bg-[#E04819] text-white font-display font-bold text-lg flex items-center justify-center">
+                <div className="space-y-2.5">
+                  <div className="w-10 h-10 rounded-lg bg-[#DC2626] text-white font-extrabold text-base flex items-center justify-center">
                     {f.name[0]}
                   </div>
-                  <h3 className="text-lg font-display font-bold text-white">{f.name}</h3>
-                  <div className="text-xs font-mono text-amber-300">{f.role}</div>
-                  <p className="text-xs text-slate-300 leading-relaxed pt-1">{f.focus}</p>
+                  <h3 className="text-lg font-bold text-white">{f.name}</h3>
+                  <div className="text-xs font-semibold text-gray-300">{f.role}</div>
+                  <p className="text-xs text-gray-400 leading-relaxed pt-1">{f.focus}</p>
                 </div>
                 {f.email && (
                   <a
                     href={`mailto:${f.email}`}
-                    className="mt-4 pt-3 border-t border-slate-800 inline-flex items-center gap-1.5 text-xs font-mono text-[#E04819] hover:text-orange-300"
+                    className="mt-5 pt-3 border-t border-white/10 inline-flex items-center gap-1.5 text-xs font-mono text-[#DC2626] hover:text-red-400"
                   >
                     <Mail className="w-3.5 h-3.5" />
                     {f.email}

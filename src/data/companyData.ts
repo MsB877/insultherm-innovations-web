@@ -8,16 +8,16 @@ export interface ProductLayer {
 
 export interface ProductSpec {
   id: ProductSlugId;
-  subBrandCode: string;
-  division: 'Energy & Industrial' | 'Defense & Compute';
+  familyGroup: 'Thermal Interface & Heat Spreading' | 'Runaway Fire & Dielectric Protection';
   name: string;
   trademarkName: string;
   shortTagline: string;
-  category: 'Dielectric Origami' | 'Fire Barrier' | 'Anisotropic Spreader' | 'Thermal Gap Pad' | 'High-Flux Hybrid TIM';
-  badgeColor: string;
-  accentHex: string;
-  revenueShareMix: string;
-  grossMarginTarget: string;
+  category:
+    | 'Dielectric Origami'
+    | 'Fire Barrier'
+    | 'Anisotropic Spreader'
+    | 'Thermal Gap Pad'
+    | 'High-Flux Hybrid TIM';
   heroImage: string;
   secondaryImage?: string;
   tdsUrl: string;
@@ -43,7 +43,7 @@ export interface ProductSpec {
   siliconeFreeAvailable: boolean;
   keyGrades: string[];
   summary: string;
-  problemSolved: string;
+  oneLineSummary: string;
   layers: ProductLayer[];
   applications: string[];
   standards: string[];
@@ -54,27 +54,17 @@ export interface KitBundle {
   sku: string;
   name: string;
   sector: string;
+  audienceTag: 'B2B R&D Lab' | 'Prototyping & B2C Friendly';
   priceInr: number;
   priceLabel: string;
+  starterSku?: string;
   starterPriceInr?: number;
   starterLabel?: string;
+  starterSummary?: string;
   leadTime: string;
+  image: string;
   contents: string[];
   procurementAdvantage: string;
-}
-
-export interface ProBenchPack {
-  id: string;
-  sku: string;
-  brandLine: string;
-  name: string;
-  audience: string;
-  priceInr: number;
-  packCountLabel: string;
-  materialBase: string;
-  specs: string;
-  includes: string[];
-  badge: string;
 }
 
 export interface ValidationPlate {
@@ -89,105 +79,99 @@ export interface ValidationPlate {
   description: string;
 }
 
-export interface ApplicationChallenge {
+export interface MarketVertical {
   id: string;
-  problemTitle: string;
-  sectorTag: string;
-  symptom: string;
-  recommendedProductId: ProductSlugId;
-  recommendedCompanionId?: ProductSlugId;
-  whyItWorks: string;
-  suggestedFootprint: { lengthMm: number; widthMm: number; qty: number };
+  name: string;
+  standards: string;
+  headline: string;
+  description: string;
+  image: string;
+  recommendedProducts: ProductSlugId[];
+  keyOutcome: string;
 }
 
 export const COMPANY_INFO = {
   name: 'InsulTherm Innovations',
-  legalDescriptor: 'Advanced Thermal & Dielectric Materials | Digital CNC Converting Lab',
-  brandMotto: 'Material Science. Engineered to Fit.™',
-  tagline: 'Zero-Tooling Custom Thermal, Fire-Containment & Dielectric Engineering',
+  legalDescriptor: 'Advanced Thermal, Fire-Barrier & Dielectric Materials',
+  tagline: 'Zero-Tooling Custom Thermal & Dielectric Converting in 24–48 Hours',
   phoneMasked: '+91 78148 XXXXX',
   officialEmail: 'manav.sb@inslthrm.in',
   routingEmail: 'manavsb9719@gmail.com',
   formSubmitEndpoint: 'https://formsubmit.co/ajax/manavsb9719@gmail.com',
-  formSubmitAction: 'https://formsubmit.co/manavsb9719@gmail.com',
   addressLines: [
     'InsulTherm Innovations — Advanced Materials & Digital Converting Wing',
     'Block C-14, Sanand GIDC Industrial Estate (Near iCreate Campus)',
     'Ahmedabad, Gujarat – 382110, India',
   ],
-  shortAddress: 'Sanand GIDC Industrial Corridor, Ahmedabad, Gujarat – 382110',
+  shortAddress: 'Sanand GIDC, Ahmedabad, Gujarat – 382110',
   coordinates: '22.9916° N, 72.3814° E',
   mapEmbedUrl:
     'https://www.openstreetmap.org/export/embed.html?bbox=72.3350%2C22.9650%2C72.4350%2C23.0250&layer=mapnik&marker=22.9916%2C72.3814',
   founders: [
     {
       name: 'Manav',
-      role: 'Co-Founder — Commercial Strategy, OEM Accounts & Enterprise Partnerships',
-      focus: 'Leads BESS, EV, Defense PSU qualification pipelines, transparent area-pricing architecture, and direct R&D procurement programs.',
+      role: 'Co-Founder — Commercial Strategy & OEM Accounts',
+      focus: 'Leads BESS, EV, and Defense qualification programs, transparent area-pricing schedules, and direct R&D procurement.',
       email: 'manav.sb@inslthrm.in',
     },
     {
       name: 'Nikhil',
-      role: 'Co-Founder — Composite Formulation, Thermal FEA & Dielectric Validation',
-      focus: 'Architects multi-layer TIM formulations, ASTM D5470 / D149 validation protocols, and 4-quadrant battery runaway thermal modeling.',
+      role: 'Co-Founder — Materials Formulation & Thermal Validation',
+      focus: 'Leads composite TIM architecture, ASTM D5470 / D149 characterization, and 4-quadrant thermal runaway FEA modeling.',
     },
     {
       name: 'Sukhmeet',
-      role: 'Co-Founder — Digital CNC Converting, CAD/CAM Nesting & Quality Operations',
-      focus: 'Directs zero-tooling oscillating-knife CNC cells, 50%-depth living-hinge scoring accuracy, and 24–48 hour rapid-dispatch execution.',
+      role: 'Co-Founder — Digital CNC Converting & Operations',
+      focus: 'Directs zero-tooling oscillating-knife CNC cells, 50%-depth living-hinge scoring accuracy, and 24–48h dispatch.',
     },
   ],
 };
 
-export const BRAND_DIVISIONS = [
+// Laird.com-style 3 Clean Technology Portfolios (Genuine InsulTherm Capabilities Only)
+export const PORTFOLIOS = [
   {
-    code: 'DIV-01',
-    name: 'Energy, Mobility & Grid Safety',
-    subBrands: ['SHIELD-FOLD™', 'PYROBLOCK™', 'TROPICORE™'],
-    colorHex: '#E04819',
-    summary:
-      'AIS-156 / UL 9540A cell-to-cell fire containment, 1,500V DC 3D dielectric busbar origami, and 50°C tropical anti-bleed cold-plate draining.',
-    ctaTarget: '/products',
+    id: 'portfolio-thermal',
+    title: 'Thermal Interface & Heat Spreading',
+    subtitle: 'Core™ • Ultra™ • Graphite-Flex™',
+    description:
+      'From 3.0 W/m·K tropical anti-bleed gap pads and 5.5 W/m·K low-stress hybrid ceramic TIMs to 1,500 W/m·K zero-outgassing pyrolytic graphite spreaders.',
+    link: '/products?group=thermal',
+    metric: '3.0 to 1,500 W/m·K',
   },
   {
-    code: 'DIV-02',
-    name: 'Defense, SpaceTech & AI Compute',
-    subBrands: ['FLUXPLANE™', 'HYPERFLUX™'],
-    colorHex: '#D97706',
-    summary:
-      'ASTM E595 zero-outgassing 1,000–1,500 W/m·K pyrolytic graphite planes and 5.5 W/m·K siloxane-free hybrid TIMs for radar, LEO satellites, and SiC/800G.',
-    ctaTarget: '/products',
+    id: 'portfolio-protection',
+    title: 'Runaway Fire & Dielectric Protection',
+    subtitle: 'Barrier™ • Shield™',
+    description:
+      '1.50 mm nanoporous aerogel-mica inter-cell firewalls (>1,100°C hold) paired with 3D living-hinge dielectric busbar shrouds (>28 kV/mm) that fold by hand.',
+    link: '/products?group=protection',
+    metric: '>1,100°C & 28–32 kV/mm',
   },
   {
-    code: 'DIV-03',
-    name: 'ThermaFix™ Pro-Bench & Lab Direct',
-    subBrands: ['THERMAFIX™', 'INSULTAPE™', 'RAPID-CUT™'],
-    colorHex: '#047857',
-    summary:
-      '3M-style ready-to-use thermal & dielectric packs (₹349–₹1,499) for electronics repair labs, workstation/SSD builders, FPV robotics, and university EV teams.',
-    ctaTarget: '/products#pro-bench',
+    id: 'portfolio-converting',
+    title: 'Zero-Tooling CNC & Prototyping Kits',
+    subtitle: '24–48h Custom CAD • <₹15k Kits',
+    description:
+      'Upload .DXF or .STEP geometry for custom parts with ₹0 steel-die NRE, or order off-the-shelf R&D qualification kits and compact starter packs from ₹999.',
+    link: '/quote',
+    metric: '₹0 NRE • MOQ 1 Pc',
   },
 ];
 
 export const PRODUCTS: ProductSpec[] = [
   {
     id: 'insultherm-shield',
-    subBrandCode: 'SHIELD-FOLD™ SERIES',
-    division: 'Energy & Industrial',
+    familyGroup: 'Runaway Fire & Dielectric Protection',
     name: 'InsulTherm Shield',
     trademarkName: 'InsulTherm Shield™',
     shortTagline: '3D Dielectric Origami & Living-Hinge Busbar Shrouds',
     category: 'Dielectric Origami',
-    badgeColor: 'bg-[#14171A] text-white border-[#14171A]',
-    accentHex: '#14171A',
-    revenueShareMix: '32% Portfolio Volume Anchor',
-    grossMarginTarget: '68–76% Gross Margin',
     heroImage: '/assets/products/insultherm-shield.jpg',
     secondaryImage: '/assets/validation/cad-assembled-pack.png',
     tdsUrl: '/tds/insultherm-shield-tds.pdf',
-    thermalConductivity: '0.16 – 0.22 W/m·K (Dielectric Barrier)',
+    thermalConductivity: '0.16 – 0.22 W/m·K (Insulator)',
     thermalConductivitySort: 0.2,
-    thermalImpedance: 'Electrical Arc & Creepage Isolation',
+    thermalImpedance: 'High-Voltage Arc & Creepage Barrier',
     dielectricStrength: '28 – 32 kV/mm (>14 kV @ 0.43 mm)',
     dielectricSort: 32,
     operatingTemp: '-40°C to +115°C (FGK) / +180°C (NMX)',
@@ -198,23 +182,24 @@ export const PRODUCTS: ProductSpec[] = [
     defaultLengthMm: 100,
     defaultWidthMm: 100,
     defaultThicknessMm: 0.43,
-    protoPriceLabel: '₹45 / 100 cm² pc (₹0.45/cm²)',
-    volumePriceLabel: '₹0.30 / cm² nested (₹30 / 100 cm²)',
-    referencePriceNote: 'Reference 100×100 mm (100 cm²) shroud = ₹45 proto (min ₹25/pc) & ₹30 volume. Any custom flat-pattern size scales directly by cm².',
+    protoPriceLabel: '₹45 / folded pc (100 cm² ref)',
+    volumePriceLabel: '₹30 / pc (₹0.30/cm² nested)',
+    referencePriceNote:
+      'Reference 100×100 mm (100 cm²) folded shroud = ₹45 prototype (₹0.45/cm², min ₹25/pc) & ₹30 volume (₹0.30/cm² nested flat area).',
     moqLabel: '1 Piece (₹0 Tooling NRE)',
     leadTime: '24 – 48 Hours',
     outgassingCompliant: true,
     siliconeFreeAvailable: true,
     keyGrades: ['Shield-FGK-043 (Formex™ GK-17 Equiv.)', 'Shield-NMX-050 (Nomex® 410 Duplex)'],
+    oneLineSummary:
+      'CNC-cut and 50%-depth crease-scored UL 94 V-0 dielectric sheets that ship flat and fold into 3D busbar shrouds—eliminating injection mold costs.',
     summary:
       'Precision CNC-cut and 50%-depth crease-scored flame-retardant polypropylene and aramid dielectric sheets that ship flat and fold by hand into rigid, snap-fit 3D enclosures around 800V–1,500V DC busbars—eliminating ₹4–12 Lakh injection molds.',
-    problemSolved:
-      'Replaces 8-week injection-molded plastic housings and 12-week steel rule dies during EV battery, BESS inverter, and switchgear design iterations.',
     layers: [
       { code: 'L1', name: 'UL 94 V-0 Dielectric Polymer / Aramid Core', spec: '28–32 kV/mm breakdown, non-hygroscopic (<0.8% H2O)' },
-      { code: 'L2', name: '50%-Depth Precision CNC Crease Channel', spec: '±0.05 mm Z-axis depth control for crack-free 90°/180° origami folds' },
-      { code: 'L3', name: 'Interlocking Tab-and-Slot Retention Geometry', spec: 'Adhesive-free mechanical snap lock over live copper busbars' },
-      { code: 'L4', name: 'Optional Zone-Applied UL94 V-0 Acrylic PSA', spec: 'Kiss-cut peel tab for rapid chassis wall anchoring' },
+      { code: 'L2', name: '50%-Depth Precision CNC Crease Channel', spec: '±0.05 mm Z-axis depth control for crack-free 90°/180° folds' },
+      { code: 'L3', name: 'Interlocking Tab-and-Slot Retention Geometry', spec: 'Adhesive-free mechanical snap lock over copper busbars' },
+      { code: 'L4', name: 'Optional Zone-Applied UL 94 V-0 Acrylic PSA', spec: 'Kiss-cut peel tab for rapid chassis wall anchoring' },
     ],
     applications: [
       '1,500V DC Grid-Scale BESS & Solar Inverter Busbar Shrouds',
@@ -226,25 +211,20 @@ export const PRODUCTS: ProductSpec[] = [
   },
   {
     id: 'insultherm-barrier',
-    subBrandCode: 'PYROBLOCK™ SERIES',
-    division: 'Energy & Industrial',
+    familyGroup: 'Runaway Fire & Dielectric Protection',
     name: 'InsulTherm Barrier',
     trademarkName: 'InsulTherm Barrier™',
-    shortTagline: '1,100°C Nanoporous Aerogel-Mica Thermal Runaway Firewall',
+    shortTagline: '1,100°C Aerogel-Mica Cell-to-Cell Runaway Firewall',
     category: 'Fire Barrier',
-    badgeColor: 'bg-[#C81E1E] text-white border-[#C81E1E]',
-    accentHex: '#C81E1E',
-    revenueShareMix: '26% Portfolio Revenue Share',
-    grossMarginTarget: '58–66% Gross Margin',
     heroImage: '/assets/products/insultherm-barrier.jpg',
     secondaryImage: '/assets/validation/fea-runaway-400c.png',
     tdsUrl: '/tds/insultherm-barrier-tds.pdf',
     thermalConductivity: '0.018 – 0.022 W/m·K @ 25°C',
     thermalConductivitySort: 0.018,
-    thermalImpedance: 'ΔT > 325°C Hold @ 1.5 mm Wall',
-    dielectricStrength: '> 15 kV/mm (>22.5 kV Total Stack)',
+    thermalImpedance: '74.189°C Neighbor Hold @ 400°C Fault',
+    dielectricStrength: '> 15 kV/mm (>22.5 kV @ 1.5 mm)',
     dielectricSort: 15,
-    operatingTemp: '-60°C to +1,100°C Torch Hold (>5 min)',
+    operatingTemp: '-60°C to +1,100°C (>5 min Torch Hold)',
     maxTempSort: 1100,
     flammability: 'UL 94 V-0 / UL 9540A / AIS-156 Amend. 3',
     hardnessOrDensity: '25–35% Compressible Cell-Breathing Core',
@@ -252,47 +232,43 @@ export const PRODUCTS: ProductSpec[] = [
     defaultLengthMm: 100,
     defaultWidthMm: 100,
     defaultThicknessMm: 1.5,
-    protoPriceLabel: '₹110 / 100 cm² sheet (₹1.10/cm²)',
-    volumePriceLabel: '₹0.85 / cm² nested (₹85 / 100 cm²)',
-    referencePriceNote: 'Reference 100×100 mm (100 cm²) cell sheet = ₹110 proto (min ₹55) & ₹85 volume. Large 280Ah BESS sheets (174×204 mm = 355 cm²) calculate transparently by cm².',
+    protoPriceLabel: '₹110 / custom sheet (100 cm² ref)',
+    volumePriceLabel: '₹85 / sheet (₹0.85/cm² nested)',
+    referencePriceNote:
+      'Reference 100×100 mm (100 cm²) cell sheet = ₹110 prototype (₹1.10/cm², min ₹55/pc) & ₹85 volume (₹0.85/cm² nested area).',
     moqLabel: '1 Sheet / Pack Kit',
     leadTime: '24 – 48 Hours',
     outgassingCompliant: false,
     siliconeFreeAvailable: true,
     keyGrades: ['Barrier-MA1-150 (Mica + Aerogel + FR-PSA)', 'Barrier-MK2-165 (Dual-Mica + Kapton® Seal)'],
+    oneLineSummary:
+      'Ultra-thin 1.50 mm Phlogopite Mica + Silica Aerogel composite (k = 0.018 W/m·K) arresting lithium-ion thermal runaway propagation.',
     summary:
-      'Ultra-thin 1.50 mm 4-layer cell-to-cell thermal runaway propagation firewall pairing high-velocity particle-erosion-resistant Phlogopite Mica with nanoporous Silica Aerogel (k = 0.018 W/m·K) to arrest cascading lithium-ion cell fires.',
-    problemSolved:
-      'Stops a 400°C–1,100°C venting lithium-ion cell from triggering thermal runaway in neighboring cells (<100°C safety ceiling) without sacrificing volumetric energy density.',
+      'Ultra-thin 1.50 mm 4-layer cell-to-cell thermal runaway propagation firewall pairing particle-erosion-resistant Phlogopite Mica with nanoporous Silica Aerogel (k = 0.018 W/m·K) to stop cascading battery fires.',
     layers: [
-      { code: 'L1', name: '0.20 mm Calcined Phlogopite Mica Armor', spec: 'Withstands >1,100°C vent-gas particle jetting & >20 kV/mm dielectric stress' },
+      { code: 'L1', name: '0.20 mm Calcined Phlogopite Mica Armor', spec: 'Withstands >1,100°C vent-gas particle jetting & >20 kV/mm stress' },
       { code: 'L2', name: '1.20 mm Nanoporous Silica Aerogel Felt', spec: 'k = 0.018 W/m·K ultra-insulation + 25–35% cell swelling absorption' },
-      { code: 'L3', name: '0.10 mm UL 94 V-0 Flame-Retardant Acrylic PSA', spec: 'Instant peel-and-stick positioning directly onto prismatic/pouch cell cans' },
-      { code: 'L4', name: '0.075 mm Moisture-Barrier PET Release Liner', spec: 'Split-back kiss-cut liner with sealed non-shedding CNC perimeter' },
+      { code: 'L3', name: '0.10 mm UL 94 V-0 Flame-Retardant Acrylic PSA', spec: 'Peel-and-stick positioning directly onto prismatic or pouch cell cans' },
+      { code: 'L4', name: '0.075 mm Moisture-Barrier PET Release Liner', spec: 'Split-back kiss-cut liner with clean CNC perimeter' },
     ],
     applications: [
       'AIS-156 Rev. 3 Two/Three-Wheeler & Passenger EV Inter-Cell Firewalls',
       'UL 9540A 280Ah / 314Ah LFP Utility BESS Container Propagation Barriers',
       'Module Lid Vent-Channel Blast Deflectors & Exhaust Shields',
-      'Aerospace, Marine & Mining Emergency Backup Battery Enclosures',
+      'Industrial, Marine & Backup Energy Storage Enclosures',
     ],
     standards: ['AIS-156 Amend. 3 (>5 min @ 1,100°C)', 'UL 9540A', 'ASTM C518', 'ASTM D149'],
   },
   {
     id: 'insultherm-graphite-flex',
-    subBrandCode: 'FLUXPLANE™ SERIES',
-    division: 'Defense & Compute',
+    familyGroup: 'Thermal Interface & Heat Spreading',
     name: 'InsulTherm Graphite-Flex',
     trademarkName: 'InsulTherm Graphite-Flex™',
     shortTagline: '1,000–1,500 W/m·K Edge-Sealed Zero-Outgassing Spreader',
     category: 'Anisotropic Spreader',
-    badgeColor: 'bg-[#D97706] text-white border-[#D97706]',
-    accentHex: '#D97706',
-    revenueShareMix: '15% Portfolio Revenue Share',
-    grossMarginTarget: '70–82% Gross Margin',
     heroImage: '/assets/products/insultherm-graphite-flex.jpg',
     tdsUrl: '/tds/insultherm-graphite-flex-tds.pdf',
-    thermalConductivity: '1,000 – 1,500 W/m·K (X-Y) | ~12 W/m·K (Z)',
+    thermalConductivity: '1,000 – 1,500 W/m·K (X-Y Plane)',
     thermalConductivitySort: 1500,
     thermalImpedance: '3.7× Copper In-Plane @ 24% Mass',
     dielectricStrength: '> 5,000 V AC (0.025 mm Kapton® Cap)',
@@ -305,45 +281,41 @@ export const PRODUCTS: ProductSpec[] = [
     defaultLengthMm: 50,
     defaultWidthMm: 50,
     defaultThicknessMm: 0.24,
-    protoPriceLabel: '₹350 (≤25 cm²) – ₹1,800 (300 cm²) by Area',
-    volumePriceLabel: '₹3.20 / cm² nested (min ₹28 / pc)',
-    referencePriceNote: '100% Area-Indexed: Proto ≤25 cm² = ₹350/pc; 26–100 cm² = ₹350 + ₹5.50/cm²; 101–300 cm² = +₹5.15/cm². Volume (≥100 pcs) = ₹3.20/cm² nested (so a 10 cm² strip is ₹32/pc!).',
+    protoPriceLabel: '₹350 – ₹1,800 / part (by cm² area)',
+    volumePriceLabel: '₹3.20 / cm² nested (min ₹28/pc)',
+    referencePriceNote:
+      'Prototype (1–99 pcs): ≤25 cm² = ₹350/pc; 26–100 cm² = ₹350 + ₹5.50/cm²; 101–300 cm² = +₹5.15/cm² (up to ₹1,800). Volume (100+ pcs): ₹3.20/cm² nested area (min ₹28/pc).',
     moqLabel: '1 Piece (100% Domestic DVA)',
     leadTime: '24 – 48 Hours',
     outgassingCompliant: true,
     siliconeFreeAvailable: true,
     keyGrades: ['GFlex-1000 (1,000 W/m·K Defense/ECU)', 'GFlex-1500 (1,500 W/m·K Satellite/Radar)'],
+    oneLineSummary:
+      'Edge-sealed Kapton®-capped pyrolytic graphite plane (1,000–1,500 W/m·K) with ASTM E595 silicone-free PSA for sealed electronics, radar, and optics.',
     summary:
-      '5-layer anisotropic heat-spreading plane encapsulating dual high-crystallinity pyrolytic graphite cores beneath an edge-sealed amber Kapton® polyimide dielectric armor and ASTM E595 zero-outgassing silicone-free adhesive.',
-    problemSolved:
-      'Eliminates conductive graphite edge-flaking PCB shorts AND silicone outgassing optical fogging in sealed UAVs, phased-array radars, LEO satellites, and 800G optics.',
+      '5-layer anisotropic lateral heat-spreading plane encapsulating dual high-crystallinity pyrolytic graphite cores beneath an edge-sealed Kapton® polyimide dielectric cap and ASTM E595 silicone-free adhesive.',
     layers: [
       { code: 'L1', name: '0.025 mm Kapton® Polyimide Dielectric Top Cap', spec: '>5 kV isolation + 1.0–1.5 mm CNC edge-seal overhang prevents flaking' },
-      { code: 'L2', name: 'Dual Pyrolytic Graphite Core (k_xy 1,000–1,500 W/m·K)', spec: 'Rapid lateral heat diffusion eliminating ≥18°C local SoC/FPGA hotspots' },
+      { code: 'L2', name: 'Dual Pyrolytic Graphite Core (1,000–1,500 W/m·K)', spec: 'Rapid lateral heat diffusion eliminating ≥18°C local SoC/FPGA hotspots' },
       { code: 'L3', name: 'Ultra-Thin Open-Mesh E-Glass Scrim Interleaf', spec: 'Tear & fold reinforcement across 2.0 mm dynamic chassis bends' },
-      { code: 'L4', name: '0.030 mm ASTM E595 Silicone-Free Acrylic PSA', spec: 'TML < 1.0%, CVCM < 0.10% — zero siloxane migration onto laser/camera optics' },
-      { code: 'L5', name: '0.050 mm Kiss-Cut Clear PET Release Liner', spec: 'Cleanroom N2-purged ESD pouch packaging option' },
+      { code: 'L4', name: '0.030 mm ASTM E595 Silicone-Free Acrylic PSA', spec: 'TML < 1.0%, CVCM < 0.10% — zero siloxane fogging on optics' },
+      { code: 'L5', name: '0.050 mm Kiss-Cut Clear PET Release Liner', spec: 'Cleanroom ESD pouch packaging option' },
     ],
     applications: [
       'Defense UAV Flight Computers, Phased-Array Radar T/R Modules & Seekers',
-      'LEO Satellite Payloads & Optical Earth-Observation Camera Housings',
-      'Sealed Automotive ADAS LiDAR/Camera ECUs & 5G/6G Small Cells',
-      '800G / 1.6T AI Pluggable Optical Transceiver Cold-Rail Heat Routing',
+      'LEO Satellite Payloads & Optical Camera Housings',
+      'Sealed Automotive ADAS ECUs & 5G/6G Small Cells',
+      '800G / 1.6T Optical Transceiver Cold-Rail Heat Routing',
     ],
     standards: ['ASTM E595 (TML <1%, CVCM <0.1%)', 'MIL-STD-810H', 'ASTM D149 (>5 kV)', '100% India DVA'],
   },
   {
     id: 'insultherm-core',
-    subBrandCode: 'TROPICORE™ SERIES',
-    division: 'Energy & Industrial',
+    familyGroup: 'Thermal Interface & Heat Spreading',
     name: 'InsulTherm Core',
     trademarkName: 'InsulTherm Core™',
-    shortTagline: '3.0 W/m·K Tropical Anti-Bleed Scrim-Reinforced TIM Pad',
+    shortTagline: '3.0 W/m·K Tropical Anti-Bleed Scrim-Reinforced Gap Pad',
     category: 'Thermal Gap Pad',
-    badgeColor: 'bg-[#E04819] text-white border-[#E04819]',
-    accentHex: '#E04819',
-    revenueShareMix: '15% Portfolio Revenue Share',
-    grossMarginTarget: '52–60% Gross Margin',
     heroImage: '/assets/products/insultherm-core.jpg',
     secondaryImage: '/assets/products/insultherm-core-diecut.jpg',
     tdsUrl: '/tds/insultherm-core-tds.pdf',
@@ -352,53 +324,49 @@ export const PRODUCTS: ProductSpec[] = [
     thermalImpedance: '0.22 – 0.28 K·cm²/W @ 1 mm, 20 psi',
     dielectricStrength: '> 10 kV/mm (Core-300) / > 14 kV/mm (350D)',
     dielectricSort: 14,
-    operatingTemp: '-50°C to +200°C (50°C Tropical Anti-Bleed)',
+    operatingTemp: '-50°C to +200°C (50°C Anti-Bleed)',
     maxTempSort: 200,
     flammability: 'UL 94 V-0 Certified Matrix',
-    hardnessOrDensity: '40 Shore 00 Ultra-Soft Conformable',
+    hardnessOrDensity: '40 Shore 00 Soft Conformable',
     thicknessRange: '0.5 mm, 1.0 mm, 1.5 mm, 2.0 mm, 3.0 mm',
     defaultLengthMm: 100,
     defaultWidthMm: 100,
     defaultThicknessMm: 1.5,
-    protoPriceLabel: '₹80 / 100 cm² custom pad | ₹20 / std 50×50mm',
-    volumePriceLabel: '₹0.68 → ₹0.612 / cm² (₹61.20 / 100 cm²)',
-    referencePriceNote: 'In-stock 50×50 mm (25 cm²) BMS pad = ₹20/pad. Custom CNC pads = ₹0.80/cm² proto (100×100 mm = ₹80, min ₹35) and ₹0.68 → ₹0.612/cm² in OEM volume.',
+    protoPriceLabel: '₹80 / custom pad | ₹20 std 50×50mm',
+    volumePriceLabel: '₹68 → ₹61.20 / pad (₹0.612/cm²)',
+    referencePriceNote:
+      'In-stock 50×50 mm (25 cm²) BMS pad = ₹20/pad. Custom CNC prototype pads = ₹80 at 100×100 mm (₹0.80/cm², min ₹35/pc) & ₹68 → ₹61.20/pad in OEM volume.',
     moqLabel: '1 Custom Pad or 50×50mm Pack',
     leadTime: '24 – 48 Hours',
     outgassingCompliant: false,
     siliconeFreeAvailable: false,
     keyGrades: ['Core-300 (3.0 W/m·K Anti-Bleed)', 'Core-BMS-50x50 (₹20 Std Pad)', 'Core-350D (>14 kV/mm HV Scrim)'],
+    oneLineSummary:
+      '3.0 W/m·K silane-passivated alumina gap pad with central fiberglass scrim—engineered for zero oil bleed across 50°C–150°C tropical duty cycles.',
     summary:
-      '5-layer tropical-climate-engineered elastomer thermal interface gap pad formulated with 72 wt% silane-passivated bimodal spherical alumina and central woven E-Glass scrim to eliminate silicone oil bleed and pad stretching during assembly.',
-    problemSolved:
-      'Prevents silicone oil pump-out under 50°C–60°C Indian ambient thermal cycling and eliminates 6–8 week import lead times on custom-cut EV cold-plate and BMS pads.',
+      '5-layer tropical-climate-engineered elastomer thermal interface gap pad formulated with 72 wt% silane-passivated spherical alumina and woven E-Glass scrim to eliminate oil bleed and pad stretching during assembly.',
     layers: [
-      { code: 'L1', name: '0.050 mm Extended-Tab Top PET Release Liner', spec: 'Glove-friendly ergonomic peel tab for 3× faster line placement' },
-      { code: 'L2', name: 'Upper Tacky PDMS + 72 wt% Spherical Alumina', spec: '40 Shore 00 micro-void wetting onto machined aluminum cold plates' },
-      { code: 'L3', name: 'Central Woven E-Glass Fiberglass Scrim', spec: 'Zero stretching, zero tearing, and anti-puncture burr protection' },
-      { code: 'L4', name: 'Lower Passivated Anti-Bleed Thermal Matrix', spec: 'Zero oil separation across 1,000 hours at 50°C–150°C cycling' },
-      { code: 'L5', name: '0.075 mm Differential-Release Bottom PET Carrier', spec: 'Kiss-cut array compatible for automated or manual assembly' },
+      { code: 'L1', name: '0.050 mm Extended-Tab Top PET Release Liner', spec: 'Glove-friendly ergonomic peel tab for fast placement' },
+      { code: 'L2', name: 'Upper Tacky PDMS + 72 wt% Spherical Alumina', spec: '40 Shore 00 micro-void wetting onto machined cold plates' },
+      { code: 'L3', name: 'Central Woven E-Glass Fiberglass Scrim', spec: 'Prevents stretching, tearing, and housing burr puncture' },
+      { code: 'L4', name: 'Lower Passivated Anti-Bleed Thermal Matrix', spec: 'Zero oil separation across 1,000h at 50°C–150°C cycling' },
+      { code: 'L5', name: '0.075 mm Differential-Release Bottom Carrier', spec: 'Kiss-cut sheet array compatible' },
     ],
     applications: [
-      'EV Battery Module Bottom Cell-to-Liquid-Cold-Plate Heat Draining',
-      'BMS Shunt Resistors, D2PAK MOSFET Arrays & Onboard Chargers (OBC)',
-      'Solar String Inverters, Telecom Rectifiers & Industrial Motor Drives',
-      'Rapid Gap-Deflection R&D Benchmarking (0.5 mm to 3.0 mm Stackups)',
+      'EV Battery Module Bottom Cell-to-Cold-Plate Heat Draining',
+      'BMS Shunt Resistors, MOSFET Arrays & Onboard Chargers (OBC)',
+      'Solar Inverters, Telecom Rectifiers & Industrial Motor Drives',
+      'Hardware Prototyping & Gap-Deflection Benchmarking (0.5–3.0 mm)',
     ],
     standards: ['ASTM D5470-17', 'ASTM D2240 (40 Shore 00)', 'ASTM D149 (>10 kV/mm)', 'UL 94 V-0'],
   },
   {
     id: 'insultherm-ultra',
-    subBrandCode: 'HYPERFLUX™ SERIES',
-    division: 'Defense & Compute',
+    familyGroup: 'Thermal Interface & Heat Spreading',
     name: 'InsulTherm Ultra',
     trademarkName: 'InsulTherm Ultra™',
     shortTagline: '5.5 W/m·K Bimodal Alumina + Aligned h-BN High-Flux TIM',
     category: 'High-Flux Hybrid TIM',
-    badgeColor: 'bg-[#047857] text-white border-[#047857]',
-    accentHex: '#047857',
-    revenueShareMix: '12% Portfolio Revenue Share',
-    grossMarginTarget: '64–72% Gross Margin',
     heroImage: '/assets/products/insultherm-ultra.jpg',
     tdsUrl: '/tds/insultherm-ultra-tds.pdf',
     thermalConductivity: '5.5 W/m·K Hybrid Ceramic Matrix',
@@ -414,177 +382,182 @@ export const PRODUCTS: ProductSpec[] = [
     defaultLengthMm: 100,
     defaultWidthMm: 100,
     defaultThicknessMm: 1.0,
-    protoPriceLabel: '₹140 / 100 cm² custom pad (₹1.40/cm²)',
-    volumePriceLabel: '₹0.95 / cm² nested (₹95 / 100 cm²)',
-    referencePriceNote: 'Reference 100×100 mm (100 cm²) pad = ₹140 proto (min ₹50 for discrete TO-247/optical pads) & ₹95 volume (₹0.95/cm² nested).',
+    protoPriceLabel: '₹140 / custom pad (100 cm² ref)',
+    volumePriceLabel: '₹95 / pad (₹0.95/cm² nested)',
+    referencePriceNote:
+      'Reference 100×100 mm (100 cm²) pad = ₹140 prototype (₹1.40/cm², min ₹50/pad for discrete packages) & ₹95 volume (₹0.95/cm² nested).',
     moqLabel: '1 Custom Pad / SiC Kit',
     leadTime: '24 – 48 Hours',
     outgassingCompliant: true,
     siliconeFreeAvailable: true,
     keyGrades: ['Ultra-550 (5.5 W/m·K AI/SiC Grade)', 'Ultra-NS (100% Siloxane-Free Optical Grade)'],
+    oneLineSummary:
+      'Ultra-soft 35 Shore 00, 5.5 W/m·K hybrid Al2O3 + Boron Nitride gap filler (<0.15 K·cm²/W) for SiC inverters, AI GPUs, and siloxane-free optics.',
     summary:
-      'High-heat-flux 5.5 W/m·K hybrid ceramic interface pad combining 82 wt% bimodal spherical Al2O3 with platelet-aligned hexagonal Boron Nitride (h-BN) for >30 W/cm² SiC traction inverters and AI server cold plates—including a 100% siloxane-free Ultra-NS variant.',
-    problemSolved:
-      'Delivers <0.15 K·cm²/W thermal impedance at 35 Shore 00 low mounting pressure (<30 psi) so bare GPU/ASIC dies and ceramic DCB substrates never crack.',
+      'High-heat-flux 5.5 W/m·K hybrid ceramic interface pad combining 82 wt% bimodal spherical Al2O3 with aligned hexagonal Boron Nitride (h-BN) for >30 W/cm² SiC inverters and AI cold plates—including a 100% siloxane-free Ultra-NS option.',
     layers: [
-      { code: 'L1', name: 'Diamond-Embossed Air-Bleed Top Release Liner', spec: 'Micro-channels purge trapped air pockets during cold-plate clamping' },
-      { code: 'L2', name: '82 wt% Bimodal Al2O3 + Aligned h-BN Hybrid Core', spec: '5.5 W/m·K percolation network with 35 Shore 00 low-modulus compliance' },
-      { code: 'L3', name: 'Optional Ultra-NS Non-Silicone Elastomer Matrix', spec: '0.00% siloxane volatiles (D3–D10 undetected) for optical & laser housings' },
-      { code: 'L4', name: 'Ultra-Fine Micro-Glass Carrier & Kiss-Cut Base', spec: 'Precision CNC cutouts around heatsink standoffs and spring screws' },
+      { code: 'L1', name: 'Diamond-Embossed Air-Bleed Top Release Liner', spec: 'Purges trapped air pockets during heatsink/cold-plate clamping' },
+      { code: 'L2', name: '82 wt% Bimodal Al2O3 + Aligned h-BN Core', spec: '5.5 W/m·K percolation network with 35 Shore 00 low die stress' },
+      { code: 'L3', name: 'Optional Ultra-NS Non-Silicone Matrix', spec: '0.00% siloxane volatiles for optical transceivers & laser modules' },
+      { code: 'L4', name: 'Micro-Glass Carrier & Kiss-Cut Base', spec: 'Precision CNC cutouts around heatsink standoffs' },
     ],
     applications: [
-      'AI Server GPU / ASIC Liquid Cold Plates & VRM Power Stages',
+      'AI Server GPU / ASIC Liquid Cold Plates & High-Density VRMs',
       '800V EV Silicon Carbide (SiC) Traction Inverters & DC-DC Converters',
-      'RDSO Railway IGBT Modules, Wind/Solar Megawatt Central Inverters',
-      '800G Optical Transceivers & Surgical/Medical Laser Diode Blocks (Ultra-NS)',
+      'RDSO Railway IGBT Modules & Central Solar Inverters',
+      '800G Optical Transceivers & Workstation / GPU Thermal Rebuilds',
     ],
     standards: ['ASTM D5470 (<0.15 K·cm²/W)', 'GC-MS Zero-Siloxane (Ultra-NS)', 'ASTM D2240 (35 Shore 00)', 'UL 94 V-0'],
   },
 ];
 
+// Genuine <₹15k R&D Kits + Compact Prototyping Starter Packs (B2B + B2C Friendly, Exact Original Prices!)
 export const RND_KITS: KitBundle[] = [
   {
     id: 'kit-ais156',
     sku: 'KIT-AIS156-PRO',
-    name: 'AIS-156 / UL 9540A Battery Pack Thermal & Fire Homologation Kit',
+    name: 'AIS-156 / UL 9540A Battery Pack Thermal & Fire Kit',
     sector: 'EV Battery & Utility BESS R&D',
+    audienceTag: 'B2B R&D Lab',
     priceInr: 14500,
     priceLabel: '₹14,500',
+    starterSku: 'KIT-AIS156-MINI',
     starterPriceInr: 3499,
     starterLabel: '₹3,499 Mini Cell-Test Pack',
-    leadTime: '48-Hour Custom Dispatch',
+    starterSummary: '4-cell coupon set for student EV teams & compact benchtop runaway tests',
+    leadTime: '48-Hour Dispatch',
+    image: '/assets/validation/pack-cutaway-studio.jpg',
     contents: [
       'Custom CNC-cut InsulTherm Core™ bottom cold-plate pads (1.5 mm & 2.0 mm)',
-      'Matched InsulTherm Barrier™ 1.50 mm aerogel-mica inter-cell runaway firewalls',
-      '3D crease-scored InsulTherm Shield™ living-hinge top busbar collector shroud',
-      'Signed ASTM D5470, D149 & UL 94 V-0 engineering certificate dossier',
+      'Matched InsulTherm Barrier™ 1.50 mm aerogel-mica inter-cell firewalls',
+      '3D crease-scored InsulTherm Shield™ living-hinge top busbar shroud',
+      'ASTM D5470, D149 & UL 94 V-0 engineering certificate dossier',
     ],
-    procurementAdvantage: 'Priced < ₹15,000 so Lead Battery Engineers can order directly via R&D petty cash / UPI without a 60-day vendor onboarding freeze.',
+    procurementAdvantage:
+      'Priced below ₹15,000 so engineering leads can order immediately via petty cash / UPI (eligible for RNDKIT1000 ₹1,000 OFF at checkout).',
   },
   {
     id: 'kit-benchtop',
     sku: 'KIT-BENCH-5IP',
-    name: 'All-5-IP Engineering Benchtop Master Sampler Box',
-    sector: 'Hardware R&D Labs & Incubators',
+    name: 'All-5-Material Engineering Benchtop Sampler Box',
+    sector: 'Hardware Labs, Prototyping & Makers',
+    audienceTag: 'Prototyping & B2C Friendly',
     priceInr: 9800,
     priceLabel: '₹9,800',
+    starterSku: 'KIT-SWATCH-MINI',
     starterPriceInr: 1499,
-    starterLabel: '₹1,499 Swatch Folio',
+    starterLabel: '₹1,499 Prototyping Swatch Pack',
+    starterSummary: 'Indexed sample strips for individual hardware builders, workstations & repair labs',
     leadTime: '24-Hour In-Stock Dispatch',
+    image: '/assets/products/thermafix-bench-pack.jpg',
     contents: [
-      'Multi-thickness indexed sheets of Core™ (0.5, 1.0, 1.5, 2.0, 3.0 mm) & Ultra™ (0.5, 1.0, 1.5 mm)',
-      '2× Barrier™ 1,100°C aerogel-mica test coupons + 2× Graphite-Flex™ edge-sealed strips',
-      '3× Shield™ living-hinge dielectric origami demo blanks (0.25, 0.43, 0.50 mm)',
-      'Shore 00 compression deflection guide & printed 2-page TDS binder',
+      'Indexed thickness sheets of Core™ (0.5–3.0 mm) & Ultra™ (0.5–1.5 mm)',
+      'Barrier™ 1,100°C aerogel-mica test coupons + Graphite-Flex™ Kapton®-sealed strips',
+      'Shield™ living-hinge dielectric origami fold blanks (0.25, 0.43, 0.50 mm)',
+      'Shore 00 compression guide & printed 2-page Technical Data Sheets',
     ],
-    procurementAdvantage: 'Eliminates blind thickness guessing during prototype tolerance stack-up signoff.',
+    procurementAdvantage:
+      'Ideal for both corporate R&D labs (₹9,800 full box) and independent hardware prototypers (₹1,499 starter pack with PROTO10 10% OFF).',
   },
   {
     id: 'kit-defense-space',
     sku: 'KIT-DEF-E595',
-    name: 'Defense, Avionics & SpaceTech Zero-Outgassing Qualification Kit',
-    sector: 'Defense PSUs, UAVs & LEO Satellites',
+    name: 'Defense, Avionics & SpaceTech Zero-Outgassing Kit',
+    sector: 'Defense PSUs, UAVs & Satellites',
+    audienceTag: 'B2B R&D Lab',
     priceInr: 12500,
     priceLabel: '₹12,500',
-    leadTime: '48-Hour Clean-Pouch Dispatch',
+    leadTime: '48-Hour ESD Dispatch',
+    image: '/assets/products/insultherm-graphite-flex.jpg',
     contents: [
-      'Custom CNC-nested InsulTherm Graphite-Flex™ (GFlex-1000 & GFlex-1500) Kapton®-sealed planes',
-      '100% siloxane-free InsulTherm Ultra-NS™ hybrid ceramic pads for optical/RF modules',
-      'Shield-NMX™ high-temperature aramid dielectric isolation barriers',
-      'ASTM E595 outgassing & 100% Domestic Value Addition (DVA) traceability declaration',
+      'Custom CNC-nested Graphite-Flex™ (GFlex-1000 & GFlex-1500) Kapton®-sealed planes',
+      '100% siloxane-free InsulTherm Ultra-NS™ pads for optical/RF modules',
+      'Shield-NMX™ high-temperature aramid dielectric barriers',
+      'ASTM E595 outgassing & 100% Domestic Value Addition (DVA) declaration',
     ],
-    procurementAdvantage: '100% Make-in-India sovereign supply compliant with MoD < ₹200 Cr domestic tender norms.',
+    procurementAdvantage:
+      '100% Make-in-India sovereign supply compliant with domestic defense procurement norms.',
   },
   {
     id: 'kit-sic-inverter',
     sku: 'KIT-SIC-RAIL',
-    name: 'Power Electronics, Rail & SiC Inverter Thermal-Dielectric Kit',
-    sector: 'Solar, Rail IGBT & EV Traction',
+    name: 'Power Electronics, Inverter & BMS Isolation Kit',
+    sector: 'SiC Inverters, Solar & Electronics Repair',
+    audienceTag: 'Prototyping & B2C Friendly',
     priceInr: 7500,
     priceLabel: '₹7,500',
+    starterSku: 'KIT-TO247-25PC',
     starterPriceInr: 999,
-    starterLabel: '₹999 25-pc TO-247 Pack',
+    starterLabel: '₹999 25-Pc TO-247 / BMS Pack',
+    starterSummary: 'Ready-to-use TO-247 / 50×50mm thermal & dielectric pack for prototypes and repairs',
     leadTime: '24-Hour Dispatch',
+    image: '/assets/products/tri-hazard-kit.jpg',
     contents: [
-      'Pre-cut TO-247, TO-220, D2PAK & EconoDUAL™ IGBT baseplate pads in Ultra™ 5.5 W/m·K',
+      'Pre-cut TO-247, TO-220, D2PAK & IGBT baseplate pads in Ultra™ 5.5 W/m·K',
       '20× Standard 50 × 50 mm Core™ BMS/MOSFET conduction pads',
       'Matched Shield™ high-voltage creepage barriers & slot liners',
-      'Clamping torque vs. thermal impedance (K·cm²/W) application note',
+      'Mounting pressure vs. thermal impedance application note',
     ],
-    procurementAdvantage: 'Drop-in domestic replacement for imported Bergquist® Sil-Pad® and Laird™ Tflex™ SKUs.',
+    procurementAdvantage:
+      'Available as a ₹7,500 pilot kit or a ₹999 25-piece starter pack for rapid benchtop assembly.',
   },
 ];
 
-// 3M-inspired Prosumer / Repair Lab / Workstation / University EV Line
-// Grounded 100% in existing Sanand CNC oscillating-knife & nesting offcut capabilities!
-export const PRO_BENCH_PACKS: ProBenchPack[] = [
+export const MARKETS: MarketVertical[] = [
   {
-    id: 'bench-nvme-pro',
-    sku: 'TFX-NVME-08',
-    brandLine: 'ThermaFix™ Pro-Bench',
-    name: 'M.2 NVMe Gen4/Gen5 SSD & Workstation Heatsink Strip Pack',
-    audience: 'PC/Server Builders, AI Workstations & Repair Labs',
-    priceInr: 499,
-    packCountLabel: '8 Pre-Cut Strips (22×70 mm)',
-    materialBase: 'InsulTherm Ultra™ (5.5 W/m·K) + Core™ (3.0 W/m·K)',
-    specs: '4× 0.5 mm + 4× 1.0 mm | 35 Shore 00 Low Controller Stress',
-    includes: [
-      '4× Ultra-550 (5.5 W/m·K) strips for Gen5 SSD controllers (-14°C throttle drop)',
-      '4× Core-300 (3.0 W/m·K) anti-bleed strips for NAND flash & laptop heatpipes',
-      'Zero silicone oil bleed onto motherboard PCIe slots',
-    ],
-    badge: 'Off-the-Shelf Direct Buy',
+    id: 'mkt-ev',
+    name: 'Automotive & EV Battery Systems',
+    standards: 'AIS-156 Amend. 3 • ISO 6469 • UL 94 V-0',
+    headline: 'Pass Thermal Propagation Homologation Without 8-Week Tooling Delays',
+    description:
+      'EV two/three-wheelers, passenger packs, and SiC traction inverters rely on coupled cell-to-cell fire isolation (Barrier™), bottom cold-plate conduction (Core™), and tool-free busbar shrouds (Shield™) cut directly from CAD in 48 hours.',
+    image: '/assets/validation/pack-cutaway-studio.jpg',
+    recommendedProducts: ['insultherm-barrier', 'insultherm-core', 'insultherm-shield'],
+    keyOutcome: '74.189°C neighbor cell hold against a 400°C runaway fault cell',
   },
   {
-    id: 'bench-gpu-vram',
-    sku: 'TFX-VRAM-12',
-    brandLine: 'ThermaFix™ Pro-Bench',
-    name: 'GPU VRAM, VRM & Console Thermal Rebuild Master Sheet Pack',
-    audience: 'Electronics Service Centers & GPU Refurbishers',
-    priceInr: 899,
-    packCountLabel: '3 Indexed Sheets (120×20 mm × 1.0 / 1.5 / 2.0 mm)',
-    materialBase: 'InsulTherm Ultra™ 5.5 W/m·K Soft-Conformable',
-    specs: '35 Shore 00 | >12 kV/mm | Scrim Tear-Free Repositioning',
-    includes: [
-      'Covers 1.0 mm, 1.5 mm & 2.0 mm GDDR6X / VRM choke heights in one pack',
-      'Embedded micro-scrim prevents tearing when opening heatsinks for servicing',
-      'Industrial lab formulation vs. dry generic retail thermal pads',
-    ],
-    badge: 'Bestseller for Repair Labs',
+    id: 'mkt-bess',
+    name: 'Grid-Scale BESS & Solar Inverters',
+    standards: 'UL 9540A • IEC 62619 • 1,500V DC',
+    headline: 'High-Voltage Dielectric Creepage & 280Ah/314Ah LFP Container Firewalls',
+    description:
+      'Utility energy storage integrators eliminate ₹6–12 Lakh plastic mold fees across evolving 1,500V DC busbar collectors using hand-folded Shield™ shrouds alongside large-format Barrier™ LFP dividers.',
+    image: '/assets/products/insultherm-shield.jpg',
+    recommendedProducts: ['insultherm-shield', 'insultherm-barrier', 'insultherm-ultra'],
+    keyOutcome: '28–32 kV/mm breakdown strength with ₹0 mold tooling NRE',
   },
   {
-    id: 'bench-drone-fpv',
-    sku: 'TFX-DRONE-06',
-    brandLine: 'FluxPlane™ Maker Edition',
-    name: 'UAV / FPV Drone ESC, VTX & Raspberry Pi5 Spreader Pack',
-    audience: 'Robotics Labs, Drone Teams & Embedded Makers',
-    priceInr: 1199,
-    packCountLabel: '6 Edge-Sealed Strips (30×35 mm & 25×60 mm)',
-    materialBase: 'InsulTherm Graphite-Flex™ (1,000 W/m·K) Kapton®-Capped',
-    specs: '0.24 mm Thin | >5 kV Top Cap | 76% Lighter than Copper Heatsinks',
-    includes: [
-      'Spreads 4-in-1 ESC & HD digital VTX heat without adding gram-weight penalty',
-      'Amber Kapton® dielectric top cap prevents carbon-fiber frame shorts',
-      'Peel-and-stick ASTM E595 high-temp acrylic PSA',
-    ],
-    badge: 'Zero-Weight Cooling',
+    id: 'mkt-defense',
+    name: 'Aerospace, Defense & SpaceTech',
+    standards: 'ASTM E595 • MIL-STD-810H • 100% India DVA',
+    headline: 'Zero-Outgassing Lateral Cooling at 24% the Weight of Copper',
+    description:
+      'Sealed UAV flight computers, phased-array radar T/R modules, and LEO satellite optical payloads use Kapton®-sealed Graphite-Flex™ (1,500 W/m·K) and siloxane-free Ultra-NS™ to eliminate hotspots without outgassing.',
+    image: '/assets/products/insultherm-graphite-flex.jpg',
+    recommendedProducts: ['insultherm-graphite-flex', 'insultherm-ultra'],
+    keyOutcome: 'TML < 1.0%, CVCM < 0.10% with 100% domestic traceability',
   },
   {
-    id: 'bench-hv-insul',
-    sku: 'INS-HV-ASSORT',
-    brandLine: 'InsulTape™ & Origami Bench',
-    name: 'EV / Inverter Repair Dielectric Washer, Ring & Fold-Strip Kit',
-    audience: 'EV Battery Rebuilders, Solar Techs & Formula Student Teams',
-    priceInr: 649,
-    packCountLabel: '60-Piece Precision CNC Assortment',
-    materialBase: 'InsulTherm Shield™ (0.43 mm UL 94 V-0) + Core-BMS',
-    specs: '28 kV/mm Breakdown | Includes 10× 50×50mm BMS Pads',
-    includes: [
-      '30× TO-247 / TO-220 dielectric shoulder pads + 20× 21700 cell HV terminal rings',
-      '10× Pre-scored Shield™ living-hinge busbar corner fold guards',
-      'Bonus: 5× Core-BMS 50×50 mm MOSFET conduction pads',
-    ],
-    badge: 'EV & Inverter Essential',
+    id: 'mkt-ai',
+    name: 'AI Data Centers, 5G & Power Electronics',
+    standards: '<0.15 K·cm²/W • 35 Shore 00 • Siloxane-Free',
+    headline: 'High-Flux Heat Extraction Without Bare-Die or PCB Bending Stress',
+    description:
+      'Liquid-cooled AI server plates, 800G optical transceivers, and SiC/IGBT power bricks achieve <0.15 K·cm²/W thermal impedance at low mounting pressure using Ultra™ 5.5 W/m·K hybrid ceramic pads.',
+    image: '/assets/products/insultherm-ultra.jpg',
+    recommendedProducts: ['insultherm-ultra', 'insultherm-graphite-flex', 'insultherm-core'],
+    keyOutcome: '5.5 W/m·K conductivity with ultra-compliant 35 Shore 00 softness',
+  },
+  {
+    id: 'mkt-proto',
+    name: 'Prototyping Labs, Student EV & Hardware Builders',
+    standards: 'MOQ 1 Piece • Starter Packs from ₹999',
+    headline: 'Industrial-Grade Materials Accessible to Every Workbench & Startup',
+    description:
+      'Whether you need 2 custom-cut pads for a weekend board bring-up, a Formula Student EV accumulator firewall set, or high-durability workstation/GPU thermal strips, order online with zero MOQ gates.',
+    image: '/assets/products/thermafix-bench-pack.jpg',
+    recommendedProducts: ['insultherm-core', 'insultherm-ultra', 'insultherm-shield'],
+    keyOutcome: 'Instant online area pricing + 10% OFF starter coupon (PROTO10)',
   },
 ];
 
@@ -592,205 +565,129 @@ export const VALIDATION_PLATES: ValidationPlate[] = [
   {
     id: 'val-fea-runaway',
     category: 'FEA Simulation',
-    title: '4-Quadrant Thermal Runaway Containment Simulation (400°C Fault Event)',
-    subtitle: 'Full Uncropped ANSYS/Fusion Thermal Solver Output — Q1 Fault Cell vs. Q2/Q3/Q4 Neighbors',
+    title: '4-Quadrant Thermal Runaway Simulation (400°C Fault Event)',
+    subtitle: 'Full Uncropped Thermal Solver Output — Q1 Fault Cell vs. Q2/Q3/Q4 Neighbors',
     src: '/assets/validation/fea-runaway-400c.png',
-    dimensions: '1669 × 873 px (Full HD Solver Plate)',
-    badge: '74.189°C Neighbor Cell Hold',
+    dimensions: '1669 × 873 px',
+    badge: '74.189°C Neighbor Hold',
     metrics: [
-      { label: 'Q1 Fault Cell Peak', value: '400.0 °C' },
-      { label: 'Neighbor Cell Min/Edge', value: '74.189 °C' },
-      { label: 'Safety Threshold', value: '< 100 °C PASS' },
+      { label: 'Q1 Fault Cell', value: '400.0 °C' },
+      { label: 'Neighbor Edge', value: '74.189 °C' },
+      { label: 'AIS-156 Ceiling', value: '< 100 °C PASS' },
     ],
     description:
-      'Full 4-quadrant coupled conduction simulation showing a catastrophic 400°C cell runaway in Quadrant 1 arrested across a 1.50 mm InsulTherm Barrier™ aerogel-mica wall while the bottom InsulTherm Core™ pad drains residual heat into the cold plate—holding adjacent cells down to 74.189°C.',
+      'Full 4-quadrant coupled conduction simulation showing a 400°C cell runaway in Quadrant 1 arrested across a 1.50 mm InsulTherm Barrier™ wall while the bottom InsulTherm Core™ pad drains heat into the cold plate—holding adjacent cells down to 74.189°C.',
   },
   {
     id: 'val-fea-continuous',
     category: 'FEA Simulation',
-    title: '4-Quadrant Continuous High-Discharge Thermal Load (180°C Hot Cell)',
-    subtitle: 'Steady-State Coupled Barrier™ Isolation + Core™ Bottom Cold-Plate Heat Rejection',
+    title: '4-Quadrant Continuous High-Load Simulation (180°C Source)',
+    subtitle: 'Steady-State Coupled Barrier™ Isolation + Core™ Cold-Plate Draining',
     src: '/assets/validation/fea-continuous-load.png',
-    dimensions: '1683 × 793 px (Full HD Solver Plate)',
-    badge: '91.3°C Peak Adjacent Hold',
+    dimensions: '1683 × 793 px',
+    badge: '91.3°C Peak Hold',
     metrics: [
       { label: 'Hot Cell Source', value: '180.0 °C' },
-      { label: 'Adjacent Cell Peak', value: '91.3 °C' },
-      { label: 'Barrier Wall Thickness', value: '1.50 mm' },
+      { label: 'Adjacent Peak', value: '91.3 °C' },
+      { label: 'Barrier Wall', value: '1.50 mm' },
     ],
     description:
-      'Demonstrates continuous abuse-discharge operation where sustained 180°C thermal stress in one cell quadrant is simultaneously blocked laterally by Barrier™ (k = 0.018 W/m·K) and extracted vertically through Core™ (k = 3.0 W/m·K).',
+      'Sustained 180°C thermal stress in one cell quadrant blocked laterally by Barrier™ (k = 0.018 W/m·K) and extracted vertically through Core™ (k = 3.0 W/m·K).',
   },
   {
     id: 'val-fea-matrix',
     category: 'FEA Simulation',
-    title: 'Q1–Q4 Multi-Cell Coupled Thermal Boundary Condition Matrix',
-    subtitle: 'Quadrant-by-Quadrant Heat Flux & Dielectric/Thermal Interface Mapping',
+    title: 'Q1–Q4 Multi-Cell Coupled Boundary Matrix',
+    subtitle: 'Quadrant Heat-Flux & Directional Anisotropy Mapping',
     src: '/assets/validation/fea-boundary-matrix.png',
-    dimensions: '1161 × 895 px (Full Engineering Diagram)',
-    badge: '4-Cell Coupled Model',
+    dimensions: '1161 × 895 px',
+    badge: 'Coupled Boundary Map',
     metrics: [
-      { label: 'Horizontal Axis', value: 'Barrier™ k=0.018' },
-      { label: 'Vertical Sink Axis', value: 'Core™ k=3.0' },
-      { label: 'Top Collector', value: 'Shield™ >28 kV/mm' },
+      { label: 'Lateral Axis', value: 'Barrier™ k=0.018' },
+      { label: 'Vertical Sink', value: 'Core™ k=3.0' },
+      { label: 'Top Shroud', value: 'Shield™ >28 kV/mm' },
     ],
     description:
-      'Complete quadrant boundary layout illustrating directional thermal anisotropy inside a 4-cell module: blocking lateral cell-to-cell heat transfer while maximizing downward heat conduction into the liquid cooling plate.',
+      'Complete 4-cell boundary layout showing how directional thermal management blocks cell-to-cell propagation while maximizing cold-plate heat rejection.',
   },
   {
     id: 'val-cutaway-studio',
     category: 'Physical Hardware',
-    title: 'Integrated Prismatic Module Hardware Cutaway (Tri-Material Stack)',
-    subtitle: 'Physical Demonstration Assembly: Core™ Base + Barrier™ Cell Dividers + Shield™ Busbar Cover',
+    title: 'Prismatic Battery Module Hardware Cutaway',
+    subtitle: 'Core™ Cold-Plate Base + Barrier™ Cell Walls + Shield™ Busbar Shroud',
     src: '/assets/validation/pack-cutaway-studio.jpg',
-    dimensions: '1408 × 768 px (Studio Hardware Cutaway)',
-    badge: 'Tri-Hazard Integration',
+    dimensions: '1408 × 768 px',
+    badge: 'Hardware Cutaway',
     metrics: [
       { label: 'Top Shroud', value: 'Shield™ 0.43 mm' },
-      { label: 'Inter-Cell Sheets', value: 'Barrier™ 1.50 mm' },
-      { label: 'Cold-Plate Pad', value: 'Core™ 1.5–2.0 mm' },
+      { label: 'Cell Walls', value: 'Barrier™ 1.50 mm' },
+      { label: 'Base Pad', value: 'Core™ 1.5–2.0 mm' },
     ],
     description:
-      'Cross-sectional view of an aluminum liquid-cooled prismatic battery module showing how all three InsulTherm Energy-series materials assemble with zero custom injection-molding or steel-die tooling.',
+      'Physical demonstration cutaway showing how all three InsulTherm protection & thermal materials assemble inside an aluminum liquid-cooled battery module.',
   },
   {
     id: 'val-cad-exploded',
     category: 'CAD Architecture',
-    title: 'Exploded 4-Cell Module CAD Stackup (Autodesk Fusion Assembly)',
-    subtitle: 'Full Uncropped Exploded Isometric View — Cold Plate, Core™ Pad, Cells, Barrier™ Walls & Busbars',
+    title: 'Exploded 4-Cell Module CAD Assembly',
+    subtitle: 'Uncropped Isometric Stackup — Cold Plate, Core™, Cells, Barrier™ & Busbars',
     src: '/assets/validation/cad-exploded-pack.png',
-    dimensions: '625 × 636 px (1:1 Full CAD Plate)',
+    dimensions: '625 × 636 px',
     badge: '.STEP / .DXF Ready',
     metrics: [
-      { label: 'CNC Nesting Input', value: '.DXF / .STEP' },
+      { label: 'CAD Input', value: '.DXF / .STEP' },
       { label: 'Tooling NRE', value: '₹0' },
-      { label: 'Cut Tolerance', value: '±0.15 mm' },
+      { label: 'Tolerance', value: '±0.15 mm' },
     ],
     description:
-      'Uncropped exploded 3D CAD assembly used directly by our CAM nesting pipeline to extract 2D flat patterns for the bottom Core™ thermal pad, vertical Barrier™ sheets, and folded Shield™ top busbar cover.',
+      'Uncropped exploded 3D CAD assembly used by our CAM nesting pipeline to generate precision 2D flat patterns with zero steel-die tooling.',
   },
   {
     id: 'val-cad-assembled',
     category: 'CAD Architecture',
-    title: 'Assembled Isometric Busbar, Terminal & Inter-Cell Firewall CAD',
-    subtitle: 'Compact 4S Prismatic Pack Geometry Showing Zero Volumetric Bloat',
+    title: 'Assembled Busbar & Inter-Cell Firewall CAD',
+    subtitle: 'Compact 4S Prismatic Pack Geometry With Zero Volumetric Bloat',
     src: '/assets/validation/cad-assembled-pack.png',
-    dimensions: '748 × 673 px (Full Isometric CAD)',
-    badge: 'Zero Pack Bloat',
+    dimensions: '748 × 673 px',
+    badge: 'Compact Pack Fit',
     metrics: [
-      { label: 'Inter-Cell Pitch', value: '1.50 mm Wall' },
-      { label: 'Busbar Isolation', value: '1,500V DC Rated' },
-      { label: 'Turnaround', value: '24–48 Hours' },
+      { label: 'Cell Spacing', value: '1.50 mm Wall' },
+      { label: 'Busbar Rating', value: '1,500V DC' },
+      { label: 'Dispatch', value: '24–48 Hours' },
     ],
     description:
-      'Assembled CAD verification confirming busbar bolt clearance, inter-cell compression allowance (25–35%), and top collector creepage protection.',
+      'Assembled CAD verification confirming copper busbar clearance, cell compression allowance, and top collector creepage isolation.',
   },
   {
     id: 'val-cad-top',
     category: 'CAD Architecture',
-    title: 'Top-Down Busbar Collector & Firewall Slot Alignment CAD',
-    subtitle: 'Plan-View Datum Verification for CNC Bolt-Hole & Living-Hinge Registration',
+    title: 'Top-Down Busbar & Firewall Datum Layout',
+    subtitle: 'Plan-View Registration for Bolt-Holes & Living-Hinge Fold Lines',
     src: '/assets/validation/cad-top-busbar.png',
-    dimensions: '637 × 663 px (Plan View CAD)',
-    badge: '±0.15mm Datum Fit',
+    dimensions: '637 × 663 px',
+    badge: '±0.15mm Datum',
     metrics: [
-      { label: 'Hole Registration', value: '±0.15 mm' },
+      { label: 'Registration', value: '±0.15 mm' },
       { label: 'Crease Depth', value: '50% ± 0.05 mm' },
       { label: 'MOQ', value: '1 Piece' },
     ],
     description:
-      'Top-view engineering alignment plate verifying copper interconnect geometry against inter-cell firewall tabs and dielectric shroud fold lines.',
+      'Plan-view alignment plate verifying copper interconnect geometry against inter-cell firewall tabs and dielectric shroud fold channels.',
   },
   {
     id: 'val-ruler-kit',
     category: 'Physical Hardware',
-    title: 'Millimeter-Scale Benchtop Inspection (0–30 cm Calibrated Steel Rule)',
-    subtitle: 'Physical Coupons of Core™ (Orange), Barrier™ (White) & Shield™ (Folded Black)',
+    title: 'Millimeter-Scale Benchtop Coupon Inspection',
+    subtitle: 'Physical Samples of Core™, Barrier™ & Folded Shield™ Over 30 cm Steel Rule',
     src: '/assets/products/tri-hazard-kit.jpg',
-    dimensions: '1300 × 1027 px (Benchtop Inspection)',
-    badge: 'Physical QC Sample',
+    dimensions: '1300 × 1027 px',
+    badge: 'Physical QC',
     metrics: [
-      { label: 'Edge Quality', value: 'Zero-Fray Clean Cut' },
-      { label: 'Fold Angle', value: 'Crisp 90° Living Hinge' },
-      { label: 'Dispatch SLA', value: '24–48 Hours' },
+      { label: 'Edge Quality', value: 'Zero-Fray Cut' },
+      { label: 'Hinge Fold', value: 'Crisp 90° Bend' },
+      { label: 'Lead Time', value: '24–48 Hours' },
     ],
     description:
-      'Unretouched benchtop scale photograph demonstrating crisp CNC oscillating-knife edge quality across soft elastomer, fibrous aerogel-mica, and scored flame-retardant polymer.',
-  },
-];
-
-export const APPLICATION_CHALLENGES: ApplicationChallenge[] = [
-  {
-    id: 'chal-runaway',
-    problemTitle: 'Stop Cell-to-Cell Thermal Runaway (AIS-156 / UL 9540A)',
-    sectorTag: 'EV Packs & Grid BESS',
-    symptom: 'Adjacent prismatic or 21700 cells exceed 100°C during single-cell nail-penetration or overcharge testing.',
-    recommendedProductId: 'insultherm-barrier',
-    recommendedCompanionId: 'insultherm-core',
-    whyItWorks:
-      '1.50 mm Barrier™ (k = 0.018 W/m·K + >1,100°C mica shield) blocks lateral flame/heat while Core™ (3.0 W/m·K) drains heat into the bottom cold plate—holding neighbor cells to 74.2°C.',
-    suggestedFootprint: { lengthMm: 148, widthMm: 95, qty: 24 },
-  },
-  {
-    id: 'chal-busbar',
-    problemTitle: 'Insulate 800V–1,500V Copper Busbars Without Mold Tooling',
-    sectorTag: 'BESS, EV & Switchgear',
-    symptom: 'Injection-molded plastic covers cost ₹6L+ and take 8 weeks every time busbar geometry shifts by 2 mm.',
-    recommendedProductId: 'insultherm-shield',
-    whyItWorks:
-      '50%-depth CNC crease-scored Shield™ ships flat in 48 hours with ₹0 NRE and folds by hand into a rigid >28 kV/mm UL 94 V-0 snap-fit 3D shroud.',
-    suggestedFootprint: { lengthMm: 180, widthMm: 110, qty: 15 },
-  },
-  {
-    id: 'chal-hotspot',
-    problemTitle: 'Eliminate Sealed PCB / Radar / Optical Hotspots with Zero Weight or Outgassing',
-    sectorTag: 'Defense, Space & 800G',
-    symptom: 'No vertical room for a finned heatsink, copper shims are too heavy, and silicone pads fog sensitive optics.',
-    recommendedProductId: 'insultherm-graphite-flex',
-    recommendedCompanionId: 'insultherm-ultra',
-    whyItWorks:
-      'Edge-sealed Kapton®-capped Graphite-Flex™ spreads heat laterally at 1,000–1,500 W/m·K (3.7× copper at 24% weight) with ASTM E595 silicone-free PSA.',
-    suggestedFootprint: { lengthMm: 60, widthMm: 40, qty: 10 },
-  },
-  {
-    id: 'chal-highflux',
-    problemTitle: 'Cool High-Flux SiC Inverters or AI GPUs Without Cracking Bare Dies',
-    sectorTag: 'AI Servers, Rail & SiC',
-    symptom: 'Standard 3 W/m·K pads bottleneck >30 W/cm² power density, while stiff 6+ W/m·K pads over-stress PCBs.',
-    recommendedProductId: 'insultherm-ultra',
-    whyItWorks:
-      '82 wt% bimodal Al2O3 + aligned h-BN achieves 5.5 W/m·K and <0.15 K·cm²/W at an ultra-soft 35 Shore 00 hardness (plus siloxane-free Ultra-NS option).',
-    suggestedFootprint: { lengthMm: 80, widthMm: 60, qty: 20 },
-  },
-];
-
-export const SECTORS = [
-  {
-    title: 'Grid-Scale BESS & Utility Solar',
-    standards: 'UL 9540A • IEC 62619 • 1,500V DC',
-    products: ['InsulTherm Barrier™', 'InsulTherm Shield™', 'InsulTherm Core™'],
-    painSolved:
-      'Prevents cascading 280Ah/314Ah LFP container fires and eliminates ₹8L injection-molded busbar shroud tooling across custom integrator layouts.',
-  },
-  {
-    title: 'EV Battery Packs, OBC & SiC Traction',
-    standards: 'AIS-156 Amend. 3 • ISO 6469 • UL 94 V-0',
-    products: ['InsulTherm Core™', 'InsulTherm Barrier™', 'InsulTherm Ultra™'],
-    painSolved:
-      '48-hour CNC custom pads and aerogel-mica cell dividers let EV teams pass ARAI thermal propagation homologation without 8-week die delays.',
-  },
-  {
-    title: 'Defense PSUs, UAVs & LEO SpaceTech',
-    standards: 'ASTM E595 • MIL-STD-810H • 100% India DVA',
-    products: ['InsulTherm Graphite-Flex™', 'InsulTherm Ultra-NS™', 'Shield-NMX™'],
-    painSolved:
-      'Zero-outgassing, silicone-free 1,500 W/m·K lateral heat planes with sovereign Make-in-India traceability for radar T/R modules and optical payloads.',
-  },
-  {
-    title: 'AI Data Centers, Rail IGBT & Pro-Bench Labs',
-    standards: '<0.15 K·cm²/W • Siloxane-Free • 35 Shore 00',
-    products: ['InsulTherm Ultra™', 'ThermaFix™ Pro-Bench', 'InsulTherm Shield™'],
-    painSolved:
-      'Ultra-low contact resistance for liquid-cooled GPU plates and 800G transceivers—plus ready-to-ship Pro-Bench strip packs for workstation & repair labs.',
+      'Unretouched benchtop scale inspection demonstrating clean digital oscillating-knife cut quality across elastomer, aerogel-mica, and scored polymer.',
   },
 ];

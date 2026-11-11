@@ -1,12 +1,18 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { ProductSlugId } from '../utils/pricingEngine';
+import {
+  CHECKOUT_COUPONS,
+  CouponEvaluation,
+  evaluateAllCoupons,
+  OfferCoupon,
+} from '../utils/couponEngine';
 
 export interface CartItem {
   uid: string;
   sku: string;
   productId?: ProductSlugId;
   title: string;
-  itemType: 'custom-cad' | 'kit-bundle' | 'pro-bench';
+  itemType: 'custom-cad' | 'kit-bundle';
   dimensionsLabel: string;
   areaCm2?: number;
   unitPriceInr: number;
@@ -31,13 +37,22 @@ interface OrderCartContextValue {
   updateQuantity: (uid: string, quantity: number) => void;
   removeItem: (uid: string) => void;
   clearCart: () => void;
+  // Coupon & Totals
+  couponEvaluations: CouponEvaluation[];
+  appliedCoupon: OfferCoupon | null;
+  couponDiscountInr: number;
+  applyCouponCode: (code: string) => { ok: boolean; message: string };
+  removeCoupon: () => void;
   subtotalInr: number;
+  netTaxableInr: number;
   gstInr: number;
   grandTotalInr: number;
   totalUnits: number;
+  distinctItemCount: number;
 }
 
-const STORAGE_KEY = 'insultherm_order_cart_v2';
+const STORAGE_KEY = 'insultherm_order_cart_v3';
+const COUPON_STORAGE_KEY = 'insultherm_applied_coupon_v3';
 
 const OrderCartContext = createContext<OrderCartContextValue | undefined>(undefined);
 
@@ -51,18 +66,90 @@ export const OrderCartProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   });
 
+  const [appliedCode, setAppliedCode] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem(COUPON_STORAGE_KEY);
+    } catch {
+      return null;
+    }
+  });
+
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'configure' | 'checkout'>('checkout');
-  const [preselectedProductId, setPreselectedProductId] = useState<ProductSlugId>('insultherm-graphite-flex');
+  const [preselectedProductId, setPreselectedProductId] =
+    useState<ProductSlugId>('insultherm-core');
   const [attachedCadFile, setAttachedCadFile] = useState<File | null>(null);
 
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
     } catch {
-      // ignore storage quota errors
+      // ignore storage errors
     }
   }, [items]);
+
+  useEffect(() => {
+    try {
+      if (appliedCode) {
+        localStorage.setItem(COUPON_STORAGE_KEY, appliedCode);
+      } else {
+        localStorage.removeItem(COUPON_STORAGE_KEY);
+      }
+    } catch {
+      // ignore
+    }
+  }, [appliedCode]);
+
+  const subtotalInr = items.reduce(
+    (sum, it) => sum + Math.round(it.unitPriceInr * it.quantity),
+    0
+  );
+  const distinctSkus = new Set(items.map((it) => it.productId || it.sku));
+  const distinctItemCount = distinctSkus.size;
+
+  const couponEvaluations = evaluateAllCoupons(subtotalInr, distinctItemCount);
+
+  const activeEval = appliedCode
+    ? couponEvaluations.find(
+        (ev) => ev.coupon.code.toUpperCase() === appliedCode.toUpperCase() && ev.isEligible
+      ) || null
+    : null;
+
+  const appliedCoupon = activeEval ? activeEval.coupon : null;
+  const couponDiscountInr = activeEval ? activeEval.discountInr : 0;
+
+  const netTaxableInr = Math.max(0, subtotalInr - couponDiscountInr);
+  const gstInr = Math.round(netTaxableInr * 0.18);
+  const grandTotalInr = netTaxableInr + gstInr;
+  const totalUnits = items.reduce((sum, it) => sum + it.quantity, 0);
+
+  const applyCouponCode = (rawCode: string): { ok: boolean; message: string } => {
+    const clean = rawCode.trim().toUpperCase();
+    if (!clean) {
+      return { ok: false, message: 'Enter a valid offer code.' };
+    }
+    const found = CHECKOUT_COUPONS.find((c) => c.code.toUpperCase() === clean);
+    if (!found) {
+      return {
+        ok: false,
+        message: `Invalid code "${clean}". Available codes: PROTO10, MULTISTACK8, RNDKIT1000, PILOT12.`,
+      };
+    }
+    const ev = couponEvaluations.find((e) => e.coupon.code === found.code);
+    if (!ev || !ev.isEligible) {
+      return {
+        ok: false,
+        message: ev ? ev.reasonText : 'Order does not yet meet this coupon threshold.',
+      };
+    }
+    setAppliedCode(found.code);
+    return {
+      ok: true,
+      message: `Applied ${found.code} — ₹${ev.discountInr.toLocaleString('en-IN')} saved!`,
+    };
+  };
+
+  const removeCoupon = () => setAppliedCode(null);
 
   const openConfigurator = (productId?: ProductSlugId) => {
     if (productId) setPreselectedProductId(productId);
@@ -100,12 +187,8 @@ export const OrderCartProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const clearCart = () => {
     setItems([]);
+    setAppliedCode(null);
   };
-
-  const subtotalInr = items.reduce((sum, it) => sum + Math.round(it.unitPriceInr * it.quantity), 0);
-  const gstInr = Math.round(subtotalInr * 0.18);
-  const grandTotalInr = subtotalInr + gstInr;
-  const totalUnits = items.reduce((sum, it) => sum + it.quantity, 0);
 
   return (
     <OrderCartContext.Provider
@@ -124,10 +207,17 @@ export const OrderCartProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         updateQuantity,
         removeItem,
         clearCart,
+        couponEvaluations,
+        appliedCoupon,
+        couponDiscountInr,
+        applyCouponCode,
+        removeCoupon,
         subtotalInr,
+        netTaxableInr,
         gstInr,
         grandTotalInr,
         totalUnits,
+        distinctItemCount,
       }}
     >
       {children}

@@ -13,17 +13,18 @@ import {
   Mail,
   ShieldCheck,
   Sliders,
-  Sparkles,
+  Tag,
+  Check,
 } from 'lucide-react';
 import { useOrderCart } from '../context/OrderCartContext';
-import { COMPANY_INFO, PRODUCTS, RND_KITS, PRO_BENCH_PACKS } from '../data/companyData';
+import { COMPANY_INFO, PRODUCTS, RND_KITS } from '../data/companyData';
 import { calculatePartPrice, PRICING_MODELS, ProductSlugId } from '../utils/pricingEngine';
 
 const FINISH_OPTIONS = [
-  'Through-Cut Individual Parts (Std ±0.15 mm)',
-  'Kiss-Cut on Release Liner Roll/Sheet (Fast Line Peel)',
-  '50%-Depth Living-Hinge Origami Score (Shield™ 3D Fold)',
-  '1.5 mm Kapton® Edge-Seal Overhang (Graphite-Flex™ HV)',
+  'Through-Cut Individual Parts (±0.15 mm)',
+  'Kiss-Cut on Release Liner Sheet (Fast Peel)',
+  '50%-Depth Living-Hinge Score (Shield™ 3D Fold)',
+  '1.5 mm Kapton® Edge-Seal Overhang (Graphite-Flex™)',
 ];
 
 export const OrderCartDrawer: React.FC = () => {
@@ -40,7 +41,13 @@ export const OrderCartDrawer: React.FC = () => {
     updateQuantity,
     removeItem,
     clearCart,
+    couponEvaluations,
+    appliedCoupon,
+    couponDiscountInr,
+    applyCouponCode,
+    removeCoupon,
     subtotalInr,
+    netTaxableInr,
     gstInr,
     grandTotalInr,
   } = useOrderCart();
@@ -50,10 +57,14 @@ export const OrderCartDrawer: React.FC = () => {
   const [lengthMm, setLengthMm] = useState<number>(100);
   const [widthMm, setWidthMm] = useState<number>(100);
   const [qty, setQty] = useState<number>(10);
-  const [thicknessMm, setThicknessMm] = useState<number>(0.24);
-  const [gradeSku, setGradeSku] = useState<string>('GFlex-1000');
+  const [thicknessMm, setThicknessMm] = useState<number>(1.5);
+  const [gradeSku, setGradeSku] = useState<string>('Core-300');
   const [finishOption, setFinishOption] = useState<string>(FINISH_OPTIONS[0]);
   const [geometrySource, setGeometrySource] = useState<'cad' | 'rect'>('cad');
+
+  // Coupon Input State
+  const [promoInput, setPromoInput] = useState('');
+  const [couponFeedback, setCouponFeedback] = useState<{ ok: boolean; text: string } | null>(null);
 
   // Checkout Form State
   const [buyerName, setBuyerName] = useState('');
@@ -63,16 +74,18 @@ export const OrderCartDrawer: React.FC = () => {
   const [gstin, setGstin] = useState('');
   const [shippingAddress, setShippingAddress] = useState('');
   const [paymentMethod, setPaymentMethod] = useState(
-    'Instant UPI / Lab Purchase Card Link (Express <₹15,000 Dispatch)'
+    'UPI / Purchase Card Link (Express <₹15,000 Dispatch)'
   );
   const [engineeringNotes, setEngineeringNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submittedOrderRef, setSubmittedOrderRef] = useState<string | null>(null);
   const [submittedSnapshot, setSubmittedSnapshot] = useState<{
     itemsManifest: string;
-    total: number;
     subtotal: number;
+    couponCode: string;
+    discount: number;
     gst: number;
+    total: number;
     cadName: string;
   } | null>(null);
 
@@ -112,6 +125,18 @@ export const OrderCartDrawer: React.FC = () => {
     gradeSku,
   });
 
+  // Next unlockable coupon hint for dynamic spend bar
+  const nextUnlockEval =
+    couponEvaluations
+      .filter((ev) => !ev.isEligible && ev.shortfallInr > 0)
+      .sort((a, b) => a.shortfallInr - b.shortfallInr)[0] || null;
+
+  // Best eligible coupon suggestion if none applied yet
+  const bestEligibleEval =
+    couponEvaluations
+      .filter((ev) => ev.isEligible)
+      .sort((a, b) => b.discountInr - a.discountInr)[0] || null;
+
   const handleProductSwitch = (newId: ProductSlugId) => {
     setSelectedProdId(newId);
     const prod = PRODUCTS.find((p) => p.id === newId);
@@ -145,10 +170,19 @@ export const OrderCartDrawer: React.FC = () => {
         quantity: qty,
         formulaNote: liveCalc.formulaExplanation,
         finishOption,
-        cadFileName: geometrySource === 'cad' ? attachedCadFile?.name || 'CAD to follow / attached' : 'Standard Rectangular Cut',
+        cadFileName:
+          geometrySource === 'cad'
+            ? attachedCadFile?.name || 'Custom CAD Profile'
+            : 'Rectangular Cut',
       },
       true
     );
+  };
+
+  const handleManualPromoSubmit = () => {
+    const res = applyCouponCode(promoInput);
+    setCouponFeedback({ ok: res.ok, text: res.message });
+    if (res.ok) setPromoInput('');
   };
 
   const buildManifestString = () =>
@@ -157,9 +191,7 @@ export const OrderCartDrawer: React.FC = () => {
         (it, idx) =>
           `${idx + 1}. [${it.sku}] ${it.title} | ${it.dimensionsLabel} | Qty: ${it.quantity} × ₹${it.unitPriceInr.toLocaleString('en-IN')} = ₹${Math.round(
             it.unitPriceInr * it.quantity
-          ).toLocaleString('en-IN')} (${it.formulaNote})${
-            it.cadFileName ? ` | CAD: ${it.cadFileName}` : ''
-          }`
+          ).toLocaleString('en-IN')}${it.cadFileName ? ` | CAD: ${it.cadFileName}` : ''}`
       )
       .join('\n');
 
@@ -170,53 +202,62 @@ export const OrderCartDrawer: React.FC = () => {
     setSubmitting(true);
     const orderRef = `ORD-IT-2026-${Math.floor(1000 + Math.random() * 9000)}`;
     const manifest = buildManifestString();
-    const cadName = attachedCadFile ? `${attachedCadFile.name} (${(attachedCadFile.size / 1024).toFixed(1)} KB)` : 'None (Standard Dimensions / SKU)';
+    const cadName = attachedCadFile
+      ? `${attachedCadFile.name} (${(attachedCadFile.size / 1024).toFixed(1)} KB)`
+      : 'None (Standard Dimensions / Kit SKU)';
+    const couponLabel = appliedCoupon
+      ? `${appliedCoupon.code} (-₹${couponDiscountInr.toLocaleString('en-IN')})`
+      : 'None Applied';
 
     try {
-      // 1. Netlify Multipart Submission (captures actual binary CAD file on insultherminnovations.netlify.app)
+      // 1. Netlify Multipart Submission
       const netlifyData = new FormData();
       netlifyData.append('form-name', 'insultherm-direct-order');
       netlifyData.append('order_reference', orderRef);
       netlifyData.append('route_to_email', COMPANY_INFO.routingEmail);
       netlifyData.append('buyer_name', buyerName);
-      netlifyData.append('company_name', companyName);
+      netlifyData.append('company_name', companyName || 'Individual / Prototyping');
       netlifyData.append('work_email', workEmail);
       netlifyData.append('phone', phone);
       netlifyData.append('gstin', gstin || 'Not Provided');
       netlifyData.append('shipping_address', shippingAddress);
       netlifyData.append('payment_method', paymentMethod);
       netlifyData.append('order_subtotal_inr', `₹${subtotalInr.toLocaleString('en-IN')}`);
+      netlifyData.append('applied_coupon', couponLabel);
+      netlifyData.append('coupon_discount_inr', `₹${couponDiscountInr.toLocaleString('en-IN')}`);
       netlifyData.append('order_gst_inr', `₹${gstInr.toLocaleString('en-IN')}`);
       netlifyData.append('order_total_inr', `₹${grandTotalInr.toLocaleString('en-IN')}`);
       netlifyData.append('line_items_manifest', manifest);
-      netlifyData.append('engineering_notes', engineeringNotes || 'Standard 24–48h CNC dispatch requested.');
+      netlifyData.append('engineering_notes', engineeringNotes || 'Standard 24–48h dispatch');
       if (attachedCadFile) {
         netlifyData.append('cad_attachment', attachedCadFile);
       }
 
-      await fetch('/', {
-        method: 'POST',
-        body: netlifyData,
-      }).catch(() => null);
+      await fetch('/', { method: 'POST', body: netlifyData }).catch(() => null);
 
-      // 2. Direct Multipart / AJAX Delivery to manavsb9719@gmail.com via FormSubmit
+      // 2. Direct Delivery to manavsb9719@gmail.com via FormSubmit
       const fsData = new FormData();
-      fsData.append('_subject', `[InsulTherm Direct Order ${orderRef}] ₹${grandTotalInr.toLocaleString('en-IN')} — ${companyName}`);
+      fsData.append(
+        '_subject',
+        `[InsulTherm Order ${orderRef}] ₹${grandTotalInr.toLocaleString('en-IN')} — ${companyName || buyerName}`
+      );
       fsData.append('_template', 'table');
       fsData.append('_captcha', 'false');
       fsData.append('Order_Reference', orderRef);
       fsData.append('Buyer_Name', buyerName);
-      fsData.append('Company_Organization', companyName);
-      fsData.append('Buyer_Email', workEmail);
+      fsData.append('Company_Or_Lab', companyName || 'Individual / Maker');
+      fsData.append('Email', workEmail);
       fsData.append('Phone', phone);
-      fsData.append('GSTIN', gstin || 'B2B Unregistered / R&D Petty Cash');
+      fsData.append('GSTIN', gstin || 'Unregistered / Prototyping');
       fsData.append('Shipping_Address', shippingAddress);
       fsData.append('Payment_Mode', paymentMethod);
-      fsData.append('Subtotal_INR', `Rs. ${subtotalInr.toLocaleString('en-IN')}`);
+      fsData.append('Base_Subtotal_INR', `Rs. ${subtotalInr.toLocaleString('en-IN')}`);
+      fsData.append('Applied_Offer_Coupon', couponLabel);
+      fsData.append('Net_Taxable_INR', `Rs. ${netTaxableInr.toLocaleString('en-IN')}`);
       fsData.append('GST_18_Percent', `Rs. ${gstInr.toLocaleString('en-IN')}`);
       fsData.append('Grand_Total_INR', `Rs. ${grandTotalInr.toLocaleString('en-IN')}`);
-      fsData.append('Attached_CAD_File_Summary', cadName);
-      fsData.append('Order_Line_Items', manifest);
+      fsData.append('Attached_CAD_File', cadName);
+      fsData.append('Line_Items', manifest);
       fsData.append('Engineering_Notes', engineeringNotes || 'None');
       if (attachedCadFile) {
         fsData.append('attachment', attachedCadFile);
@@ -230,9 +271,11 @@ export const OrderCartDrawer: React.FC = () => {
     } finally {
       setSubmittedSnapshot({
         itemsManifest: manifest,
-        total: grandTotalInr,
         subtotal: subtotalInr,
+        couponCode: appliedCoupon ? appliedCoupon.code : 'None',
+        discount: couponDiscountInr,
         gst: gstInr,
+        total: grandTotalInr,
         cadName,
       });
       setSubmittedOrderRef(orderRef);
@@ -241,24 +284,20 @@ export const OrderCartDrawer: React.FC = () => {
     }
   };
 
-  const handlePrintOrder = () => {
-    window.print();
-  };
-
   return (
-    <div className="fixed inset-0 z-[80] flex justify-end bg-[#14171A]/75 backdrop-blur-sm">
-      <div className="relative w-full max-w-2xl bg-[#FBFBF9] h-full shadow-2xl border-l border-[#E2E0D8] flex flex-col overflow-hidden">
-        {/* Chromatic Top Accent */}
-        <div className="h-1.5 w-full brand-chromatic-bar shrink-0" />
+    <div className="fixed inset-0 z-[80] flex justify-end bg-black/60 backdrop-blur-sm">
+      <div className="relative w-full max-w-2xl bg-white h-full shadow-2xl border-l border-gray-200 flex flex-col overflow-hidden">
+        {/* Signature Black & Red Top Rule */}
+        <div className="h-1.5 w-full insultherm-accent-bar shrink-0" />
 
         {/* Drawer Header */}
-        <div className="px-6 py-4 bg-white border-b border-[#E2E0D8] flex items-center justify-between gap-3 shrink-0">
+        <div className="px-6 py-4 bg-white border-b border-gray-200 flex items-center justify-between gap-3 shrink-0">
           <div>
-            <div className="text-[11px] font-mono uppercase tracking-widest text-[#E04819] font-semibold">
-              Zero-Tooling Direct Purchase & Custom CAD Desk
+            <div className="text-xs font-semibold uppercase tracking-wider text-[#DC2626]">
+              Direct Purchase & Custom CAD Checkout
             </div>
-            <h2 className="text-lg sm:text-xl font-display font-bold text-[#14171A]">
-              InsulTherm® Engineering Order & CAD Upload
+            <h2 className="text-lg sm:text-xl font-bold text-[#0F1115]">
+              Insul<span className="text-[#DC2626]">Therm</span> Order Desk
             </h2>
           </div>
           <button
@@ -268,7 +307,7 @@ export const OrderCartDrawer: React.FC = () => {
               closeDrawer();
             }}
             aria-label="Close Order Desk"
-            className="p-2 rounded border border-[#E2E0D8] hover:bg-[#14171A] hover:text-white transition-colors"
+            className="p-2 rounded-lg border border-gray-200 hover:bg-[#0F1115] hover:text-white transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -276,79 +315,81 @@ export const OrderCartDrawer: React.FC = () => {
 
         {/* Mode Switcher Tabs */}
         {!submittedOrderRef && (
-          <div className="grid grid-cols-2 bg-[#F6F5F1] border-b border-[#E2E0D8] p-1.5 gap-1.5 shrink-0">
+          <div className="grid grid-cols-2 bg-[#F7F8FA] border-b border-gray-200 p-1.5 gap-1.5 shrink-0">
             <button
               type="button"
               onClick={() => setActiveTab('configure')}
-              className={`py-2.5 px-3 rounded text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 transition-all ${
+              className={`py-2.5 px-3 rounded-md text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 transition-all ${
                 activeTab === 'configure'
-                  ? 'bg-[#14171A] text-white shadow-sm'
-                  : 'text-slate-700 hover:bg-white'
+                  ? 'bg-[#0F1115] text-white shadow-sm'
+                  : 'text-gray-700 hover:bg-white'
               }`}
             >
-              <Sliders className="w-4 h-4 text-[#E04819]" />
-              1. Configure Custom Part / CAD
+              <Sliders className="w-4 h-4 text-[#DC2626]" />
+              1. Configure Custom Part
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('checkout')}
-              className={`py-2.5 px-3 rounded text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 transition-all ${
+              className={`py-2.5 px-3 rounded-md text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 transition-all ${
                 activeTab === 'checkout'
-                  ? 'bg-[#E04819] text-white shadow-sm'
-                  : 'text-slate-700 hover:bg-white'
+                  ? 'bg-[#DC2626] text-white shadow-sm'
+                  : 'text-gray-700 hover:bg-white'
               }`}
             >
               <ShoppingBag className="w-4 h-4" />
-              2. Review & Place Order ({items.length})
+              2. Checkout & Offers ({items.length})
             </button>
           </div>
         )}
 
-        {/* Scrollable Body */}
+        {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6">
           {submittedOrderRef && submittedSnapshot ? (
-            /* ORDER SUCCESS RECEIPT */
-            <div className="bg-white border border-[#E2E0D8] rounded-md p-6 space-y-5">
+            /* ORDER CONFIRMATION */
+            <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-5">
               <div className="flex items-start gap-3.5">
-                <div className="w-11 h-11 rounded-full bg-emerald-100 border border-emerald-300 flex items-center justify-center shrink-0">
-                  <CheckCircle2 className="w-6 h-6 text-emerald-700" />
+                <div className="w-11 h-11 rounded-full bg-red-50 border border-red-200 flex items-center justify-center shrink-0">
+                  <CheckCircle2 className="w-6 h-6 text-[#DC2626]" />
                 </div>
                 <div>
-                  <span className="text-xs font-mono uppercase tracking-wider text-emerald-700 font-bold">
-                    Order Logged & Routed to Sanand CNC Desk
+                  <span className="text-xs font-semibold uppercase tracking-wider text-[#DC2626]">
+                    Order Logged & Routed
                   </span>
-                  <h3 className="text-2xl font-display font-bold text-[#14171A] mt-0.5">
-                    Order Reference: {submittedOrderRef}
+                  <h3 className="text-2xl font-bold text-[#0F1115] mt-0.5 tabular-nums">
+                    {submittedOrderRef}
                   </h3>
-                  <p className="text-sm text-slate-600 mt-1">
-                    Dispatched to <strong className="font-mono text-[#14171A]">{COMPANY_INFO.routingEmail}</strong> (cc:{' '}
-                    <span className="font-mono">{COMPANY_INFO.officialEmail}</span>). Our CAM team verifies CAD tolerances and issues your GST Proforma / UPI payment link within 2–4 business hours.
+                  <p className="text-sm text-gray-600 mt-1 leading-relaxed">
+                    Sent to <strong className="font-mono text-[#0F1115]">{COMPANY_INFO.routingEmail}</strong>. Our Sanand team confirms CAD tolerances and dispatches your GST Proforma / UPI payment link within 2–4 business hours.
                   </p>
                 </div>
               </div>
 
-              <div className="bg-[#F6F5F1] border border-[#E2E0D8] rounded p-4 font-mono text-xs space-y-2">
-                <div className="font-bold text-[#14171A] border-b border-[#E2E0D8] pb-1.5">
-                  ITEMIZED MANUFACTURING MANIFEST
+              <div className="bg-[#F7F8FA] border border-gray-200 rounded-lg p-4 font-mono text-xs space-y-2">
+                <div className="font-semibold text-[#0F1115] border-b border-gray-200 pb-1.5">
+                  ORDER SUMMARY
                 </div>
-                <pre className="whitespace-pre-wrap text-slate-700 leading-relaxed">
+                <pre className="whitespace-pre-wrap text-gray-700 leading-relaxed">
                   {submittedSnapshot.itemsManifest}
                 </pre>
-                <div className="border-t border-[#E2E0D8] pt-2 flex flex-col gap-1 text-slate-800">
+                <div className="border-t border-gray-200 pt-2 space-y-1 text-gray-800 tabular-nums">
                   <div className="flex justify-between">
-                    <span>Merchandise & CNC Subtotal (₹0 NRE):</span>
+                    <span>Base Subtotal (₹0 NRE):</span>
                     <span>₹{submittedSnapshot.subtotal.toLocaleString('en-IN')}</span>
                   </div>
+                  {submittedSnapshot.discount > 0 && (
+                    <div className="flex justify-between text-emerald-700 font-semibold">
+                      <span>Offer Applied ({submittedSnapshot.couponCode}):</span>
+                      <span>- ₹{submittedSnapshot.discount.toLocaleString('en-IN')}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span>GST (18%):</span>
                     <span>₹{submittedSnapshot.gst.toLocaleString('en-IN')}</span>
                   </div>
-                  <div className="flex justify-between font-bold text-sm text-[#E04819]">
-                    <span>Total Order Value:</span>
+                  <div className="flex justify-between font-bold text-sm text-[#DC2626] pt-1">
+                    <span>Total Payable:</span>
                     <span>₹{submittedSnapshot.total.toLocaleString('en-IN')}</span>
-                  </div>
-                  <div className="text-[11px] text-slate-500 pt-1">
-                    CAD Attachment: {submittedSnapshot.cadName}
                   </div>
                 </div>
               </div>
@@ -356,32 +397,31 @@ export const OrderCartDrawer: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <button
                   type="button"
-                  onClick={handlePrintOrder}
-                  className="py-2.5 px-4 rounded border border-[#14171A] text-[#14171A] hover:bg-[#14171A] hover:text-white text-xs font-semibold flex items-center justify-center gap-2 transition-colors"
+                  onClick={() => window.print()}
+                  className="py-2.5 px-4 rounded-lg border border-[#0F1115] text-[#0F1115] hover:bg-[#0F1115] hover:text-white text-xs font-semibold flex items-center justify-center gap-2 transition-colors"
                 >
                   <Printer className="w-4 h-4" />
-                  Print / Save Requisition PDF
+                  Print / Save Order PDF
                 </button>
                 <a
                   href={`mailto:${COMPANY_INFO.routingEmail}?cc=${COMPANY_INFO.officialEmail}&subject=${encodeURIComponent(
-                    `[${submittedOrderRef}] Direct Order Confirmation — ${companyName}`
+                    `[${submittedOrderRef}] InsulTherm Order — ${companyName || buyerName}`
                   )}&body=${encodeURIComponent(
-                    `Order Ref: ${submittedOrderRef}\nBuyer: ${buyerName} (${companyName})\nPhone: ${phone}\nPayment Mode: ${paymentMethod}\nTotal (incl. GST): Rs. ${submittedSnapshot.total.toLocaleString('en-IN')}\nCAD File: ${submittedSnapshot.cadName}\n\nManifest:\n${submittedSnapshot.itemsManifest}`
+                    `Order Ref: ${submittedOrderRef}\nBuyer: ${buyerName} (${companyName})\nPhone: ${phone}\nCoupon: ${submittedSnapshot.couponCode} (-Rs. ${submittedSnapshot.discount})\nTotal (incl. GST): Rs. ${submittedSnapshot.total.toLocaleString('en-IN')}\nCAD File: ${submittedSnapshot.cadName}\n\nItems:\n${submittedSnapshot.itemsManifest}`
                   )}`}
-                  className="py-2.5 px-4 rounded bg-[#E04819] hover:bg-[#BF360C] text-white text-xs font-semibold flex items-center justify-center gap-2 transition-colors"
+                  className="py-2.5 px-4 rounded-lg bg-[#DC2626] hover:bg-[#B91C1C] text-white text-xs font-semibold flex items-center justify-center gap-2 transition-colors"
                 >
                   <Mail className="w-4 h-4" />
-                  Send Instant Email Copy + Attach CAD
+                  Send Direct Email Copy
                 </a>
               </div>
             </div>
           ) : activeTab === 'configure' ? (
-            /* TAB 1: CUSTOM PART AREA CALCULATOR + CAD UPLOADER */
+            /* TAB 1: CUSTOM PART CONFIGURATOR */
             <div className="space-y-5">
-              {/* Material Selector */}
-              <div className="bg-white border border-[#E2E0D8] rounded-md p-4 space-y-3">
-                <label className="block text-xs font-mono uppercase tracking-wider text-slate-500 font-semibold">
-                  Step 1 — Select InsulTherm® Material Platform
+              <div className="bg-[#F7F8FA] border border-gray-200 rounded-lg p-4 space-y-3">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500">
+                  1. Select Material
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {PRODUCTS.map((p) => (
@@ -389,29 +429,25 @@ export const OrderCartDrawer: React.FC = () => {
                       key={p.id}
                       type="button"
                       onClick={() => handleProductSwitch(p.id)}
-                      className={`text-left p-2.5 rounded border transition-all ${
+                      className={`text-left p-3 rounded-lg border transition-all ${
                         selectedProdId === p.id
-                          ? 'border-[#E04819] bg-[#FFF3EE]'
-                          : 'border-[#E2E0D8] bg-[#FBFBF9] hover:border-slate-400'
+                          ? 'border-[#DC2626] bg-white shadow-sm ring-1 ring-[#DC2626]'
+                          : 'border-gray-200 bg-white/70 hover:border-gray-400'
                       }`}
                     >
-                      <div className="text-[10px] font-mono uppercase text-[#E04819] font-bold">
-                        {p.subBrandCode}
-                      </div>
-                      <div className="text-xs font-bold text-[#14171A]">{p.trademarkName}</div>
-                      <div className="text-[11px] text-slate-500 truncate">{p.protoPriceLabel}</div>
+                      <div className="text-sm font-bold text-[#0F1115]">{p.trademarkName}</div>
+                      <div className="text-xs text-gray-500 mt-0.5">{p.protoPriceLabel}</div>
                     </button>
                   ))}
                 </div>
 
-                {/* Grade & Thickness */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Grade / SKU</label>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">Grade</label>
                     <select
                       value={gradeSku}
                       onChange={(e) => setGradeSku(e.target.value)}
-                      className="w-full px-3 py-2 rounded border border-[#E2E0D8] bg-white text-xs font-medium text-[#14171A]"
+                      className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white text-xs font-medium text-[#0F1115]"
                     >
                       {activeModel.gradeOptions.map((g) => (
                         <option key={g.sku} value={g.sku}>
@@ -421,11 +457,13 @@ export const OrderCartDrawer: React.FC = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Thickness</label>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">
+                      Thickness
+                    </label>
                     <select
                       value={thicknessMm}
                       onChange={(e) => setThicknessMm(Number(e.target.value))}
-                      className="w-full px-3 py-2 rounded border border-[#E2E0D8] bg-white text-xs font-medium text-[#14171A]"
+                      className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white text-xs font-medium text-[#0F1115]"
                     >
                       {activeModel.thicknessOptions.map((t) => (
                         <option key={t.mm} value={t.mm}>
@@ -437,34 +475,34 @@ export const OrderCartDrawer: React.FC = () => {
                 </div>
               </div>
 
-              {/* Step 2: Upload Custom CAD File OR Standard Rectangle */}
-              <div className="bg-white border border-[#E2E0D8] rounded-md p-4 space-y-3">
+              {/* Dimensions + CAD Upload */}
+              <div className="bg-[#F7F8FA] border border-gray-200 rounded-lg p-4 space-y-4">
                 <div className="flex items-center justify-between">
-                  <label className="block text-xs font-mono uppercase tracking-wider text-slate-500 font-semibold">
-                    Step 2 — Custom CAD File Upload (.DXF / .STEP / .PDF)
+                  <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    2. Part Size & Custom CAD
                   </label>
-                  <div className="flex gap-1.5">
+                  <div className="flex gap-1">
                     <button
                       type="button"
                       onClick={() => setGeometrySource('cad')}
-                      className={`px-2.5 py-1 rounded text-[11px] font-semibold ${
+                      className={`px-2.5 py-1 rounded text-xs font-semibold ${
                         geometrySource === 'cad'
-                          ? 'bg-[#14171A] text-white'
-                          : 'bg-[#F6F5F1] text-slate-600'
+                          ? 'bg-[#0F1115] text-white'
+                          : 'bg-white text-gray-600 border border-gray-200'
                       }`}
                     >
-                      Custom CAD Cut
+                      Custom CAD
                     </button>
                     <button
                       type="button"
                       onClick={() => setGeometrySource('rect')}
-                      className={`px-2.5 py-1 rounded text-[11px] font-semibold ${
+                      className={`px-2.5 py-1 rounded text-xs font-semibold ${
                         geometrySource === 'rect'
-                          ? 'bg-[#14171A] text-white'
-                          : 'bg-[#F6F5F1] text-slate-600'
+                          ? 'bg-[#0F1115] text-white'
+                          : 'bg-white text-gray-600 border border-gray-200'
                       }`}
                     >
-                      Simple L×W Rectangle
+                      Rectangle
                     </button>
                   </div>
                 </div>
@@ -472,7 +510,7 @@ export const OrderCartDrawer: React.FC = () => {
                 {geometrySource === 'cad' && (
                   <div
                     onClick={() => fileInputConfigRef.current?.click()}
-                    className="border-2 border-dashed border-[#E04819]/50 hover:border-[#E04819] bg-[#FFF3EE]/50 rounded-md p-4 text-center cursor-pointer transition-colors"
+                    className="border-2 border-dashed border-gray-300 hover:border-[#DC2626] bg-white rounded-lg p-4 text-center cursor-pointer transition-colors"
                   >
                     <input
                       ref={fileInputConfigRef}
@@ -484,38 +522,35 @@ export const OrderCartDrawer: React.FC = () => {
                     {attachedCadFile ? (
                       <div className="flex items-center justify-between gap-3 text-left">
                         <div className="flex items-center gap-2.5 min-w-0">
-                          <FileCode2 className="w-6 h-6 text-[#E04819] shrink-0" />
+                          <FileCode2 className="w-5 h-5 text-[#DC2626] shrink-0" />
                           <div className="min-w-0">
-                            <div className="text-xs font-bold text-[#14171A] truncate">
+                            <div className="text-xs font-bold text-[#0F1115] truncate">
                               {attachedCadFile.name}
                             </div>
-                            <div className="text-[11px] font-mono text-emerald-700">
-                              {(attachedCadFile.size / 1024).toFixed(1)} KB • Attached for CNC Nesting
+                            <div className="text-xs text-gray-500">
+                              {(attachedCadFile.size / 1024).toFixed(1)} KB attached
                             </div>
                           </div>
                         </div>
-                        <span className="text-xs font-semibold text-[#E04819] shrink-0 underline">
-                          Replace File
-                        </span>
+                        <span className="text-xs font-semibold text-[#DC2626] shrink-0">Change</span>
                       </div>
                     ) : (
                       <div className="space-y-1">
-                        <Upload className="w-6 h-6 text-[#E04819] mx-auto" />
-                        <div className="text-xs font-bold text-[#14171A]">
-                          Click to Upload Custom .DXF, .STEP, .IGES, .DWG, .PDF or .ZIP
+                        <Upload className="w-5 h-5 text-[#DC2626] mx-auto" />
+                        <div className="text-xs font-semibold text-[#0F1115]">
+                          Upload .DXF, .STEP, .IGES, or .PDF Drawing
                         </div>
-                        <div className="text-[11px] text-slate-500">
-                          Enter bounding-box Length × Width below for instant area pricing (₹0 Tooling NRE)
+                        <div className="text-xs text-gray-500">
+                          Enter part Length × Width below for instant area price
                         </div>
                       </div>
                     )}
                   </div>
                 )}
 
-                {/* Bounding Box Dimensions + Quantity */}
-                <div className="grid grid-cols-3 gap-3 pt-1">
+                <div className="grid grid-cols-3 gap-3">
                   <div>
-                    <label className="block text-[11px] font-mono text-slate-600 mb-1">
+                    <label className="block text-xs font-medium text-gray-600 mb-1">
                       Length (mm)
                     </label>
                     <input
@@ -524,11 +559,11 @@ export const OrderCartDrawer: React.FC = () => {
                       max={1000}
                       value={lengthMm}
                       onChange={(e) => setLengthMm(Number(e.target.value))}
-                      className="w-full px-3 py-2 rounded border border-[#E2E0D8] font-mono text-sm font-bold text-[#14171A]"
+                      className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white font-mono text-sm font-semibold"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-mono text-slate-600 mb-1">
+                    <label className="block text-xs font-medium text-gray-600 mb-1">
                       Width (mm)
                     </label>
                     <input
@@ -537,32 +572,30 @@ export const OrderCartDrawer: React.FC = () => {
                       max={1000}
                       value={widthMm}
                       onChange={(e) => setWidthMm(Number(e.target.value))}
-                      className="w-full px-3 py-2 rounded border border-[#E2E0D8] font-mono text-sm font-bold text-[#14171A]"
+                      className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white font-mono text-sm font-semibold"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-mono text-slate-600 mb-1">
-                      Quantity (pcs)
-                    </label>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Quantity</label>
                     <input
                       type="number"
                       min={1}
                       max={100000}
                       value={qty}
                       onChange={(e) => setQty(Number(e.target.value))}
-                      className="w-full px-3 py-2 rounded border border-[#E2E0D8] font-mono text-sm font-bold text-[#14171A]"
+                      className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white font-mono text-sm font-semibold"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-mono text-slate-600 mb-1">
-                    CNC Converting / Liner Finish
+                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                    Cut / Scoring Option
                   </label>
                   <select
                     value={finishOption}
                     onChange={(e) => setFinishOption(e.target.value)}
-                    className="w-full px-3 py-2 rounded border border-[#E2E0D8] bg-white text-xs font-medium text-[#14171A]"
+                    className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white text-xs font-medium"
                   >
                     {FINISH_OPTIONS.map((opt) => (
                       <option key={opt} value={opt}>
@@ -573,74 +606,68 @@ export const OrderCartDrawer: React.FC = () => {
                 </div>
               </div>
 
-              {/* Transparent Area Price Breakdown Box */}
-              <div className="bg-[#14171A] text-white rounded-md p-5 space-y-3">
-                <div className="flex items-center justify-between text-xs font-mono text-amber-400">
+              {/* Live Price Box */}
+              <div className="bg-[#0F1115] text-white rounded-lg p-5 space-y-3 tabular-nums">
+                <div className="flex items-center justify-between text-xs text-gray-400">
                   <span>{liveCalc.tierName}</span>
-                  <span>Part Area: {liveCalc.areaCm2} cm²</span>
+                  <span className="font-mono text-white">Area: {liveCalc.areaCm2} cm²</span>
                 </div>
-                <div className="grid grid-cols-3 gap-3 border-y border-slate-800 py-3">
+                <div className="grid grid-cols-3 gap-3 border-y border-gray-800 py-3">
                   <div>
-                    <div className="text-[10px] font-mono uppercase text-slate-400">Unit Price</div>
-                    <div className="text-xl font-mono font-bold text-white">
+                    <div className="text-xs text-gray-400">Unit Price</div>
+                    <div className="text-xl font-bold text-white">
                       ₹{liveCalc.unitPriceInr.toLocaleString('en-IN')}
                     </div>
                   </div>
                   <div>
-                    <div className="text-[10px] font-mono uppercase text-slate-400">Effective Rate</div>
-                    <div className="text-base font-mono font-bold text-emerald-400">
+                    <div className="text-xs text-gray-400">Area Rate</div>
+                    <div className="text-base font-semibold text-gray-200">
                       ₹{liveCalc.effectiveRatePerCm2}/cm²
                     </div>
                   </div>
                   <div>
-                    <div className="text-[10px] font-mono uppercase text-slate-400">
-                      Line Subtotal ({qty} pcs)
-                    </div>
-                    <div className="text-xl font-mono font-bold text-[#E04819]">
+                    <div className="text-xs text-gray-400">Line Total</div>
+                    <div className="text-xl font-bold text-[#DC2626]">
                       ₹{liveCalc.lineSubtotalInr.toLocaleString('en-IN')}
                     </div>
                   </div>
                 </div>
-                <div className="text-xs font-mono text-slate-300 leading-relaxed">
-                  Formula: {liveCalc.formulaExplanation} • Steel-Die NRE: ₹0 (Saves ₹40,000)
-                </div>
+                <div className="text-xs text-gray-400">{liveCalc.formulaExplanation}</div>
                 <button
                   type="button"
                   onClick={handleAddConfiguredPart}
-                  className="w-full py-3 px-4 rounded bg-[#E04819] hover:bg-[#BF360C] text-white text-sm font-bold flex items-center justify-center gap-2 transition-colors shadow-md"
+                  className="w-full py-3 px-4 rounded-lg bg-[#DC2626] hover:bg-[#B91C1C] text-white text-sm font-bold flex items-center justify-center gap-2 transition-colors"
                 >
                   <Plus className="w-4 h-4" />
-                  Add Custom Part to Order & Proceed to Checkout
+                  Add to Order & View Checkout Offers
                 </button>
               </div>
             </div>
           ) : (
-            /* TAB 2: REVIEW ORDER CART + ATTACH CAD + DIRECT PURCHASE FORM */
+            /* TAB 2: CHECKOUT + B2B / PROTOTYPING COUPON ENGINE */
             <div className="space-y-6">
               {items.length === 0 ? (
-                <div className="bg-white border border-[#E2E0D8] rounded-md p-6 text-center space-y-4">
-                  <ShoppingBag className="w-10 h-10 text-slate-300 mx-auto" />
+                <div className="bg-[#F7F8FA] border border-gray-200 rounded-lg p-6 text-center space-y-4">
+                  <ShoppingBag className="w-10 h-10 text-gray-300 mx-auto" />
                   <div>
-                    <h3 className="text-base font-display font-bold text-[#14171A]">
-                      Your Engineering Order Cart is Empty
-                    </h3>
-                    <p className="text-xs text-slate-500 mt-1">
-                      Configure a custom area-priced CAD part or add a ready-to-ship R&D Kit / Pro-Bench Pack below:
+                    <h3 className="text-base font-bold text-[#0F1115]">Your Order Cart is Empty</h3>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Configure a custom CAD part or add a ready-to-ship R&D / Starter Kit below:
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => setActiveTab('configure')}
-                    className="py-2.5 px-4 rounded bg-[#14171A] hover:bg-[#E04819] text-white text-xs font-semibold transition-colors"
+                    className="py-2.5 px-5 rounded-lg bg-[#0F1115] hover:bg-[#DC2626] text-white text-xs font-semibold transition-colors"
                   >
-                    + Configure Custom CAD Part (Any L × W mm)
+                    + Configure Custom Part
                   </button>
 
-                  <div className="pt-3 border-t border-[#E2E0D8] text-left space-y-2">
-                    <div className="text-[11px] font-mono uppercase text-slate-400 font-semibold">
-                      1-Click Quick-Add Express SKUs:
+                  <div className="pt-4 border-t border-gray-200 text-left space-y-2.5">
+                    <div className="text-xs font-semibold text-gray-500">
+                      Quick-Add Kits & Starter Packs:
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                       {RND_KITS.slice(0, 2).map((kit) => (
                         <button
                           key={kit.id}
@@ -650,40 +677,44 @@ export const OrderCartDrawer: React.FC = () => {
                               sku: kit.sku,
                               title: kit.name,
                               itemType: 'kit-bundle',
-                              dimensionsLabel: 'Turnkey R&D Kit (<₹15k Petty-Cash)',
+                              dimensionsLabel: 'Turnkey R&D Kit',
                               unitPriceInr: kit.priceInr,
                               quantity: 1,
-                              formulaNote: `${kit.leadTime} • Includes CoC`,
+                              formulaNote: kit.leadTime,
                             })
                           }
-                          className="p-2.5 rounded border border-[#E2E0D8] hover:border-[#E04819] bg-[#FBFBF9] text-left"
+                          className="p-3 rounded-lg border border-gray-200 hover:border-[#DC2626] bg-white text-left"
                         >
-                          <div className="text-xs font-bold text-[#14171A] line-clamp-1">{kit.name}</div>
-                          <div className="text-xs font-mono text-[#E04819] font-semibold mt-0.5">
-                            + Add @ {kit.priceLabel}
+                          <div className="text-xs font-bold text-[#0F1115] line-clamp-1">
+                            {kit.name}
+                          </div>
+                          <div className="text-xs font-semibold text-[#DC2626] mt-1">
+                            + Add Full Kit ({kit.priceLabel})
                           </div>
                         </button>
                       ))}
-                      {PRO_BENCH_PACKS.slice(0, 2).map((pack) => (
+                      {RND_KITS.filter((k) => k.starterPriceInr).slice(0, 2).map((kit) => (
                         <button
-                          key={pack.id}
+                          key={`${kit.id}-starter`}
                           type="button"
                           onClick={() =>
                             addItem({
-                              sku: pack.sku,
-                              title: pack.name,
-                              itemType: 'pro-bench',
-                              dimensionsLabel: pack.packCountLabel,
-                              unitPriceInr: pack.priceInr,
+                              sku: kit.starterSku || `${kit.sku}-MINI`,
+                              title: `${kit.name} — Starter`,
+                              itemType: 'kit-bundle',
+                              dimensionsLabel: kit.starterLabel || 'Starter Pack',
+                              unitPriceInr: kit.starterPriceInr!,
                               quantity: 1,
-                              formulaNote: `${pack.brandLine} • Off-the-Shelf`,
+                              formulaNote: 'Prototyping Starter Pack',
                             })
                           }
-                          className="p-2.5 rounded border border-[#E2E0D8] hover:border-emerald-600 bg-[#FBFBF9] text-left"
+                          className="p-3 rounded-lg border border-gray-200 hover:border-[#0F1115] bg-white text-left"
                         >
-                          <div className="text-xs font-bold text-[#14171A] line-clamp-1">{pack.name}</div>
-                          <div className="text-xs font-mono text-emerald-700 font-semibold mt-0.5">
-                            + Add @ ₹{pack.priceInr}
+                          <div className="text-xs font-bold text-[#0F1115] line-clamp-1">
+                            {kit.starterLabel}
+                          </div>
+                          <div className="text-xs font-semibold text-gray-600 mt-1">
+                            + Add Starter Pack
                           </div>
                         </button>
                       ))}
@@ -692,49 +723,100 @@ export const OrderCartDrawer: React.FC = () => {
                 </div>
               ) : (
                 <>
-                  {/* Line Items */}
-                  <div className="bg-white border border-[#E2E0D8] rounded-md divide-y divide-[#E2E0D8]">
-                    <div className="px-4 py-2.5 bg-[#F6F5F1] flex items-center justify-between">
-                      <span className="text-xs font-mono uppercase tracking-wider font-semibold text-slate-600">
-                        Order Line Items ({items.length})
+                  {/* Dynamic Spend-Unlock Progress Banner */}
+                  <div className="bg-[#0F1115] text-white rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-start gap-2.5">
+                      <Tag className="w-4 h-4 text-[#DC2626] shrink-0 mt-0.5" />
+                      <div className="text-xs leading-relaxed">
+                        {appliedCoupon ? (
+                          <span>
+                            Offer <strong className="font-mono text-[#DC2626]">{appliedCoupon.code}</strong> active — saving{' '}
+                            <strong className="text-emerald-400">
+                              ₹{couponDiscountInr.toLocaleString('en-IN')}
+                            </strong>
+                            !
+                            {nextUnlockEval && (
+                              <span className="text-gray-400">
+                                {' '}
+                                (Add ₹{nextUnlockEval.shortfallInr.toLocaleString('en-IN')} more to unlock{' '}
+                                {nextUnlockEval.coupon.code})
+                              </span>
+                            )}
+                          </span>
+                        ) : bestEligibleEval ? (
+                          <span>
+                            You unlocked{' '}
+                            <strong className="font-mono text-white">
+                              {bestEligibleEval.coupon.code}
+                            </strong>{' '}
+                            — save{' '}
+                            <strong className="text-emerald-400">
+                              ₹{bestEligibleEval.discountInr.toLocaleString('en-IN')}
+                            </strong>{' '}
+                            right now!
+                          </span>
+                        ) : nextUnlockEval ? (
+                          <span>
+                            Add{' '}
+                            <strong className="text-white">
+                              ₹{nextUnlockEval.shortfallInr.toLocaleString('en-IN')}
+                            </strong>{' '}
+                            more to unlock{' '}
+                            <strong className="font-mono text-[#DC2626]">
+                              {nextUnlockEval.coupon.code}
+                            </strong>{' '}
+                            ({nextUnlockEval.coupon.badge}).
+                          </span>
+                        ) : null}
+                      </div>
+                    </div>
+                    {!appliedCoupon && bestEligibleEval && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const res = applyCouponCode(bestEligibleEval.coupon.code);
+                          setCouponFeedback({ ok: res.ok, text: res.message });
+                        }}
+                        className="px-3 py-1.5 rounded bg-[#DC2626] hover:bg-[#B91C1C] text-white text-xs font-bold shrink-0"
+                      >
+                        Apply Best Offer
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Cart Line Items */}
+                  <div className="bg-white border border-gray-200 rounded-lg divide-y divide-gray-200">
+                    <div className="px-4 py-3 bg-[#F7F8FA] flex items-center justify-between">
+                      <span className="text-xs font-semibold text-gray-700">
+                        Order Items ({items.length})
                       </span>
                       <button
                         type="button"
                         onClick={() => setActiveTab('configure')}
-                        className="text-xs font-semibold text-[#E04819] hover:underline"
+                        className="text-xs font-semibold text-[#DC2626] hover:underline"
                       >
-                        + Add Another Custom Part
+                        + Add Another Item
                       </button>
                     </div>
 
                     {items.map((item) => (
-                      <div key={item.uid} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div className="space-y-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#14171A] text-white font-semibold">
-                              {item.sku}
-                            </span>
-                            <span className="text-xs sm:text-sm font-bold text-[#14171A]">
-                              {item.title}
-                            </span>
-                          </div>
-                          <div className="text-xs font-mono text-slate-600">{item.dimensionsLabel}</div>
-                          <div className="text-[11px] text-slate-500">{item.formulaNote}</div>
-                          {item.finishOption && (
-                            <div className="text-[11px] text-[#E04819] font-medium">
-                              Finish: {item.finishOption}
-                            </div>
-                          )}
+                      <div
+                        key={item.uid}
+                        className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                      >
+                        <div className="space-y-0.5 min-w-0">
+                          <div className="text-sm font-bold text-[#0F1115]">{item.title}</div>
+                          <div className="text-xs text-gray-500">{item.dimensionsLabel}</div>
                         </div>
 
-                        <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0">
-                          <div className="flex items-center border border-[#E2E0D8] rounded bg-[#FBFBF9]">
+                        <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 tabular-nums">
+                          <div className="flex items-center border border-gray-200 rounded-lg bg-[#F7F8FA]">
                             <button
                               type="button"
                               onClick={() => updateQuantity(item.uid, item.quantity - 1)}
-                              className="p-1.5 hover:bg-slate-200 text-slate-700"
+                              className="p-1.5 hover:bg-gray-200 text-gray-700"
                             >
-                              <Minus className="w-3 h-3" />
+                              <Minus className="w-3.5 h-3.5" />
                             </button>
                             <input
                               type="number"
@@ -743,31 +825,29 @@ export const OrderCartDrawer: React.FC = () => {
                               onChange={(e) =>
                                 updateQuantity(item.uid, Math.max(1, Number(e.target.value) || 1))
                               }
-                              className="w-14 text-center text-xs font-mono font-bold bg-transparent focus:outline-none"
+                              className="w-12 text-center text-xs font-mono font-bold bg-transparent focus:outline-none"
                             />
                             <button
                               type="button"
                               onClick={() => updateQuantity(item.uid, item.quantity + 1)}
-                              className="p-1.5 hover:bg-slate-200 text-slate-700"
+                              className="p-1.5 hover:bg-gray-200 text-gray-700"
                             >
-                              <Plus className="w-3 h-3" />
+                              <Plus className="w-3.5 h-3.5" />
                             </button>
                           </div>
 
-                          <div className="text-right min-w-[82px]">
-                            <div className="text-sm font-mono font-bold text-[#14171A]">
+                          <div className="text-right min-w-[84px]">
+                            <div className="text-sm font-bold text-[#0F1115]">
                               ₹{Math.round(item.unitPriceInr * item.quantity).toLocaleString('en-IN')}
                             </div>
-                            <div className="text-[10px] font-mono text-slate-500">
-                              ₹{item.unitPriceInr}/pc
-                            </div>
+                            <div className="text-xs text-gray-500">₹{item.unitPriceInr}/pc</div>
                           </div>
 
                           <button
                             type="button"
                             onClick={() => removeItem(item.uid)}
                             aria-label="Remove item"
-                            className="p-1.5 text-slate-400 hover:text-red-600"
+                            className="p-1.5 text-gray-400 hover:text-[#DC2626]"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -776,25 +856,144 @@ export const OrderCartDrawer: React.FC = () => {
                     ))}
                   </div>
 
-                  {/* Master CAD Upload Box in Checkout */}
-                  <div className="bg-white border border-[#E2E0D8] rounded-md p-4">
+                  {/* EXCITING B2B & PROTOTYPING CHECKOUT OFFERS SECTION */}
+                  <div className="bg-[#F7F8FA] border border-gray-200 rounded-lg p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#0F1115]">
+                        <Tag className="w-3.5 h-3.5 text-[#DC2626]" />
+                        B2B & Prototyping Offers (Select or Enter Code)
+                      </div>
+                      {appliedCoupon && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            removeCoupon();
+                            setCouponFeedback(null);
+                          }}
+                          className="text-xs font-semibold text-[#DC2626] hover:underline"
+                        >
+                          Remove {appliedCoupon.code}
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Manual Code Input */}
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={promoInput}
+                        onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
+                        placeholder="Enter coupon code (e.g. PROTO10, RNDKIT1000)"
+                        className="flex-1 px-3 py-2 rounded-lg border border-gray-300 bg-white text-xs font-mono uppercase"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleManualPromoSubmit}
+                        className="px-4 py-2 rounded-lg bg-[#0F1115] hover:bg-[#DC2626] text-white text-xs font-bold transition-colors"
+                      >
+                        Apply
+                      </button>
+                    </div>
+
+                    {couponFeedback && (
+                      <div
+                        className={`text-xs font-medium px-3 py-2 rounded-lg ${
+                          couponFeedback.ok
+                            ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                            : 'bg-red-50 text-red-800 border border-red-200'
+                        }`}
+                      >
+                        {couponFeedback.text}
+                      </div>
+                    )}
+
+                    {/* 4 Interactive Coupon Cards */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                      {couponEvaluations.map(({ coupon, isEligible, reasonText }) => {
+                        const isApplied = appliedCoupon?.code === coupon.code;
+                        return (
+                          <div
+                            key={coupon.code}
+                            className={`rounded-lg border p-3 bg-white flex flex-col justify-between transition-all ${
+                              isApplied
+                                ? 'border-[#DC2626] ring-1 ring-[#DC2626]'
+                                : isEligible
+                                ? 'border-gray-300 hover:border-[#0F1115]'
+                                : 'border-gray-200 opacity-75'
+                            }`}
+                          >
+                            <div className="space-y-1">
+                              <div className="flex items-center justify-between gap-1.5">
+                                <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-[#0F1115] text-white">
+                                  {coupon.code}
+                                </span>
+                                <span className="text-[11px] font-semibold text-[#DC2626]">
+                                  {coupon.badge}
+                                </span>
+                              </div>
+                              <div className="text-xs font-bold text-[#0F1115] pt-0.5">
+                                {coupon.title}
+                              </div>
+                              <p className="text-[11px] text-gray-500 leading-snug">
+                                {coupon.description}
+                              </p>
+                            </div>
+
+                            <div className="pt-2.5 mt-2.5 border-t border-gray-100 flex items-center justify-between gap-2">
+                              <span
+                                className={`text-[11px] font-medium ${
+                                  isEligible ? 'text-emerald-700' : 'text-gray-500'
+                                }`}
+                              >
+                                {reasonText}
+                              </span>
+                              {isApplied ? (
+                                <span className="inline-flex items-center gap-1 text-xs font-bold text-[#DC2626] shrink-0">
+                                  <Check className="w-3.5 h-3.5" /> Applied
+                                </span>
+                              ) : (
+                                <button
+                                  type="button"
+                                  disabled={!isEligible}
+                                  onClick={() => {
+                                    const res = applyCouponCode(coupon.code);
+                                    setCouponFeedback({ ok: res.ok, text: res.message });
+                                  }}
+                                  className={`px-2.5 py-1 rounded text-xs font-bold shrink-0 ${
+                                    isEligible
+                                      ? 'bg-[#DC2626] hover:bg-[#B91C1C] text-white'
+                                      : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                  }`}
+                                >
+                                  Apply
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Optional CAD Attachment in Checkout */}
+                  <div className="bg-white border border-gray-200 rounded-lg p-4">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-mono uppercase tracking-wider text-slate-600 font-semibold">
-                        Attach Custom CAD / Drawing Package (Optional for Std SKUs)
+                      <span className="text-xs font-semibold text-gray-700">
+                        Custom CAD / Drawing Attachment (Optional for Kits & Std Sizes)
                       </span>
                       {attachedCadFile && (
                         <button
                           type="button"
                           onClick={() => setAttachedCadFile(null)}
-                          className="text-[11px] text-red-600 hover:underline"
+                          className="text-xs text-[#DC2626] hover:underline"
                         >
-                          Remove File
+                          Remove
                         </button>
                       )}
                     </div>
                     <div
                       onClick={() => fileInputCheckoutRef.current?.click()}
-                      className="border border-dashed border-slate-300 hover:border-[#E04819] rounded p-3 bg-[#FBFBF9] cursor-pointer flex items-center justify-between gap-3"
+                      className="border border-dashed border-gray-300 hover:border-[#DC2626] rounded-lg p-3 bg-[#F7F8FA] cursor-pointer flex items-center justify-between gap-3"
                     >
                       <input
                         ref={fileInputCheckoutRef}
@@ -804,87 +1003,98 @@ export const OrderCartDrawer: React.FC = () => {
                         className="hidden"
                       />
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <Upload className="w-4 h-4 text-[#E04819] shrink-0" />
-                        <span className="text-xs text-slate-700 truncate font-medium">
+                        <Upload className="w-4 h-4 text-[#DC2626] shrink-0" />
+                        <span className="text-xs text-gray-700 truncate font-medium">
                           {attachedCadFile
                             ? `${attachedCadFile.name} (${(attachedCadFile.size / 1024).toFixed(1)} KB)`
-                            : 'Upload .DXF, .STEP, .IGES, .PDF drawing or .ZIP bundle'}
+                            : 'Attach .DXF, .STEP, .PDF drawing or .ZIP package'}
                         </span>
                       </div>
-                      <span className="text-xs font-semibold text-[#E04819] shrink-0">Browse</span>
+                      <span className="text-xs font-semibold text-[#DC2626] shrink-0">Browse</span>
                     </div>
                   </div>
 
-                  {/* GST & Totals Summary */}
-                  <div className="bg-[#F6F5F1] border border-[#E2E0D8] rounded-md p-4 space-y-1.5 text-xs font-mono">
-                    <div className="flex justify-between text-slate-600">
-                      <span>Subtotal (Parts & Digital CNC Nesting):</span>
-                      <span>₹{subtotalInr.toLocaleString('en-IN')}</span>
+                  {/* Clean Pricing & Tax Summary */}
+                  <div className="bg-[#F7F8FA] border border-gray-200 rounded-lg p-4 space-y-2 text-sm tabular-nums">
+                    <div className="flex justify-between text-gray-600">
+                      <span>Base Merchandise Subtotal:</span>
+                      <span className="font-semibold text-[#0F1115]">
+                        ₹{subtotalInr.toLocaleString('en-IN')}
+                      </span>
                     </div>
-                    <div className="flex justify-between text-emerald-700 font-semibold">
-                      <span>Custom Steel-Die / Mold NRE Fee:</span>
-                      <span>₹0 (Waived)</span>
+                    <div className="flex justify-between text-gray-600">
+                      <span>Steel-Die / Mold Tooling NRE:</span>
+                      <span className="font-semibold text-emerald-700">₹0 (Waived)</span>
                     </div>
-                    <div className="flex justify-between text-slate-600">
-                      <span>GST @ 18% (B2B Input Credit Eligible):</span>
+                    {appliedCoupon && couponDiscountInr > 0 && (
+                      <div className="flex justify-between text-emerald-700 font-semibold">
+                        <span>Coupon Discount ({appliedCoupon.code}):</span>
+                        <span>- ₹{couponDiscountInr.toLocaleString('en-IN')}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-gray-600">
+                      <span>GST (18%):</span>
                       <span>₹{gstInr.toLocaleString('en-IN')}</span>
                     </div>
-                    <div className="border-t border-[#E2E0D8] pt-2 flex justify-between text-base font-bold text-[#14171A]">
-                      <span>Total Order Value:</span>
-                      <span className="text-[#E04819]">₹{grandTotalInr.toLocaleString('en-IN')}</span>
+                    <div className="border-t border-gray-200 pt-2.5 flex justify-between text-base font-bold text-[#0F1115]">
+                      <span>Total Payable:</span>
+                      <span className="text-[#DC2626]">
+                        ₹{grandTotalInr.toLocaleString('en-IN')}
+                      </span>
                     </div>
                   </div>
 
-                  {/* Buyer & Dispatch Form */}
-                  <form onSubmit={handlePlaceOrder} className="bg-white border border-[#E2E0D8] rounded-md p-5 space-y-4">
-                    <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[#14171A] font-bold">
-                      <Sparkles className="w-4 h-4 text-[#E04819]" />
-                      Dispatch & Payment Details (Routes to {COMPANY_INFO.routingEmail})
-                    </div>
+                  {/* Buyer Details Form */}
+                  <form
+                    onSubmit={handlePlaceOrder}
+                    className="bg-white border border-gray-200 rounded-lg p-5 space-y-4"
+                  >
+                    <h3 className="text-sm font-bold text-[#0F1115]">
+                      Delivery & Billing Information
+                    </h3>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">
-                          Buyer / Engineer Name *
+                        <label className="block text-xs font-semibold text-gray-700 mb-1">
+                          Full Name *
                         </label>
                         <input
                           type="text"
                           required
                           value={buyerName}
                           onChange={(e) => setBuyerName(e.target.value)}
-                          placeholder="e.g. Rohan Kulkarni"
-                          className="w-full px-3 py-2 rounded border border-[#E2E0D8] text-xs"
+                          placeholder="Your Name"
+                          className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">
-                          Company / Lab / Team *
+                        <label className="block text-xs font-semibold text-gray-700 mb-1">
+                          Company / Lab (Optional for B2C)
                         </label>
                         <input
                           type="text"
-                          required
                           value={companyName}
                           onChange={(e) => setCompanyName(e.target.value)}
-                          placeholder="e.g. VoltGrid Energy Pvt Ltd"
-                          className="w-full px-3 py-2 rounded border border-[#E2E0D8] text-xs"
+                          placeholder="Company, Startup, or Individual"
+                          className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">
-                          Official Email *
+                        <label className="block text-xs font-semibold text-gray-700 mb-1">
+                          Email Address *
                         </label>
                         <input
                           type="email"
                           required
                           value={workEmail}
                           onChange={(e) => setWorkEmail(e.target.value)}
-                          placeholder="rohan@company.in"
-                          className="w-full px-3 py-2 rounded border border-[#E2E0D8] text-xs"
+                          placeholder="name@domain.com"
+                          className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">
-                          Direct Phone / WhatsApp *
+                        <label className="block text-xs font-semibold text-gray-700 mb-1">
+                          Phone / WhatsApp *
                         </label>
                         <input
                           type="tel"
@@ -892,89 +1102,87 @@ export const OrderCartDrawer: React.FC = () => {
                           value={phone}
                           onChange={(e) => setPhone(e.target.value)}
                           placeholder="+91 98XXX XXXXX"
-                          className="w-full px-3 py-2 rounded border border-[#E2E0D8] text-xs"
+                          className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm"
                         />
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">
-                          Buyer GSTIN (Optional for B2B Tax Credit)
+                        <label className="block text-xs font-semibold text-gray-700 mb-1">
+                          Buyer GSTIN (Optional for B2B Input Credit)
                         </label>
                         <input
                           type="text"
                           value={gstin}
                           onChange={(e) => setGstin(e.target.value.toUpperCase())}
                           placeholder="24AAAAA0000A1Z5"
-                          className="w-full px-3 py-2 rounded border border-[#E2E0D8] text-xs font-mono"
+                          className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm font-mono"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">
-                          Preferred Payment / PO Mode *
+                        <label className="block text-xs font-semibold text-gray-700 mb-1">
+                          Payment / PO Mode *
                         </label>
                         <select
                           value={paymentMethod}
                           onChange={(e) => setPaymentMethod(e.target.value)}
-                          className="w-full px-3 py-2 rounded border border-[#E2E0D8] bg-white text-xs font-medium"
+                          className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm"
                         >
-                          <option value="Instant UPI / Lab Purchase Card Link (Express <₹15,000 Dispatch)">
-                            Instant UPI / Card Payment Link (&lt;₹15k Express)
+                          <option value="UPI / Purchase Card Link (Express <₹15,000 Dispatch)">
+                            UPI / Card Link (&lt;₹15k Express)
                           </option>
-                          <option value="GST Proforma Invoice — 100% Advance NEFT / RTGS">
+                          <option value="GST Proforma Invoice — NEFT / RTGS">
                             GST Proforma Invoice — NEFT / RTGS
                           </option>
-                          <option value="Corporate / Defense PSU Formal Purchase Order (PO)">
-                            Corporate / PSU Formal Purchase Order
+                          <option value="Corporate / PSU Formal Purchase Order">
+                            Corporate / PSU Purchase Order
                           </option>
                         </select>
                       </div>
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        Delivery Address & PIN Code *
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">
+                        Shipping Address & PIN Code *
                       </label>
                       <input
                         type="text"
                         required
                         value={shippingAddress}
                         onChange={(e) => setShippingAddress(e.target.value)}
-                        placeholder="Plot / Lab Wing, Industrial Area, City, State – PIN"
-                        className="w-full px-3 py-2 rounded border border-[#E2E0D8] text-xs"
+                        placeholder="Street, Industrial Area / Campus, City, State – PIN"
+                        className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        Tolerance / Adhesive / Special Converting Notes
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">
+                        Special Converting / Order Notes
                       </label>
                       <textarea
                         rows={2}
                         value={engineeringNotes}
                         onChange={(e) => setEngineeringNotes(e.target.value)}
-                        placeholder="e.g. Maintain 1.5 mm Kapton overhang on outer perimeter; ship in ESD pouch."
-                        className="w-full px-3 py-2 rounded border border-[#E2E0D8] text-xs"
+                        placeholder="Optional tolerance, adhesive, or delivery notes..."
+                        className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm"
                       />
                     </div>
 
                     <button
                       type="submit"
                       disabled={submitting}
-                      className="w-full py-3.5 px-5 rounded bg-[#E04819] hover:bg-[#BF360C] disabled:opacity-60 text-white text-sm font-bold flex items-center justify-center gap-2 shadow-md transition-colors"
+                      className="w-full py-3.5 px-5 rounded-lg bg-[#DC2626] hover:bg-[#B91C1C] disabled:opacity-60 text-white text-sm font-bold flex items-center justify-center gap-2 shadow-sm transition-colors"
                     >
                       <Send className="w-4 h-4" />
                       {submitting
-                        ? 'Transmitting Order & CAD Package...'
-                        : `Submit Official Order (₹${grandTotalInr.toLocaleString('en-IN')}) →`}
+                        ? 'Submitting Order...'
+                        : `Place Order — ₹${grandTotalInr.toLocaleString('en-IN')} →`}
                     </button>
 
-                    <div className="flex items-center justify-center gap-2 text-[11px] text-slate-500">
-                      <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>
-                        NDA-Protected CAD Handling • 24–48h Sanand GIDC Dispatch • Zero Tooling NRE
-                      </span>
+                    <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
+                      <ShieldCheck className="w-4 h-4 text-[#0F1115] shrink-0" />
+                      <span>Routes directly to {COMPANY_INFO.routingEmail} • 24–48h Dispatch</span>
                     </div>
                   </form>
                 </>
