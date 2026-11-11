@@ -89,9 +89,9 @@ PRODUCTS_TDS = [
             ["System Voltage Architecture", "Up to 1,500V DC BESS, Solar & Rail Busbars", "IEC 60664-1 Clearance"],
         ],
         "variants": [
-            ["Shield-FGK-043", "Flame-Retardant Polypropylene (Formex™ GK-17 equiv.), 0.43 mm, Matte Black", "₹45 / folded pc (1–50 pcs)", "₹30 / pc (Volume)"],
-            ["Shield-NMX-050", "High-Temp Aramid / PET Duplex (Nomex® 410 equiv.), 0.50 mm, Amber/Natural", "₹45 / folded pc (1–50 pcs)", "₹30 / pc (Volume)"],
-            ["Custom CAD Profile", "24–48h Digital CNC Cut & Score from .DXF / .STEP (Zero NRE Tooling Fee)", "₹0 NRE | MOQ: 1 pc", "Rotary Toll >10k/mo"],
+            ["Shield-FGK-043", "Formex™ GK-17 equiv. Polypropylene, 0.43 mm (100 cm² ref. shroud)", "₹45 / pc (₹0.45/cm², min ₹25)", "₹30 / pc (₹0.30/cm² nested)"],
+            ["Shield-NMX-050", "Nomex® 410 equiv. Aramid/PET Duplex, 0.50 mm (100 cm² ref. shroud)", "₹45 / pc (₹0.45/cm², min ₹25)", "₹30 / pc (₹0.30/cm² nested)"],
+            ["Custom Tray / Shroud", "Custom .DXF/.STEP 3D Origami (Priced by flat-pattern cm² area, ₹0 NRE)", "₹0.45 / cm² (1–99 pcs)", "₹0.28–0.30 / cm² (≥100 pcs)"],
         ],
         "applications": [
             "1,500V DC solar string inverters, industrial Variable Frequency Drives (VFDs), and UPS collector isolation.",
@@ -145,9 +145,9 @@ PRODUCTS_TDS = [
             ["Particulate / Dust Control", "Mica-faced & edge-consolidated assembly", "InsulTherm QC-BAR-02"],
         ],
         "variants": [
-            ["Barrier-MA1-150", "0.20mm Phlogopite Mica + 1.20mm Silica Aerogel + 0.10mm FR-PSA (1.50 mm)", "₹110 / custom sheet (Proto)", "₹85 / sheet (Volume)"],
-            ["Barrier-MK2-165", "Dual-Mica + Silica Aerogel + Kapton® HV Polyimide Encapsulation (1.65 mm)", "₹110 / custom sheet (Proto)", "₹85 / sheet (Volume)"],
-            ["AIS-156 Pack Kit", "Turnkey Custom-Cut Core™ + Barrier™ + Shield™ Homologation Pack Bundle", "₹14,500 / kit (₹3,499 starter)", "Ships in 48 Hours"],
+            ["Barrier-MA1-150", "0.20mm Mica + 1.20mm Silica Aerogel + FR-PSA (100 cm² ref. cell sheet)", "₹110 / sheet (₹1.10/cm²)", "₹85 / sheet (₹0.85/cm² area)"],
+            ["Barrier-MK2-165", "Dual-Mica + Aerogel + Kapton® HV Encapsulation (100 cm² ref. sheet)", "₹110 / sheet (₹1.10/cm²)", "₹85 / sheet (₹0.85/cm² area)"],
+            ["Custom BESS / AIS-156", "280Ah/314Ah LFP Custom Cutouts (Exact quote by sheet cm²; Kit ₹14,500)", "₹1.10 / cm² (min ₹55/pc)", "₹0.85 / cm² nested (≥100 pcs)"],
         ],
         "applications": [
             "Grid-scale 20-ft BESS containers: vertical inter-cell thermal runaway firewalls between 280Ah–314Ah prismatic LiFePO4 cells.",
@@ -202,9 +202,9 @@ PRODUCTS_TDS = [
             ["Procurement Sovereignty", "100% India DVA (< ₹200 Cr MoD GTE Compliant)", "Make-in-India Class I/II"],
         ],
         "variants": [
-            ["GFlex-1000", "0.025mm Kapton® Cap + Dual Graphite (1,000 W/m·K) + E-Glass Scrim + E595 PSA", "₹350 – ₹1,200 / custom part", "Instant Area Quote"],
-            ["GFlex-1500", "Satellite & Phased-Array Radar High-Crystallinity Grade (1,500 W/m·K)", "₹650 – ₹1,800 / custom part", "Zero MOQ (1–500 pcs)"],
-            ["Space/Defense Kit", "Defense, Avionics & SpaceTech Zero-Outgassing Sampler Kit (GFlex + Ultra-NS)", "₹12,500 / turnkey lab kit", "Ships in 48 Hours"],
+            ["GFlex-1000 (Area-Rated)", "Kapton® Cap + Graphite (1,000 W/m·K) + Scrim: ≤25cm² ₹350 | +₹5.50/cm²", "₹350–₹1,800 / pc (by cm²)", "₹3.20 / cm² nested (min ₹28)"],
+            ["GFlex-1500 (Area-Rated)", "Satellite/Radar Grade (1,500 W/m·K): ≤25cm² ₹550 | +₹7.50/cm² up to 300cm²", "₹550–₹1,800 / pc (by cm²)", "₹4.60 / cm² nested (min ₹38)"],
+            ["Space/Defense Kit", "Turnkey Zero-Outgassing Sampler Kit (GFlex + Ultra-NS + ASTM E595 Trace)", "₹12,500 / turnkey lab kit", "Ships in 48 Hours"],
         ],
         "applications": [
             "Defense UAV flight computers, phased-array radar Transmit/Receive (T/R) modules, and seeker electronics (BEL, HAL, DRDO, private primes).",
@@ -259,9 +259,9 @@ PRODUCTS_TDS = [
             ["Continuous Operating Temp", "-50°C to +200°C", "IEC 60216"],
         ],
         "variants": [
-            ["Core-300 (Custom Proto)", "Custom CNC-Cut R&D Pad from .DXF/.STEP (0.5–3.0 mm, Zero NRE)", "₹80 / custom pad (Proto)", "48-Hour Dispatch"],
-            ["Core-BMS-50x50", "Standard Pre-Cut 50 × 50 mm MOSFET / BMS Thermal Conduction Pad", "₹20 / std 50×50mm pad", "In-Stock Rapid Ship"],
-            ["Core-350D (OEM Blanket)", "High-Dielectric Woven E-Glass Anti-Puncture Grade (Annual Blanket)", "₹68 / pad (Y2 Scale)", "₹61.20 / pad (Y3 Blanket)"],
+            ["Core-300 (Area-Rated)", "Custom CNC Pad (100 cm² ref. = ₹80; scaled @ ₹0.80/cm² by area & thickness)", "₹80 / 100cm² (min ₹35/pc)", "₹61.20 / 100cm² (₹0.61/cm²)"],
+            ["Core-BMS-50x50", "Standard Pre-Cut 50 × 50 mm (25 cm²) MOSFET / BMS Thermal Conduction Pad", "₹20 / std 50×50mm pad", "In-Stock Rapid Ship"],
+            ["Core-350D (OEM Blanket)", "High-Dielectric Woven E-Glass Anti-Puncture Grade (100 cm² ref. pad)", "₹68 / 100cm² (Y2 Scale)", "₹61.20 / 100cm² (Y3 Blanket)"],
         ],
         "applications": [
             "EV traction battery module bottom cell-to-liquid-cold-plate thermal draining interfaces during ARAI AIS-156 rapid prototyping.",
@@ -315,8 +315,8 @@ PRODUCTS_TDS = [
             ["Operating Temperature Range", "-55°C to +200°C (550) / -40°C to +125°C (NS)", "IEC 60216"],
         ],
         "variants": [
-            ["Ultra-550", "Functionalized Siloxane + 82% Bimodal Al2O3 + Aligned h-BN (AI Cold Plates & SiC)", "₹140 / custom pad (Proto)", "₹95 / pad (Volume)"],
-            ["Ultra-NS (Non-Silicone)", "100% Siloxane-Free Hybrid TIM for 800G Optical Transceivers & Medical Systems", "₹140 / custom pad (Proto)", "₹95 / pad (Volume)"],
+            ["Ultra-550 (Area-Rated)", "82% Bimodal Al2O3 + Aligned h-BN (100 cm² ref. = ₹140; ₹1.40/cm² proto)", "₹140 / 100cm² (min ₹50/pc)", "₹95 / 100cm² (₹0.95/cm² vol)"],
+            ["Ultra-NS (Non-Silicone)", "100% Siloxane-Free Optical/AI Grade (100 cm² ref. = ₹140; ₹1.40/cm² proto)", "₹140 / 100cm² (min ₹50/pc)", "₹95 / 100cm² (₹0.95/cm² vol)"],
             ["Inverter / SiC Kit", "Power Electronics, Rail & SiC Isolation Kit (TO-247 / EconoDUAL + Shield™)", "₹999 (25-pc) | ₹7,500 (Line)", "Ships in 48 Hours"],
         ],
         "applications": [

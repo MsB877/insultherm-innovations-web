@@ -1,438 +1,569 @@
 import React, { useState } from 'react';
 import {
-  FileText,
-  ShoppingCart,
-  Search,
-  Filter,
-  Layers,
+  FileDown,
+  ShoppingBag,
+  Upload,
+  Maximize2,
   CheckCircle2,
-  PackageCheck,
+  Layers,
+  Info,
+  Wrench,
   Sparkles,
 } from 'lucide-react';
-import { CORE_PRODUCTS, TURNKEY_BUNDLES, ProductItem } from '../data/companyData';
+import { PRODUCTS, RND_KITS, PRO_BENCH_PACKS, ProductSpec } from '../data/companyData';
+import { calculatePartPrice, PRICING_MODELS } from '../utils/pricingEngine';
+import { useOrderCart } from '../context/OrderCartContext';
 import { ParametricComparisonMatrix } from '../components/ParametricComparisonMatrix';
-import { InquiryPreset } from '../components/InquiryModal';
+import { LightboxImagePayload } from '../components/ImageLightbox';
 
 interface ProductsPageProps {
-  onOpenInquiry: (preset?: InquiryPreset) => void;
+  onOpenLightbox: (img: LightboxImagePayload) => void;
 }
 
-export const ProductsPage: React.FC<ProductsPageProps> = ({ onOpenInquiry }) => {
-  const [categoryFilter, setCategoryFilter] = useState<string>('all');
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [selectedVariants, setSelectedVariants] = useState<Record<string, number>>({});
-  const [activeTabByProd, setActiveTabByProd] = useState<Record<string, 'stack' | 'specs'>>({});
+const ProductDossierCard: React.FC<{
+  product: ProductSpec;
+  index: number;
+  onOpenLightbox: (img: LightboxImagePayload) => void;
+}> = ({ product, index, onOpenLightbox }) => {
+  const { addItem, openConfigurator } = useOrderCart();
+  const model = PRICING_MODELS[product.id];
 
-  const categories = [
-    { id: 'all', label: 'All 5 Core Products' },
-    { id: 'dielectric-origami', label: '3D Dielectric Origami' },
-    { id: 'fire-containment', label: '1,100°C Runaway Firewalls' },
-    { id: 'lateral-spreader', label: 'Pyrolytic Graphite Spreaders' },
-    { id: 'vertical-tim', label: 'Vertical Conduction TIMs' },
-  ];
+  const [len, setLen] = useState<number>(product.defaultLengthMm);
+  const [wid, setWid] = useState<number>(product.defaultWidthMm);
+  const [qty, setQty] = useState<number>(product.id === 'insultherm-graphite-flex' ? 10 : 25);
 
-  const filteredProducts = CORE_PRODUCTS.filter((p) => {
-    const matchesCategory = categoryFilter === 'all' || p.category === categoryFilter;
-    const q = searchQuery.trim().toLowerCase();
-    const matchesSearch =
-      !q ||
-      p.name.toLowerCase().includes(q) ||
-      p.tagline.toLowerCase().includes(q) ||
-      p.materialBaseShort.toLowerCase().includes(q) ||
-      p.applications.some((a) => a.toLowerCase().includes(q)) ||
-      p.variants.some((v) => v.code.toLowerCase().includes(q));
-    return matchesCategory && matchesSearch;
+  const livePrice = calculatePartPrice({
+    productId: product.id,
+    lengthMm: len,
+    widthMm: wid,
+    quantity: qty,
+    thicknessMm: product.defaultThicknessMm,
   });
 
-  const getVariantIndex = (prodId: string) => selectedVariants[prodId] || 0;
-  const getActiveTab = (prodId: string) => activeTabByProd[prodId] || 'stack';
-
   return (
-    <div className="bg-slate-50 min-h-screen pb-20">
-      {/* Page Hero */}
-      <section className="bg-[#0B192C] text-white border-b border-slate-800 bg-dark-grid py-12 sm:py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
-          <div className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-orange-400 font-bold">
-            <Layers className="w-4 h-4" />
-            <span>Products &amp; Technical Engineering Catalog</span>
-          </div>
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight">
-            5 Core Proprietary Interface Materials &amp; Pricing
-          </h1>
-          <p className="text-sm sm:text-base text-slate-300 max-w-3xl leading-relaxed">
-            Inspect full internal layer stacks, ASTM / UL / IEC test parameters, transparent prototype &amp; OEM pricing tiers, and standalone 2-page Technical Data Sheets (PDF) across our entire portfolio.
-          </p>
+    <article
+      id={product.id}
+      className="bg-white border border-[#E2E0D8] rounded-md shadow-sm overflow-hidden"
+    >
+      {/* Top Banner */}
+      <div className="px-6 py-4 bg-[#14171A] text-white flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <span className="font-mono text-xs px-2.5 py-1 rounded bg-[#E04819] text-white font-bold">
+            0{index + 1} • {product.subBrandCode}
+          </span>
+          <span className="text-xs font-mono text-slate-300 hidden sm:inline">
+            {product.category} • {product.revenueShareMix}
+          </span>
         </div>
-      </section>
+        <div className="flex items-center gap-2">
+          <a
+            href={product.tdsUrl}
+            download
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-xs font-mono font-semibold text-amber-300 border border-slate-700 transition-colors"
+          >
+            <FileDown className="w-3.5 h-3.5" />
+            Download 2-Page TDS PDF
+          </a>
+          <button
+            type="button"
+            onClick={() => openConfigurator(product.id)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#E04819] hover:bg-[#BF360C] text-xs font-bold text-white transition-colors"
+          >
+            <Upload className="w-3.5 h-3.5" />
+            Upload CAD
+          </button>
+        </div>
+      </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-16">
-        {/* Filter & Search Bar */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-sm flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 text-xs font-mono uppercase text-slate-500 mr-1">
-              <Filter className="w-3.5 h-3.5 text-orange-600" />
-              Filter:
+      <div className="p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Left 5 Cols: Uncropped Studio Imagery + Layer Stackup */}
+        <div className="lg:col-span-5 space-y-5">
+          <div
+            onClick={() =>
+              onOpenLightbox({
+                src: product.heroImage,
+                title: `${product.trademarkName} — Multi-Layer Architecture`,
+                subtitle: product.shortTagline,
+                badge: product.subBrandCode,
+                description: product.summary,
+              })
+            }
+            className="relative bg-[#FBFBF9] border border-[#E2E0D8] rounded-md p-3 flex items-center justify-center min-h-[250px] cursor-zoom-in group"
+          >
+            <img
+              src={product.heroImage}
+              alt={product.trademarkName}
+              className="max-h-[260px] w-auto max-w-full object-contain group-hover:scale-[1.02] transition-transform"
+            />
+            <span className="absolute bottom-3 right-3 px-2.5 py-1 rounded bg-[#14171A]/85 text-white text-[11px] font-mono inline-flex items-center gap-1 group-hover:bg-[#E04819]">
+              <Maximize2 className="w-3 h-3" />
+              Click for Full View
             </span>
-            {categories.map((cat) => (
-              <button
-                key={cat.id}
-                type="button"
-                onClick={() => setCategoryFilter(cat.id)}
-                className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-colors ${
-                  categoryFilter === cat.id
-                    ? 'bg-slate-900 text-white'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                }`}
+          </div>
+
+          {product.secondaryImage && (
+            <div
+              onClick={() =>
+                onOpenLightbox({
+                  src: product.secondaryImage!,
+                  title: `${product.trademarkName} — Engineering Validation / Converted Geometry`,
+                  subtitle: 'Full Uncropped View',
+                  badge: 'Validation Plate',
+                })
+              }
+              className="bg-[#F6F5F1] border border-[#E2E0D8] rounded-md p-2.5 flex items-center justify-between gap-3 cursor-zoom-in hover:border-[#E04819] transition-colors"
+            >
+              <img
+                src={product.secondaryImage}
+                alt={`${product.name} validation`}
+                className="h-16 w-24 object-contain bg-white rounded border border-[#E2E0D8] p-1 shrink-0"
+              />
+              <div className="min-w-0 flex-1">
+                <div className="text-[10px] font-mono uppercase text-[#E04819] font-bold">
+                  Companion Engineering Plate
+                </div>
+                <div className="text-xs font-bold text-[#14171A] truncate">
+                  Click to Inspect Full Uncropped Simulation / Cutout
+                </div>
+              </div>
+              <Maximize2 className="w-4 h-4 text-slate-500 shrink-0 mr-1" />
+            </div>
+          )}
+
+          {/* Multi-Layer Stack */}
+          <div className="bg-[#F6F5F1] border border-[#E2E0D8] rounded-md p-4 space-y-2.5">
+            <div className="flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-[#14171A] font-bold">
+              <Layers className="w-3.5 h-3.5 text-[#E04819]" />
+              Cross-Section Laminate Architecture
+            </div>
+            {product.layers.map((layer) => (
+              <div
+                key={layer.code}
+                className="bg-white border border-[#E2E0D8] rounded p-2.5 flex items-start gap-2.5"
               >
-                {cat.label}
-              </button>
+                <span className="px-1.5 py-0.5 rounded bg-[#14171A] text-white font-mono text-[10px] font-bold shrink-0 mt-0.5">
+                  {layer.code}
+                </span>
+                <div>
+                  <div className="text-xs font-bold text-[#14171A]">{layer.name}</div>
+                  <div className="text-[11px] text-slate-600">{layer.spec}</div>
+                </div>
+              </div>
             ))}
           </div>
+        </div>
 
-          <div className="relative w-full lg:w-80">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search k, UL 94, SiC, BESS, E595..."
-              className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-300 text-xs sm:text-sm focus:border-orange-600 focus:outline-none"
-            />
+        {/* Right 7 Cols: Specs + Crystal-Clear Area Pricing Table + Instant Order Box */}
+        <div className="lg:col-span-7 space-y-6">
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-display font-bold text-[#14171A]">
+              {product.trademarkName}
+            </h2>
+            <p className="text-sm font-semibold text-[#E04819] mt-0.5">{product.shortTagline}</p>
+            <p className="text-sm text-slate-700 leading-relaxed mt-3">{product.summary}</p>
           </div>
-        </div>
 
-        {/* Detailed 5-Product Technical Cards */}
-        <div className="space-y-10">
-          {filteredProducts.map((product: ProductItem) => {
-            const vIdx = getVariantIndex(product.id);
-            const activeVariant = product.variants[vIdx] || product.variants[0];
-            const detailTab = getActiveTab(product.id);
-
-            return (
-              <article
-                key={product.id}
-                id={product.slug}
-                className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden"
-              >
-                <div className="grid grid-cols-1 lg:grid-cols-12">
-                  {/* Left 5 Cols: Studio Macro Image, Badges & Pricing Schedule */}
-                  <div className="lg:col-span-5 bg-slate-900 text-white p-6 flex flex-col justify-between space-y-6">
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between gap-2">
-                        <span
-                          className={`${product.badgeColor} text-white text-[11px] font-mono font-bold uppercase px-2.5 py-1 rounded`}
-                        >
-                          {product.categoryLabel}
-                        </span>
-                        <span className="text-xs font-mono text-slate-400">{product.tdsDocCode}</span>
-                      </div>
-
-                      <div className="rounded-xl overflow-hidden border border-slate-700 bg-slate-950">
-                        <img
-                          src={product.image}
-                          alt={`${product.name} Macro Studio View`}
-                          className="w-full h-56 sm:h-64 object-cover"
-                        />
-                      </div>
-
-                      <div className="flex flex-wrap gap-1.5">
-                        {product.quickBadges.map((badge) => (
-                          <span
-                            key={badge}
-                            className="px-2.5 py-1 rounded bg-slate-800 border border-slate-700 font-mono text-[11px] text-orange-300"
-                          >
-                            {badge}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Explicit Documented Pricing Structure */}
-                    <div className="bg-slate-800/90 border border-slate-700 rounded-xl p-4 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-mono uppercase tracking-wider text-orange-400 font-bold">
-                          Official Pricing Structure
-                        </span>
-                        <span className="text-[11px] font-mono text-emerald-400">₹0 Tooling NRE</span>
-                      </div>
-
-                      <div className="space-y-2 divide-y divide-slate-700/80">
-                        {product.pricingTiers.map((tier) => (
-                          <div key={tier.tierName} className="pt-2 first:pt-0">
-                            <div className="flex items-baseline justify-between gap-2">
-                              <span className="text-xs text-slate-300 font-medium">
-                                {tier.tierName}
-                              </span>
-                              <span className="font-mono text-sm font-extrabold text-white shrink-0">
-                                {tier.priceDisplay}
-                              </span>
-                            </div>
-                            <div className="text-[11px] text-slate-400 mt-0.5">{tier.notes}</div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Primary Action Buttons: Download TDS (PDF) & Request to Buy */}
-                    <div className="space-y-2.5">
-                      <a
-                        href={product.tdsUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-full inline-flex items-center justify-center gap-2 bg-white hover:bg-slate-100 text-slate-900 text-xs sm:text-sm font-extrabold px-4 py-3 rounded-xl transition-colors"
-                      >
-                        <FileText className="w-4 h-4 text-orange-600 shrink-0" />
-                        <span>View / Download Technical Data Sheet (PDF)</span>
-                      </a>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          onOpenInquiry({
-                            productName: product.name,
-                            variant: activeVariant.name,
-                            pricingTier: `${activeVariant.protoPriceLabel} | ${activeVariant.volumePriceLabel}`,
-                          })
-                        }
-                        className="w-full inline-flex items-center justify-center gap-2 bg-orange-600 hover:bg-orange-500 text-white text-xs sm:text-sm font-bold px-4 py-3 rounded-xl shadow-md transition-colors"
-                      >
-                        <ShoppingCart className="w-4 h-4 shrink-0" />
-                        <span>Request to Buy — {product.shortName}</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Right 7 Cols: Chemistry, Premix Variant Selector, Layer Stack & Specs */}
-                  <div className="lg:col-span-7 p-6 sm:p-8 space-y-6">
-                    <div>
-                      <div className="text-xs font-mono text-orange-600 font-bold uppercase">
-                        {product.revenueShare} • {product.targetSectors.join(' • ')}
-                      </div>
-                      <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">
-                        {product.name}
-                      </h2>
-                      <p className="text-sm font-semibold text-slate-600 mt-1">{product.tagline}</p>
-                      <p className="text-sm text-slate-700 leading-relaxed mt-3">
-                        {product.chemistryDescription}
-                      </p>
-                    </div>
-
-                    {/* Selectable Online Premix Variants */}
-                    <div className="bg-slate-50 rounded-xl border border-slate-200 p-4 space-y-3">
-                      <div className="text-xs font-mono uppercase tracking-wider text-slate-500 font-bold">
-                        Selectable Premix Grades &amp; Thicknesses
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                        {product.variants.map((v, idx) => (
-                          <button
-                            key={v.code}
-                            type="button"
-                            onClick={() =>
-                              setSelectedVariants((prev) => ({ ...prev, [product.id]: idx }))
-                            }
-                            className={`text-left p-3 rounded-xl border transition-all ${
-                              vIdx === idx
-                                ? 'bg-white border-orange-600 ring-1 ring-orange-600 shadow-sm'
-                                : 'bg-white/70 border-slate-200 hover:border-slate-400'
-                            }`}
-                          >
-                            <div className="flex items-center justify-between">
-                              <span className="font-mono text-xs font-extrabold text-slate-900">
-                                {v.code}
-                              </span>
-                              <span className="text-[11px] font-mono text-orange-700 font-bold">
-                                {v.protoPriceLabel.split('(')[0].trim()}
-                              </span>
-                            </div>
-                            <div className="text-xs font-semibold text-slate-800 mt-1">
-                              {v.name}
-                            </div>
-                            <div className="text-[11px] text-slate-600 mt-1 leading-snug">
-                              {v.chemistrySummary}
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                      <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                        <span className="text-[11px] font-mono text-slate-500 mr-1">
-                          Available Thicknesses ({activeVariant.code}):
-                        </span>
-                        {activeVariant.thicknessOptions.map((th) => (
-                          <span
-                            key={th}
-                            className="px-2 py-0.5 rounded bg-white border border-slate-300 font-mono text-[11px] font-semibold text-slate-800"
-                          >
-                            {th}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Sub-Tabs: Layer Architecture vs Physical/Thermal/Electrical Specs */}
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-2 border-b border-slate-200">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setActiveTabByProd((prev) => ({ ...prev, [product.id]: 'stack' }))
-                          }
-                          className={`px-4 py-2 text-xs font-mono uppercase font-bold border-b-2 transition-colors ${
-                            detailTab === 'stack'
-                              ? 'border-orange-600 text-orange-600'
-                              : 'border-transparent text-slate-500 hover:text-slate-800'
-                          }`}
-                        >
-                          Internal Layer Architecture ({product.layers.length}-Layer)
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setActiveTabByProd((prev) => ({ ...prev, [product.id]: 'specs' }))
-                          }
-                          className={`px-4 py-2 text-xs font-mono uppercase font-bold border-b-2 transition-colors ${
-                            detailTab === 'specs'
-                              ? 'border-orange-600 text-orange-600'
-                              : 'border-transparent text-slate-500 hover:text-slate-800'
-                          }`}
-                        >
-                          ASTM / UL Technical Properties
-                        </button>
-                      </div>
-
-                      {detailTab === 'stack' ? (
-                        <div className="space-y-2">
-                          {product.layers.map((layer) => (
-                            <div
-                              key={layer.index}
-                              className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 p-3 rounded-xl border border-slate-200 bg-slate-50/60"
-                            >
-                              <span
-                                className={`${layer.accentClass} px-2.5 py-1 rounded font-mono text-xs font-bold shrink-0 w-fit`}
-                              >
-                                {layer.index}
-                              </span>
-                              <div className="min-w-0">
-                                <div className="text-xs font-bold text-slate-900">
-                                  {layer.title}
-                                </div>
-                                <div className="text-xs text-slate-600">{layer.detail}</div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="overflow-x-auto rounded-xl border border-slate-200">
-                          <table className="w-full text-left border-collapse text-xs">
-                            <thead>
-                              <tr className="bg-slate-900 text-white font-mono">
-                                <th className="p-2.5">Property</th>
-                                <th className="p-2.5">Typical Engineering Value</th>
-                                <th className="p-2.5">Test Standard</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-200">
-                              {product.specsTable.map((row) => (
-                                <tr key={row.parameter} className="hover:bg-slate-50">
-                                  <td className="p-2.5 font-semibold text-slate-900">
-                                    {row.parameter}
-                                  </td>
-                                  <td className="p-2.5 font-mono font-bold text-slate-800">
-                                    {row.value}
-                                  </td>
-                                  <td className="p-2.5 text-slate-500 font-mono">{row.method}</td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Applications List */}
-                    <div className="pt-2 border-t border-slate-100">
-                      <div className="text-xs font-mono uppercase text-slate-500 font-bold mb-2">
-                        Validated Hardware Use Cases
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        {product.applications.map((app) => (
-                          <div key={app} className="flex items-start gap-2 text-xs text-slate-700">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
-                            <span>{app}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-
-        {/* Interactive Side-by-Side Parametric Comparison Matrix */}
-        <section id="comparison-matrix" className="pt-4">
-          <ParametricComparisonMatrix onOpenInquiry={onOpenInquiry} />
-        </section>
-
-        {/* Turnkey R&D Kits Section */}
-        <section className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 space-y-6 shadow-sm">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <div className="inline-flex items-center gap-1.5 text-xs font-mono uppercase text-orange-600 font-bold mb-1">
-                <PackageCheck className="w-4 h-4" />
-                <span>1-Click Turnkey R&amp;D Sampler Bundles (&lt;₹15,000 Petty-Cash Limit)</span>
+          {/* Core Specs Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div className="p-3 rounded bg-[#FBFBF9] border border-[#E2E0D8]">
+              <div className="text-[10px] font-mono uppercase text-slate-500">
+                Thermal Conductivity
               </div>
-              <h3 className="text-2xl font-extrabold text-slate-900">
-                Pre-Packaged Multi-IP Engineering Kits
-              </h3>
+              <div className="text-xs font-mono font-bold text-[#14171A] mt-0.5">
+                {product.thermalConductivity}
+              </div>
             </div>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-xs font-mono font-bold text-amber-900">
-              <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-              Ships in 48 Hours • No 3-Quote Empanelment Delay
-            </span>
+            <div className="p-3 rounded bg-[#FBFBF9] border border-[#E2E0D8]">
+              <div className="text-[10px] font-mono uppercase text-slate-500">
+                Dielectric Strength
+              </div>
+              <div className="text-xs font-mono font-bold text-[#14171A] mt-0.5">
+                {product.dielectricStrength}
+              </div>
+            </div>
+            <div className="p-3 rounded bg-[#FBFBF9] border border-[#E2E0D8]">
+              <div className="text-[10px] font-mono uppercase text-slate-500">Operating Temp</div>
+              <div className="text-xs font-mono font-bold text-[#14171A] mt-0.5">
+                {product.operatingTemp}
+              </div>
+            </div>
+            <div className="p-3 rounded bg-[#FBFBF9] border border-[#E2E0D8]">
+              <div className="text-[10px] font-mono uppercase text-slate-500">Thicknesses</div>
+              <div className="text-xs font-mono font-bold text-[#14171A] mt-0.5">
+                {product.thicknessRange}
+              </div>
+            </div>
+            <div className="p-3 rounded bg-[#FBFBF9] border border-[#E2E0D8]">
+              <div className="text-[10px] font-mono uppercase text-slate-500">
+                Hardness / Density
+              </div>
+              <div className="text-xs font-mono font-bold text-[#14171A] mt-0.5">
+                {product.hardnessOrDensity}
+              </div>
+            </div>
+            <div className="p-3 rounded bg-[#FBFBF9] border border-[#E2E0D8]">
+              <div className="text-[10px] font-mono uppercase text-slate-500">Dispatch SLA</div>
+              <div className="text-xs font-mono font-bold text-emerald-700 mt-0.5">
+                {product.leadTime} (₹0 NRE)
+              </div>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {TURNKEY_BUNDLES.map((b) => (
-              <div
-                key={b.id}
-                className="rounded-xl border border-slate-200 bg-slate-50 p-5 flex flex-col justify-between space-y-4"
-              >
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[11px] font-mono font-bold text-orange-700 bg-orange-100 px-2 py-0.5 rounded">
-                      {b.badge}
-                    </span>
-                    <span className="font-mono text-sm font-extrabold text-slate-900">
-                      {b.pricePrimary}
-                    </span>
-                  </div>
-                  <h4 className="text-base font-extrabold text-slate-900">{b.title}</h4>
-                  {b.priceSecondary && (
-                    <div className="text-xs font-mono text-emerald-700 font-semibold">
-                      Starter Tier: {b.priceSecondary}
-                    </div>
-                  )}
-                  <p className="text-xs text-slate-600 leading-relaxed">{b.contents}</p>
-                </div>
+          {/* Transparent Area-Based (cm²) Pricing Schedule */}
+          <div className="bg-[#FFF3EE]/70 border border-[#E04819]/30 rounded-md p-4 space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-[#14171A] font-bold">
+                <Info className="w-4 h-4 text-[#E04819]" />
+                Transparent Area-Based (cm²) Pricing Schedule
+              </div>
+              <span className="text-[11px] font-mono text-slate-600">
+                Ref: {model.referenceFootprintLabel}
+              </span>
+            </div>
+            <p className="text-xs text-slate-700 leading-relaxed">{product.referencePriceNote}</p>
 
+            <div className="overflow-x-auto bg-white rounded border border-[#E2E0D8]">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="bg-[#F6F5F1] border-b border-[#E2E0D8] text-[10px] font-mono uppercase text-slate-600">
+                    <th className="py-2 px-3">Part Area Tier (L × W)</th>
+                    <th className="py-2 px-3">Prototype Custom (1–99 pcs)</th>
+                    <th className="py-2 px-3">Volume Nested (100+ pcs)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#E2E0D8]">
+                  {model.areaTiersSummary.map((row) => (
+                    <tr key={row.band}>
+                      <td className="py-2 px-3 font-semibold text-[#14171A]">
+                        <div>{row.band}</div>
+                        <div className="text-[10px] font-mono text-slate-500 font-normal">
+                          {row.exampleSize}
+                        </div>
+                      </td>
+                      <td className="py-2 px-3 font-mono text-slate-800">{row.protoRule}</td>
+                      <td className="py-2 px-3 font-mono font-semibold text-emerald-800">
+                        {row.volumeRule}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Instant Inline L × W × Qty Direct Buy Bar */}
+          <div className="bg-[#14171A] text-white rounded-md p-4 space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
+              <span className="text-amber-300 font-semibold">
+                Quick Custom Part Calculator & Direct Order:
+              </span>
+              <span className="text-slate-300">
+                Area: {livePrice.areaCm2} cm² • ₹{livePrice.effectiveRatePerCm2}/cm²
+              </span>
+            </div>
+
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-2.5 items-end">
+              <div>
+                <label className="block text-[10px] font-mono text-slate-400 mb-1">
+                  Length (mm)
+                </label>
+                <input
+                  type="number"
+                  min={10}
+                  max={1000}
+                  value={len}
+                  onChange={(e) => setLen(Number(e.target.value))}
+                  className="w-full px-2.5 py-2 rounded bg-slate-900 border border-slate-700 font-mono text-xs text-white font-bold"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-mono text-slate-400 mb-1">
+                  Width (mm)
+                </label>
+                <input
+                  type="number"
+                  min={10}
+                  max={1000}
+                  value={wid}
+                  onChange={(e) => setWid(Number(e.target.value))}
+                  className="w-full px-2.5 py-2 rounded bg-slate-900 border border-slate-700 font-mono text-xs text-white font-bold"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-mono text-slate-400 mb-1">Qty (pcs)</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={100000}
+                  value={qty}
+                  onChange={(e) => setQty(Number(e.target.value))}
+                  className="w-full px-2.5 py-2 rounded bg-slate-900 border border-slate-700 font-mono text-xs text-white font-bold"
+                />
+              </div>
+              <div className="col-span-3 sm:col-span-2">
                 <button
                   type="button"
                   onClick={() =>
-                    onOpenInquiry({
-                      productName: b.title,
-                      variant: b.includedIPs.join(' + '),
-                      pricingTier: b.priceSecondary
-                        ? `${b.pricePrimary} | ${b.priceSecondary}`
-                        : b.pricePrimary,
-                      quantity: '1 Turnkey Kit',
-                    })
+                    addItem(
+                      {
+                        sku: model.gradeOptions[0].sku,
+                        productId: product.id,
+                        title: `${product.trademarkName} (${model.gradeOptions[0].sku})`,
+                        itemType: 'custom-cad',
+                        dimensionsLabel: `${len} × ${wid} × ${product.defaultThicknessMm} mm (${livePrice.areaCm2} cm²)`,
+                        areaCm2: livePrice.areaCm2,
+                        unitPriceInr: livePrice.unitPriceInr,
+                        quantity: qty,
+                        formulaNote: livePrice.formulaExplanation,
+                      },
+                      true
+                    )
                   }
-                  className="w-full inline-flex items-center justify-center gap-2 bg-slate-900 hover:bg-orange-600 text-white text-xs font-bold px-4 py-2.5 rounded-lg transition-colors"
+                  className="w-full py-2 px-3 rounded bg-[#E04819] hover:bg-[#BF360C] text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors h-[36px]"
                 >
-                  <ShoppingCart className="w-3.5 h-3.5" />
-                  <span>Request to Buy Bundle</span>
+                  <ShoppingBag className="w-3.5 h-3.5" />
+                  Add @ ₹{livePrice.unitPriceInr}/pc (₹
+                  {livePrice.lineSubtotalInr.toLocaleString('en-IN')})
                 </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+  );
+};
+
+export const ProductsPage: React.FC<ProductsPageProps> = ({ onOpenLightbox }) => {
+  const { addItem, openConfigurator } = useOrderCart();
+
+  return (
+    <div className="bg-[#FBFBF9] pb-20">
+      {/* Page Hero */}
+      <section className="bg-white bg-architectural-grid border-b border-[#E2E0D8] py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
+          <div className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#E04819] font-bold">
+            5 Core Material Platforms • 4 R&D Kits • 4 Pro-Bench Packs
+          </div>
+          <h1 className="text-3xl sm:text-5xl font-display font-bold text-[#14171A] max-w-4xl leading-tight">
+            Technical Material Catalog & Zero-Ambiguity{' '}
+            <span className="font-serif italic font-normal text-[#E04819]">
+              Area-Based (cm²) Pricing
+            </span>
+          </h1>
+          <p className="text-base text-slate-600 max-w-3xl leading-relaxed">
+            Every custom part at InsulTherm is priced transparently by active bounding-box area (
+            <strong className="font-mono text-[#14171A]">Length × Width in cm²</strong>) with{' '}
+            <strong className="text-[#14171A]">₹0 steel-die tooling NRE</strong>. Prototype orders
+            (1–99 pcs) use predictable area bands, while production orders (100+ pcs) switch
+            automatically to pure nested <strong className="font-mono text-[#14171A]">₹/cm²</strong>{' '}
+            sheet rates.
+          </p>
+
+          <div className="pt-2 flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => openConfigurator('insultherm-graphite-flex')}
+              className="inline-flex items-center gap-2 px-5 py-3 rounded bg-[#E04819] hover:bg-[#BF360C] text-white text-xs sm:text-sm font-bold shadow-sm"
+            >
+              <Upload className="w-4 h-4" />
+              Upload Custom .DXF / .STEP & Calculate Area Cost
+            </button>
+            <a
+              href="#rnd-kits"
+              className="inline-flex items-center gap-2 px-4 py-3 rounded bg-[#14171A] text-white text-xs sm:text-sm font-bold"
+            >
+              &lt; ₹15,000 Turnkey R&D Kits
+            </a>
+            <a
+              href="#pro-bench"
+              className="inline-flex items-center gap-2 px-4 py-3 rounded border border-emerald-700 text-emerald-800 bg-emerald-50 text-xs sm:text-sm font-bold"
+            >
+              ThermaFix™ Pro-Bench Packs (₹499+)
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 space-y-16">
+        {/* Parametric Comparison Matrix */}
+        <ParametricComparisonMatrix />
+
+        {/* All 5 Detailed Product Dossiers */}
+        <div className="space-y-10">
+          {PRODUCTS.map((product, idx) => (
+            <ProductDossierCard
+              key={product.id}
+              product={product}
+              index={idx}
+              onOpenLightbox={onOpenLightbox}
+            />
+          ))}
+        </div>
+
+        {/* Turnkey <₹15,000 R&D Kits */}
+        <section id="rnd-kits" className="space-y-6 pt-4">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div>
+              <div className="inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-widest text-[#E04819] font-bold">
+                <Sparkles className="w-3.5 h-3.5" />
+                Zero Vendor-Onboarding Delay
+              </div>
+              <h2 className="text-3xl font-display font-bold text-[#14171A] mt-1">
+                Turnkey &lt; ₹15,000 R&D Qualification & Homologation Kits
+              </h2>
+            </div>
+            <p className="text-xs sm:text-sm text-slate-600 max-w-md">
+              Order directly via R&D petty cash, UPI, or Proforma Invoice. Ships in 24–48 hours with ASTM compliance certificates.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {RND_KITS.map((kit) => (
+              <div
+                key={kit.id}
+                className="bg-white border border-[#E2E0D8] rounded-md p-6 flex flex-col justify-between shadow-sm"
+              >
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-mono font-bold text-[#E04819]">{kit.sector}</span>
+                    <span className="text-xs font-mono px-2 py-0.5 rounded bg-[#F6F5F1] border border-[#E2E0D8] text-slate-700">
+                      {kit.sku} • {kit.leadTime}
+                    </span>
+                  </div>
+                  <h3 className="text-xl font-display font-bold text-[#14171A]">{kit.name}</h3>
+                  <ul className="space-y-1.5 text-xs sm:text-sm text-slate-600 pt-1">
+                    {kit.contents.map((c, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                        <span>{c}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="p-3 rounded bg-[#F6F5F1] text-xs text-slate-700">
+                    <strong>Procurement Edge:</strong> {kit.procurementAdvantage}
+                  </div>
+                </div>
+
+                <div className="pt-5 mt-5 border-t border-[#E2E0D8] flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <div className="text-2xl font-mono font-bold text-[#14171A]">
+                      {kit.priceLabel}
+                    </div>
+                    <div className="text-[11px] font-mono text-slate-500">Full Turnkey Kit</div>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {kit.starterPriceInr && kit.starterLabel && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          addItem({
+                            sku: `${kit.sku}-MINI`,
+                            title: `${kit.name} (${kit.starterLabel})`,
+                            itemType: 'kit-bundle',
+                            dimensionsLabel: 'Starter Evaluation Pack',
+                            unitPriceInr: kit.starterPriceInr!,
+                            quantity: 1,
+                            formulaNote: 'Starter Petty-Cash Evaluation Pack',
+                          })
+                        }
+                        className="px-3 py-2 rounded border border-[#14171A] text-xs font-bold text-[#14171A] hover:bg-[#14171A] hover:text-white transition-colors"
+                      >
+                        + {kit.starterLabel}
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        addItem({
+                          sku: kit.sku,
+                          title: kit.name,
+                          itemType: 'kit-bundle',
+                          dimensionsLabel: 'Full Turnkey R&D Kit (<₹15k)',
+                          unitPriceInr: kit.priceInr,
+                          quantity: 1,
+                          formulaNote: kit.leadTime,
+                        })
+                      }
+                      className="px-4 py-2 rounded bg-[#E04819] hover:bg-[#BF360C] text-white text-xs font-bold inline-flex items-center gap-1.5 transition-colors"
+                    >
+                      <ShoppingBag className="w-3.5 h-3.5" />
+                      Order Full Kit
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ThermaFix™ Pro-Bench Direct Packs */}
+        <section id="pro-bench" className="space-y-6 pt-4">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div>
+              <div className="inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-widest text-emerald-800 font-bold">
+                <Wrench className="w-3.5 h-3.5" />
+                3M-Inspired Prosumer, Repair Lab & University Line
+              </div>
+              <h2 className="text-3xl font-display font-bold text-[#14171A] mt-1">
+                ThermaFix™ & InsulTape™ Pro-Bench Direct Packs
+              </h2>
+            </div>
+            <p className="text-xs sm:text-sm text-slate-600 max-w-md">
+              Precision-cut from our primary industrial laminates—giving PC/GPU service labs, drone builders, and student teams genuine aerospace/EV-grade materials.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+            {PRO_BENCH_PACKS.map((pack) => (
+              <div
+                key={pack.id}
+                className="bg-white border border-[#E2E0D8] rounded-md p-5 flex flex-col justify-between shadow-sm"
+              >
+                <div className="space-y-2.5">
+                  <span className="inline-block text-[10px] font-mono uppercase font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
+                    {pack.badge}
+                  </span>
+                  <h3 className="text-base font-display font-bold text-[#14171A] leading-snug">
+                    {pack.name}
+                  </h3>
+                  <div className="text-xs font-mono font-semibold text-emerald-800">
+                    {pack.packCountLabel}
+                  </div>
+                  <div className="text-[11px] text-slate-500">{pack.specs}</div>
+                  <ul className="space-y-1.5 text-xs text-slate-600 pt-1">
+                    {pack.includes.map((inc, idx) => (
+                      <li key={idx} className="flex items-start gap-1.5">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                        <span>{inc}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="pt-4 mt-4 border-t border-[#E2E0D8] flex items-center justify-between">
+                  <div className="text-xl font-mono font-bold text-[#14171A]">
+                    ₹{pack.priceInr}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      addItem({
+                        sku: pack.sku,
+                        title: pack.name,
+                        itemType: 'pro-bench',
+                        dimensionsLabel: pack.packCountLabel,
+                        unitPriceInr: pack.priceInr,
+                        quantity: 1,
+                        formulaNote: `${pack.brandLine} Off-the-Shelf`,
+                      })
+                    }
+                    className="px-3.5 py-2 rounded bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold inline-flex items-center gap-1.5"
+                  >
+                    <ShoppingBag className="w-3.5 h-3.5" />
+                    Buy Pack
+                  </button>
+                </div>
               </div>
             ))}
           </div>

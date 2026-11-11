@@ -1,268 +1,394 @@
-import React, { useState } from 'react';
-import { UploadCloud, Cpu, CheckCircle2, ArrowRight, Sparkles } from 'lucide-react';
-import { CORE_PRODUCTS } from '../data/companyData';
-import { InquiryPreset } from './InquiryModal';
+import React, { useRef, useState } from 'react';
+import { Calculator, Upload, ShoppingBag, CheckCircle2, FileCode2, Info } from 'lucide-react';
+import { PRODUCTS } from '../data/companyData';
+import { calculatePartPrice, PRICING_MODELS, ProductSlugId } from '../utils/pricingEngine';
+import { useOrderCart } from '../context/OrderCartContext';
 
-interface CadQuoteEngineProps {
-  onOpenInquiry: (preset: InquiryPreset) => void;
-}
+const SIZE_PRESETS = [
+  { label: '25 × 80 mm (20 cm² Strip)', l: 80, w: 25 },
+  { label: '50 × 50 mm (25 cm² BMS)', l: 50, w: 50 },
+  { label: '100 × 100 mm (100 cm² Ref)', l: 100, w: 100 },
+  { label: '174 × 204 mm (355 cm² 280Ah)', l: 204, w: 174 },
+  { label: '200 × 150 mm (300 cm² Plane)', l: 200, w: 150 },
+];
 
-export const CadQuoteEngine: React.FC<CadQuoteEngineProps> = ({ onOpenInquiry }) => {
-  const [selectedProdId, setSelectedProdId] = useState<string>('shield');
-  const [variantIdx, setVariantIdx] = useState<number>(0);
-  const [thicknessIdx, setThicknessIdx] = useState<number>(1);
-  const [quantity, setQuantity] = useState<number>(25);
-  const [lengthMm, setLengthMm] = useState<number>(100);
-  const [widthMm, setWidthMm] = useState<number>(80);
-  const [cadFileName, setCadFileName] = useState<string>('');
+export const CadQuoteEngine: React.FC = () => {
+  const { addItem, attachedCadFile, setAttachedCadFile } = useOrderCart();
+  const [selectedId, setSelectedId] = useState<ProductSlugId>('insultherm-graphite-flex');
+  const [lengthMm, setLengthMm] = useState<number>(80);
+  const [widthMm, setWidthMm] = useState<number>(50);
+  const [qty, setQty] = useState<number>(15);
+  const [thicknessMm, setThicknessMm] = useState<number>(0.24);
+  const [gradeSku, setGradeSku] = useState<string>('GFlex-1000');
+  const fileRef = useRef<HTMLInputElement | null>(null);
 
-  const product = CORE_PRODUCTS.find((p) => p.id === selectedProdId) || CORE_PRODUCTS[0];
-  const variant = product.variants[variantIdx] || product.variants[0];
-  const thickness = variant.thicknessOptions[thicknessIdx] || variant.thicknessOptions[0];
+  const model = PRICING_MODELS[selectedId];
+  const product = PRODUCTS.find((p) => p.id === selectedId) || PRODUCTS[0];
 
-  const handleProductChange = (id: string) => {
-    setSelectedProdId(id);
-    setVariantIdx(0);
-    setThicknessIdx(0);
+  const handleMaterialChange = (id: ProductSlugId) => {
+    setSelectedId(id);
+    const p = PRODUCTS.find((x) => x.id === id);
+    const m = PRICING_MODELS[id];
+    if (p && m) {
+      setLengthMm(p.defaultLengthMm);
+      setWidthMm(p.defaultWidthMm);
+      setThicknessMm(p.defaultThicknessMm);
+      setGradeSku(m.gradeOptions[0].sku);
+    }
   };
 
-  // Compute exact unit price grounded strictly in Google Drive pricing rules
-  const computeUnitPrice = (): { unitINR: number; tierLabel: string } => {
-    const areaCm2 = (lengthMm * widthMm) / 100;
+  const result = calculatePartPrice({
+    productId: selectedId,
+    lengthMm,
+    widthMm,
+    quantity: qty,
+    thicknessMm,
+    gradeSku,
+  });
 
-    if (product.id === 'graphite-flex') {
-      // ₹350 – ₹1,800 / custom part by area & grade
-      const base = variant.code === 'GFlex-1500' ? 650 : 350;
-      const maxCap = 1800;
-      const areaScaled = Math.round(base + Math.max(0, areaCm2 - 25) * 4.5);
-      const finalUnit = Math.min(maxCap, Math.max(350, areaScaled));
-      return {
-        unitINR: finalUnit,
-        tierLabel: `₹${finalUnit} / custom part (Range: ₹350–₹1,800 by area)`,
-      };
-    }
+  // Also preview volume unit price at Qty 200 so buyer immediately sees volume area drop!
+  const volumeComparison = calculatePartPrice({
+    productId: selectedId,
+    lengthMm,
+    widthMm,
+    quantity: Math.max(200, qty),
+    thicknessMm,
+    gradeSku,
+  });
 
-    if (product.id === 'core' && lengthMm === 50 && widthMm === 50) {
-      return {
-        unitINR: 20,
-        tierLabel: '₹20 / std 50×50mm BMS Pad Tier',
-      };
-    }
-
-    const isVolume = quantity >= 100;
-    const unitINR = isVolume ? variant.unitVolumeINR : variant.unitProtoINR;
-    const tierLabel = isVolume ? variant.volumePriceLabel : variant.protoPriceLabel;
-    return { unitINR, tierLabel };
-  };
-
-  const { unitINR, tierLabel } = computeUnitPrice();
-  const totalINR = Math.round(unitINR * quantity * 100) / 100;
-  const isPettyCashEligible = totalINR > 0 && totalINR <= 15000;
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setCadFileName(file.name);
-    }
+  const handleAddToCart = () => {
+    addItem(
+      {
+        sku: gradeSku,
+        productId: selectedId,
+        title: `${product.trademarkName} (${gradeSku})`,
+        itemType: 'custom-cad',
+        dimensionsLabel: `${lengthMm} × ${widthMm} × ${thicknessMm} mm (${result.areaCm2} cm²)`,
+        areaCm2: result.areaCm2,
+        unitPriceInr: result.unitPriceInr,
+        quantity: qty,
+        formulaNote: result.formulaExplanation,
+        cadFileName: attachedCadFile ? attachedCadFile.name : 'Dimensions entered via Area Calculator',
+      },
+      true
+    );
   };
 
   return (
-    <div className="bg-white text-slate-900 rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
-      {/* Calculator Header */}
-      <div className="bg-slate-900 px-5 py-4 border-b border-slate-800 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <Cpu className="w-4 h-4 text-orange-500" />
-          <span className="text-xs font-mono font-bold uppercase tracking-wider text-white">
-            Instant Digital CNC Quote Engine
+    <div className="bg-white border border-[#E2E0D8] rounded-md shadow-sm overflow-hidden">
+      {/* Top Bar */}
+      <div className="px-6 py-5 bg-[#14171A] text-white flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#E04819] font-semibold mb-1">
+            <Calculator className="w-4 h-4" />
+            Transparent Area-Based (cm²) Pricing & Custom CAD Upload Engine
+          </div>
+          <h3 className="text-xl sm:text-2xl font-display font-bold">
+            Calculate Exact Custom Part Cost by Area (L × W mm) & Order Online
+          </h3>
+        </div>
+        <div className="flex items-center gap-2 text-xs font-mono">
+          <span className="px-3 py-1.5 rounded bg-slate-900 border border-slate-700 text-emerald-400">
+            ₹0 Steel-Die NRE
+          </span>
+          <span className="px-3 py-1.5 rounded bg-slate-900 border border-slate-700 text-amber-300">
+            1–99 Proto • 100+ Nested Volume
           </span>
         </div>
-        <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-          ₹0.00 Tooling NRE
-        </span>
       </div>
 
-      <div className="p-5 space-y-4">
-        {/* CAD Dropzone */}
-        <label className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border-2 border-dashed border-slate-300 hover:border-orange-500 bg-slate-50 cursor-pointer transition-colors">
-          <div className="flex items-center gap-3 min-w-0">
-            <UploadCloud className="w-5 h-5 text-orange-600 shrink-0" />
-            <div className="truncate">
-              <div className="text-xs font-bold text-slate-800 truncate">
-                {cadFileName ? `CAD Attached: ${cadFileName}` : 'Attach .DXF, .STEP, or 2D Drawing (Optional)'}
-              </div>
-              <div className="text-[11px] text-slate-500 font-mono">
-                Auto-nesting &amp; 50% living-hinge toolpath check
-              </div>
-            </div>
-          </div>
-          <span className="text-[11px] font-mono font-semibold text-orange-600 shrink-0">Browse</span>
-          <input
-            type="file"
-            accept=".dxf,.step,.stp,.pdf,.dwg,.iges"
-            onChange={handleFileChange}
-            className="hidden"
-          />
-        </label>
-
-        {/* Material & Premix Selectors */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Left 7 Cols: Controls + Area Tier Schedule */}
+        <div className="lg:col-span-7 space-y-6">
+          {/* Material Selector Tabs */}
           <div>
-            <label className="block text-[11px] font-mono uppercase text-slate-500 font-semibold mb-1">
-              1. Proprietary Material IP
+            <label className="block text-xs font-mono uppercase tracking-wider text-slate-500 font-semibold mb-2">
+              1. Choose InsulTherm® Material Platform
             </label>
-            <select
-              value={selectedProdId}
-              onChange={(e) => handleProductChange(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-900 focus:border-orange-600 focus:outline-none"
-            >
-              {CORE_PRODUCTS.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name} ({p.categoryLabel})
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-[11px] font-mono uppercase text-slate-500 font-semibold mb-1">
-              2. Premix Grade / Variant
-            </label>
-            <select
-              value={variantIdx}
-              onChange={(e) => {
-                setVariantIdx(Number(e.target.value));
-                setThicknessIdx(0);
-              }}
-              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-mono font-semibold text-slate-900 focus:border-orange-600 focus:outline-none"
-            >
-              {product.variants.map((v, i) => (
-                <option key={v.code} value={i}>
-                  {v.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Thickness, Dimensions, Quantity */}
-        <div className="grid grid-cols-3 gap-2.5">
-          <div>
-            <label className="block text-[11px] font-mono uppercase text-slate-500 font-semibold mb-1">
-              Thickness
-            </label>
-            <select
-              value={thicknessIdx}
-              onChange={(e) => setThicknessIdx(Number(e.target.value))}
-              className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-xs font-mono text-slate-900 focus:border-orange-600 focus:outline-none"
-            >
-              {variant.thicknessOptions.map((t, idx) => (
-                <option key={t} value={idx}>
-                  {t}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-[11px] font-mono uppercase text-slate-500 font-semibold mb-1">
-              Size L×W (mm)
-            </label>
-            <div className="flex items-center gap-1">
-              <input
-                type="number"
-                min={10}
-                max={1000}
-                value={lengthMm}
-                onChange={(e) => setLengthMm(Math.max(10, Number(e.target.value) || 10))}
-                className="w-full rounded-lg border border-slate-300 px-2 py-2 text-xs font-mono text-slate-900 focus:border-orange-600 focus:outline-none"
-              />
-              <span className="text-xs text-slate-400">×</span>
-              <input
-                type="number"
-                min={10}
-                max={1000}
-                value={widthMm}
-                onChange={(e) => setWidthMm(Math.max(10, Number(e.target.value) || 10))}
-                className="w-full rounded-lg border border-slate-300 px-2 py-2 text-xs font-mono text-slate-900 focus:border-orange-600 focus:outline-none"
-              />
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+              {PRODUCTS.map((p) => {
+                const active = p.id === selectedId;
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => handleMaterialChange(p.id)}
+                    className={`p-2.5 rounded border text-left transition-all ${
+                      active
+                        ? 'border-[#E04819] bg-[#FFF3EE] shadow-sm'
+                        : 'border-[#E2E0D8] bg-[#FBFBF9] hover:border-slate-400'
+                    }`}
+                  >
+                    <div className="text-[10px] font-mono font-bold text-[#E04819] truncate">
+                      {p.subBrandCode.split(' ')[0]}
+                    </div>
+                    <div className="text-xs font-bold text-[#14171A] mt-0.5 leading-tight">
+                      {p.name.replace('InsulTherm ', '')}™
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
+          {/* Grade & Thickness */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                Material Grade / SKU
+              </label>
+              <select
+                value={gradeSku}
+                onChange={(e) => setGradeSku(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded border border-[#E2E0D8] bg-white text-xs sm:text-sm font-medium text-[#14171A]"
+              >
+                {model.gradeOptions.map((g) => (
+                  <option key={g.sku} value={g.sku}>
+                    {g.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                Thickness Stack
+              </label>
+              <select
+                value={thicknessMm}
+                onChange={(e) => setThicknessMm(Number(e.target.value))}
+                className="w-full px-3.5 py-2.5 rounded border border-[#E2E0D8] bg-white text-xs sm:text-sm font-medium text-[#14171A]"
+              >
+                {model.thicknessOptions.map((t) => (
+                  <option key={t.mm} value={t.mm}>
+                    {t.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Dimensions & Presets */}
           <div>
-            <label className="block text-[11px] font-mono uppercase text-slate-500 font-semibold mb-1">
-              Quantity (pcs)
-            </label>
-            <input
-              type="number"
-              min={1}
-              max={100000}
-              value={quantity}
-              onChange={(e) => setQuantity(Math.max(1, Number(e.target.value) || 1))}
-              className="w-full rounded-lg border border-slate-300 px-2.5 py-2 text-xs font-mono font-bold text-slate-900 focus:border-orange-600 focus:outline-none"
-            />
-          </div>
-        </div>
-
-        {product.id === 'core' && (
-          <button
-            type="button"
-            onClick={() => {
-              setLengthMm(50);
-              setWidthMm(50);
-              setQuantity(50);
-            }}
-            className="text-[11px] font-mono text-orange-600 hover:text-orange-700 underline"
-          >
-            Quick-set Standard 50×50 mm BMS Pad (@ ₹20/pad)
-          </button>
-        )}
-
-        {/* Live Pricing Breakdown */}
-        <div className="rounded-xl bg-slate-900 text-white p-4 space-y-2 font-mono text-xs">
-          <div className="flex items-center justify-between text-slate-300">
-            <span>Hard-Die Tooling NRE:</span>
-            <span className="text-emerald-400 font-bold">₹0.00 (Saved ₹35,000 Die)</span>
-          </div>
-          <div className="flex items-center justify-between text-slate-300">
-            <span>Active Tier Rate:</span>
-            <span className="text-white font-bold">₹{unitINR.toLocaleString('en-IN')} / pc</span>
-          </div>
-          <div className="flex items-center justify-between pt-2 border-t border-slate-800 text-sm">
-            <span className="font-sans font-semibold text-slate-200">Estimated Lot Total (ex-GST):</span>
-            <span className="text-lg font-extrabold text-orange-400">
-              ₹{totalINR.toLocaleString('en-IN')}
-            </span>
-          </div>
-          <div className="flex flex-wrap items-center justify-between gap-1 pt-1 text-[11px] text-slate-400">
-            <span className="inline-flex items-center gap-1 text-emerald-400">
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              SLA: Ships in 24–48 Hours
-            </span>
-            {isPettyCashEligible && (
-              <span className="inline-flex items-center gap-1 text-amber-300">
-                <Sparkles className="w-3 h-3" />
-                &lt;₹15k Lab Card Eligible
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <label className="text-xs font-mono uppercase tracking-wider text-slate-500 font-semibold">
+                2. Part Bounding-Box Area (Length × Width in mm) & Quantity
+              </label>
+              <span className="text-xs font-mono font-bold text-[#E04819]">
+                Active Area = {result.areaCm2} cm²
               </span>
-            )}
+            </div>
+
+            <div className="flex flex-wrap gap-1.5 mb-3">
+              {SIZE_PRESETS.map((preset) => (
+                <button
+                  key={preset.label}
+                  type="button"
+                  onClick={() => {
+                    setLengthMm(preset.l);
+                    setWidthMm(preset.w);
+                  }}
+                  className="px-2.5 py-1 rounded bg-[#F6F5F1] hover:bg-[#14171A] hover:text-white border border-[#E2E0D8] text-[11px] font-mono transition-colors"
+                >
+                  {preset.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className="block text-xs text-slate-600 mb-1 font-medium">Length (mm)</label>
+                <input
+                  type="number"
+                  min={10}
+                  max={1000}
+                  value={lengthMm}
+                  onChange={(e) => setLengthMm(Number(e.target.value))}
+                  className="w-full px-3.5 py-2.5 rounded border border-[#E2E0D8] font-mono text-sm font-bold text-[#14171A]"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-slate-600 mb-1 font-medium">Width (mm)</label>
+                <input
+                  type="number"
+                  min={10}
+                  max={1000}
+                  value={widthMm}
+                  onChange={(e) => setWidthMm(Number(e.target.value))}
+                  className="w-full px-3.5 py-2.5 rounded border border-[#E2E0D8] font-mono text-sm font-bold text-[#14171A]"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-slate-600 mb-1 font-medium">
+                  Quantity (pcs)
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={100000}
+                  value={qty}
+                  onChange={(e) => setQty(Number(e.target.value))}
+                  className="w-full px-3.5 py-2.5 rounded border border-[#E2E0D8] font-mono text-sm font-bold text-[#14171A]"
+                />
+                <div className="flex gap-1.5 mt-1">
+                  {[10, 50, 150, 500].map((qPreset) => (
+                    <button
+                      key={qPreset}
+                      type="button"
+                      onClick={() => setQty(qPreset)}
+                      className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700"
+                    >
+                      {qPreset}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Transparent Area Pricing Schedule for Selected Material */}
+          <div className="bg-[#F6F5F1] border border-[#E2E0D8] rounded-md p-4">
+            <div className="flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-[#14171A] font-bold mb-2.5">
+              <Info className="w-3.5 h-3.5 text-[#E04819]" />
+              How {product.trademarkName} Area Pricing Works (Proto vs. Volume)
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-[#E2E0D8] text-[10px] font-mono uppercase text-slate-500">
+                    <th className="pb-2 pr-3">Part Area Band</th>
+                    <th className="pb-2 pr-3">Prototype (1–99 pcs)</th>
+                    <th className="pb-2">Volume Nested (100+ pcs)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#E2E0D8]/70">
+                  {model.areaTiersSummary.map((tier) => (
+                    <tr key={tier.band}>
+                      <td className="py-2 pr-3 font-semibold text-[#14171A]">
+                        <div>{tier.band}</div>
+                        <div className="text-[10px] font-mono text-slate-500 font-normal">
+                          {tier.exampleSize}
+                        </div>
+                      </td>
+                      <td className="py-2 pr-3 font-mono text-slate-700">{tier.protoRule}</td>
+                      <td className="py-2 font-mono text-emerald-800 font-semibold">
+                        {tier.volumeRule}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={() =>
-            onOpenInquiry({
-              productName: product.name,
-              variant: `${variant.code} (${thickness})`,
-              pricingTier: `${tierLabel} — Est. Total ₹${totalINR.toLocaleString('en-IN')}`,
-              quantity: `${quantity} pcs`,
-              dimensions: `${lengthMm} × ${widthMm} mm${cadFileName ? ` | File: ${cadFileName}` : ''}`,
-            })
-          }
-          className="w-full inline-flex items-center justify-center gap-2 bg-orange-600 hover:bg-orange-700 text-white text-sm font-bold px-5 py-3 rounded-xl shadow-md transition-all"
-        >
-          <span>Lock Quote &amp; Request to Buy</span>
-          <ArrowRight className="w-4 h-4" />
-        </button>
+        {/* Right 5 Cols: Live Quote Readout + Custom CAD Upload + Direct Buy */}
+        <div className="lg:col-span-5 flex flex-col justify-between bg-[#14171A] text-white rounded-md p-6 border border-slate-800">
+          <div className="space-y-5">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div>
+                <div className="text-[11px] font-mono uppercase text-amber-400 font-semibold">
+                  {result.tierName}
+                </div>
+                <div className="text-lg font-display font-bold text-white mt-0.5">
+                  {product.trademarkName} • {gradeSku}
+                </div>
+              </div>
+              <div className="text-right font-mono">
+                <div className="text-xs text-slate-400">Footprint</div>
+                <div className="text-sm font-bold text-emerald-400">{result.areaCm2} cm²</div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-slate-900/90 border border-slate-800 rounded p-3.5">
+                <div className="text-[11px] font-mono uppercase text-slate-400">Unit Part Price</div>
+                <div className="text-2xl sm:text-3xl font-mono font-bold text-white mt-1">
+                  ₹{result.unitPriceInr.toLocaleString('en-IN')}
+                </div>
+                <div className="text-[11px] font-mono text-emerald-400 mt-1">
+                  Effective: ₹{result.effectiveRatePerCm2} / cm²
+                </div>
+              </div>
+
+              <div className="bg-slate-900/90 border border-slate-800 rounded p-3.5">
+                <div className="text-[11px] font-mono uppercase text-slate-400">
+                  Line Total ({qty} pcs)
+                </div>
+                <div className="text-2xl sm:text-3xl font-mono font-bold text-[#E04819] mt-1">
+                  ₹{result.lineSubtotalInr.toLocaleString('en-IN')}
+                </div>
+                <div className="text-[11px] font-mono text-slate-400 mt-1">+ 18% GST at checkout</div>
+              </div>
+            </div>
+
+            <div className="bg-slate-900/70 border border-slate-800 rounded p-3 text-xs font-mono text-slate-300 space-y-1.5">
+              <div className="text-amber-300 font-semibold">Exact Calculation:</div>
+              <div>{result.formulaExplanation}</div>
+              {qty < 100 && (
+                <div className="text-emerald-400 pt-1 border-t border-slate-800">
+                  Volume Preview (≥200 pcs): Drops to ₹{volumeComparison.unitPriceInr}/pc (₹
+                  {volumeComparison.effectiveRatePerCm2}/cm² nested)!
+                </div>
+              )}
+            </div>
+
+            {/* Inline CAD Upload */}
+            <div>
+              <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-400 mb-1.5">
+                3. Attach Custom CAD File (Optional — .DXF / .STEP / .PDF)
+              </label>
+              <div
+                onClick={() => fileRef.current?.click()}
+                className="border border-dashed border-slate-600 hover:border-[#E04819] bg-slate-900/60 rounded p-3.5 cursor-pointer transition-colors"
+              >
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept=".dxf,.step,.stp,.iges,.igs,.dwg,.pdf,.zip"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) setAttachedCadFile(f);
+                  }}
+                  className="hidden"
+                />
+                {attachedCadFile ? (
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <FileCode2 className="w-5 h-5 text-emerald-400 shrink-0" />
+                      <span className="text-xs font-mono text-emerald-300 truncate">
+                        {attachedCadFile.name} ({(attachedCadFile.size / 1024).toFixed(1)} KB)
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-[#E04819] underline shrink-0">Change</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2.5 text-xs text-slate-300">
+                    <Upload className="w-4 h-4 text-[#E04819] shrink-0" />
+                    <span>Click to attach .DXF / .STEP / .PDF custom cutout profile</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-5 space-y-2.5">
+            <button
+              type="button"
+              onClick={handleAddToCart}
+              className="w-full py-3.5 px-5 rounded bg-[#E04819] hover:bg-[#BF360C] text-white text-sm font-bold flex items-center justify-center gap-2 shadow-lg transition-colors"
+            >
+              <ShoppingBag className="w-4 h-4" />
+              Add Custom Part to Order (₹{result.lineSubtotalInr.toLocaleString('en-IN')}) →
+            </button>
+            <div className="flex items-center justify-between text-[11px] font-mono text-slate-400">
+              <span className="inline-flex items-center gap-1">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                24–48h Dispatch
+              </span>
+              <span>Saves ₹40,000 Steel Die NRE</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

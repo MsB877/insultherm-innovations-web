@@ -1,51 +1,48 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { OrderCartProvider } from './context/OrderCartContext';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
-import { InquiryModal, InquiryPreset } from './components/InquiryModal';
+import { OrderCartDrawer } from './components/OrderCartDrawer';
+import { ImageLightbox, LightboxImagePayload } from './components/ImageLightbox';
 import { HomePage } from './pages/HomePage';
 import { ProductsPage } from './pages/ProductsPage';
 import { AboutPage } from './pages/AboutPage';
 import { ContactPage } from './pages/ContactPage';
 
 const ScrollToTop: React.FC = () => {
-  const { pathname } = useLocation();
+  const { pathname, hash } = useLocation();
   useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [pathname]);
+    if (!hash) {
+      window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+    }
+  }, [pathname, hash]);
   return null;
 };
 
 export const App: React.FC = () => {
-  const [inquiryOpen, setInquiryOpen] = useState(false);
-  const [inquiryPreset, setInquiryPreset] = useState<InquiryPreset | undefined>(undefined);
-
-  const handleOpenInquiry = (preset?: InquiryPreset) => {
-    setInquiryPreset(preset);
-    setInquiryOpen(true);
-  };
+  const [lightboxImage, setLightboxImage] = useState<LightboxImagePayload | null>(null);
 
   return (
     <BrowserRouter>
-      <ScrollToTop />
-      <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 overflow-x-hidden">
-        <Navbar onOpenInquiry={handleOpenInquiry} />
-        <main className="flex-1">
-          <Routes>
-            <Route path="/" element={<HomePage onOpenInquiry={handleOpenInquiry} />} />
-            <Route path="/products" element={<ProductsPage onOpenInquiry={handleOpenInquiry} />} />
-            <Route path="/about" element={<AboutPage onOpenInquiry={handleOpenInquiry} />} />
-            <Route path="/contact" element={<ContactPage />} />
-            <Route path="*" element={<HomePage onOpenInquiry={handleOpenInquiry} />} />
-          </Routes>
-        </main>
-        <Footer onOpenInquiry={handleOpenInquiry} />
-        <InquiryModal
-          isOpen={inquiryOpen}
-          onClose={() => setInquiryOpen(false)}
-          preset={inquiryPreset}
-        />
-      </div>
+      <OrderCartProvider>
+        <ScrollToTop />
+        <div className="min-h-screen flex flex-col bg-[#FBFBF9] text-[#14171A]">
+          <Navbar />
+          <main className="flex-1">
+            <Routes>
+              <Route path="/" element={<HomePage onOpenLightbox={setLightboxImage} />} />
+              <Route path="/products" element={<ProductsPage onOpenLightbox={setLightboxImage} />} />
+              <Route path="/about" element={<AboutPage onOpenLightbox={setLightboxImage} />} />
+              <Route path="/contact" element={<ContactPage />} />
+              <Route path="*" element={<HomePage onOpenLightbox={setLightboxImage} />} />
+            </Routes>
+          </main>
+          <Footer />
+          <OrderCartDrawer />
+          <ImageLightbox image={lightboxImage} onClose={() => setLightboxImage(null)} />
+        </div>
+      </OrderCartProvider>
     </BrowserRouter>
   );
 };

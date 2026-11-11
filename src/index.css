@@ -3,23 +3,45 @@
 @tailwind utilities;
 
 @layer base {
-  html,
-  body {
-    max-width: 100vw;
-    overflow-x: hidden;
-    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  html {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    color: #14171A;
+    background-color: #FBFBF9;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: 'Space Grotesk', 'Plus Jakarta Sans', system-ui, sans-serif;
+    letter-spacing: -0.025em;
   }
 }
 
-/* Subtle precision laboratory blueprint grid */
-.bg-lab-grid {
-  background-size: 28px 28px;
-  background-image: linear-gradient(to right, rgba(148, 163, 184, 0.12) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(148, 163, 184, 0.12) 1px, transparent 1px);
+.bg-architectural-grid {
+  background-size: 36px 36px;
+  background-image:
+    linear-gradient(to right, rgba(20, 23, 26, 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(20, 23, 26, 0.045) 1px, transparent 1px);
 }
 
-.bg-dark-grid {
+.bg-blueprint-dark {
   background-size: 32px 32px;
-  background-image: linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+}
+
+/* 3M / Henkel style signature multi-division chromatic rule */
+.brand-chromatic-bar {
+  background: linear-gradient(
+    90deg,
+    #E04819 0%,
+    #E04819 28%,
+    #C81E1E 28%,
+    #C81E1E 50%,
+    #D97706 50%,
+    #D97706 70%,
+    #047857 70%,
+    #047857 86%,
+    #14171A 86%,
+    #14171A 100%
+  );
 }

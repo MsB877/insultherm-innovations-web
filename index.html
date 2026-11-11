@@ -4,49 +4,70 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/assets/brand/logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>InsulTherm Innovations | Advanced Thermal, Dielectric &amp; 1,100°C Runaway Containment Materials</title>
+    <title>InsulTherm Innovations | Material Science. Engineered to Fit.™ — Custom TIM, Fire Barriers & Dielectric Origami</title>
     <meta
       name="description"
-      content="India's rapid-turn digital CNC converter and specialty compounder of thermal interface materials (TIMs), 1,100°C nanoporous aerogel-mica fire barriers, 3D dielectric busbar origami, and ASTM E595 pyrolytic graphite spreaders. CAD-to-part in 24-48 hours with ₹0 tooling NRE."
+      content="InsulTherm Innovations — India's Digital-First Thermal & Dielectric Material Ecosystem. 5 Proprietary Material Sub-Brands (Shield™, Barrier™, Graphite-Flex™, Core™, Ultra™) + Pro-Bench Direct Packs. Zero NRE Tooling, Transparent ₹/cm² Area Pricing, 24–48h Custom CAD Dispatch."
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap"
       rel="stylesheet"
     />
   </head>
-  <body class="bg-slate-50 text-slate-900 antialiased selection:bg-orange-600 selection:text-white overflow-x-hidden">
-    <!-- Hidden Netlify Forms blueprints for automated build-time form registration -->
-    <form name="product-order-inquiry" data-netlify="true" netlify-honeypot="bot-field" hidden>
-      <input type="text" name="bot-field" />
-      <input type="text" name="routing_destination" />
-      <input type="text" name="product_name" />
-      <input type="text" name="selected_variant" />
-      <input type="text" name="pricing_tier" />
-      <input type="text" name="quantity" />
-      <input type="text" name="dimensions_cad" />
-      <input type="text" name="full_name" />
-      <input type="email" name="work_email" />
-      <input type="text" name="company_organization" />
-      <input type="text" name="phone_number" />
-      <input type="text" name="industry_sector" />
-      <textarea name="engineering_notes"></textarea>
-    </form>
-
-    <form name="contact-engineering" data-netlify="true" netlify-honeypot="bot-field" hidden>
-      <input type="text" name="bot-field" />
-      <input type="text" name="routing_destination" />
-      <input type="text" name="full_name" />
-      <input type="email" name="work_email" />
-      <input type="text" name="company_organization" />
-      <input type="text" name="phone_number" />
-      <input type="text" name="inquiry_type" />
-      <input type="text" name="product_interest" />
-      <textarea name="message"></textarea>
-    </form>
-
+  <body class="bg-[#FBFBF9] text-[#14171A] antialiased selection:bg-[#E04819] selection:text-white">
     <div id="root"></div>
+
+    <!-- Netlify Build-Time Multipart Form Scanners (Captures Direct Orders + Custom CAD File Attachments) -->
+    <form
+      name="insultherm-direct-order"
+      method="POST"
+      data-netlify="true"
+      netlify-honeypot="bot-field"
+      enctype="multipart/form-data"
+      hidden
+    >
+      <input type="hidden" name="form-name" value="insultherm-direct-order" />
+      <input name="bot-field" />
+      <input name="order_reference" />
+      <input name="route_to_email" />
+      <input name="buyer_name" />
+      <input name="company_name" />
+      <input name="work_email" />
+      <input name="phone" />
+      <input name="gstin" />
+      <input name="shipping_address" />
+      <input name="payment_method" />
+      <input name="order_subtotal_inr" />
+      <input name="order_gst_inr" />
+      <input name="order_total_inr" />
+      <textarea name="line_items_manifest"></textarea>
+      <textarea name="engineering_notes"></textarea>
+      <input type="file" name="cad_attachment" />
+    </form>
+
+    <form
+      name="insultherm-engineering-rfq"
+      method="POST"
+      data-netlify="true"
+      netlify-honeypot="bot-field"
+      enctype="multipart/form-data"
+      hidden
+    >
+      <input type="hidden" name="form-name" value="insultherm-engineering-rfq" />
+      <input name="bot-field" />
+      <input name="full_name" />
+      <input name="company" />
+      <input name="email" />
+      <input name="phone" />
+      <input name="sector" />
+      <input name="product_interest" />
+      <input name="dimensions_qty" />
+      <textarea name="technical_brief"></textarea>
+      <input type="file" name="cad_drawing_file" />
+    </form>
+
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
