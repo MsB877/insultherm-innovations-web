@@ -118,6 +118,15 @@ def deploy_netlify(nf_token):
 
     site_id = site_obj["id"]
 
+    # Ensure public visitor access (disable Netlify SSO login gate)
+    json_headers = {**auth_headers, "Content-Type": "application/json"}
+    api_request(
+        f"https://api.netlify.com/api/v1/sites/{site_id}",
+        method="PATCH",
+        headers=json_headers,
+        data=json.dumps({"sso_login": False}).encode("utf-8"),
+    )
+
     # Build ZIP of dist/ and deploy atomically
     zip_path = "/tmp/insultherm_netlify_deploy.zip"
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
