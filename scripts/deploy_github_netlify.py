@@ -1,21 +1,22 @@
 #!/usr/bin/env python3
 """
-Credit-Safe GitHub & Netlify Deployment Orchestrator (V4)
-- Default Mode (0 Netlify Deploy Credits):
+Credit-Safe GitHub & Netlify Deployment Orchestrator (V4 — Official File-Digest Draft Mode)
+- Default Mode (0 Netlify Deploy Credits — matches `netlify deploy` draft workflow in 12345.pdf):
   1. Keeps the published production deploy LOCKED so zero 15-credit production deploys occur accidentally.
-  2. Uploads dist/ via `?draft=true&branch=preview` (0 deploy credits!) returning a permanent shareable preview URL.
-  3. Pushes source code cleanly to GitHub (`main` & `preview` branches).
+  2. Creates a Draft Deploy (`"draft": True`) via Netlify's File-Digest API, uploading ONLY changed SHA1 files.
+  3. Returns the live, shareable Draft Preview URL (`https://<deploy_id>--insultherminnovations.netlify.app`) at 0 deploy credits!
 - Pass `--production` ONLY when explicitly ready to spend 15 Netlify credits to update the main production URL.
 """
 
+import hashlib
 import json
 import os
 import subprocess
 import sys
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
-import zipfile
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DIST_DIR = os.path.join(BASE_DIR, "dist")
@@ -114,7 +115,7 @@ def deploy_netlify(nf_token, production=False):
         data=json.dumps({"sso_login": False}).encode("utf-8"),
     )
 
-    # Lock published production deploy when running in 0-credit preview mode
+    # Lock published production deploy when running in 0-credit draft preview mode
     if not production and published_deploy_id:
         l_status, _ = api_request(
             f"https://api.netlify.com/api/v1/deploys/{published_deploy_id}/lock",
@@ -122,47 +123,77 @@ def deploy_netlify(nf_token, production=False):
             headers=auth_headers,
         )
         print(f"Locked published production deploy ({published_deploy_id}) -> HTTP {l_status} (0-Credit Safe Mode)")
+    elif production and published_deploy_id:
+        api_request(f"https://api.netlify.com/api/v1/deploys/{published_deploy_id}/unlock", method="POST", headers=auth_headers)
 
-    zip_path = "/tmp/insultherm_netlify_deploy.zip"
-    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
-        for root, _, files in os.walk(DIST_DIR):
-            for fname in files:
-                full_p = os.path.join(root, fname)
-                rel_p = os.path.relpath(full_p, DIST_DIR)
-                zf.write(full_p, rel_p)
+    # Compute SHA1 file-digest map of dist/ (exactly how `netlify deploy` CLI works!)
+    file_hashes = {}
+    sha_to_paths = {}
+    for root, _, files in os.walk(DIST_DIR):
+        for fname in files:
+            full_p = os.path.join(root, fname)
+            rel_p = "/" + os.path.relpath(full_p, DIST_DIR).replace(os.sep, "/")
+            with open(full_p, "rb") as f:
+                sha1 = hashlib.sha1(f.read()).hexdigest()
+            file_hashes[rel_p] = sha1
+            sha_to_paths.setdefault(sha1, []).append((rel_p, full_p))
 
-    with open(zip_path, "rb") as f:
-        zip_bytes = f.read()
-
-    zip_headers = {
-        **auth_headers,
-        "Content-Type": "application/zip",
+    manifest_payload = {
+        "files": file_hashes,
+        "draft": (not production),
+        "title": "v4-production" if production else "v4-zero-credit-draft-preview",
     }
+    if not production:
+        manifest_payload["branch"] = "preview"
 
-    if production:
-        if published_deploy_id:
-            api_request(f"https://api.netlify.com/api/v1/deploys/{published_deploy_id}/unlock", method="POST", headers=auth_headers)
-        endpoint = f"https://api.netlify.com/api/v1/sites/{site_id}/deploys"
-    else:
-        # 0-CREDIT DRAFT PREVIEW DEPLOY!
-        endpoint = f"https://api.netlify.com/api/v1/sites/{site_id}/deploys?draft=true&branch=preview&title=v4-credit-safe-preview"
-
-    d_status, deploy_res = api_request(endpoint, method="POST", headers=zip_headers, data=zip_bytes)
+    d_status, deploy_res = api_request(
+        f"https://api.netlify.com/api/v1/sites/{site_id}/deploys",
+        method="POST",
+        headers=json_headers,
+        data=json.dumps(manifest_payload).encode("utf-8"),
+    )
     if d_status not in (200, 201):
-        raise RuntimeError(f"Netlify ZIP deploy failed ({d_status}): {deploy_res}")
+        raise RuntimeError(f"Netlify manifest deploy creation failed ({d_status}): {deploy_res}")
 
-    os.remove(zip_path)
+    deploy_id = deploy_res["id"]
+    required_shas = set(deploy_res.get("required") or [])
+    print(f"Deploy {deploy_id} created (draft={deploy_res.get('draft')}). Uploading {len(required_shas)} changed files (skipping {len(file_hashes) - len(required_shas)} cached files)...")
 
-    deploy_ssl_url = deploy_res.get("deploy_ssl_url") or f"https://{deploy_res.get('id')}--{site_obj['name']}.netlify.app"
-    branch_url = f"https://preview--{site_obj['name']}.netlify.app"
-    prod_url = site_obj.get("ssl_url") or f"https://{site_obj['name']}.netlify.app"
+    octet_headers = {**auth_headers, "Content-Type": "application/octet-stream"}
+    for sha1 in required_shas:
+        for rel_p, full_p in sha_to_paths.get(sha1, [])[:1]:
+            encoded_path = "/".join(urllib.parse.quote(seg, safe="") for seg in rel_p.lstrip("/").split("/"))
+            with open(full_p, "rb") as f:
+                file_bytes = f.read()
+            u_status, u_res = api_request(
+                f"https://api.netlify.com/api/v1/deploys/{deploy_id}/files/{encoded_path}",
+                method="PUT",
+                headers=octet_headers,
+                data=file_bytes,
+            )
+            if u_status not in (200, 201):
+                raise RuntimeError(f"Failed uploading {rel_p} ({u_status}): {u_res}")
+
+    # Poll until state == 'ready'
+    final_deploy = deploy_res
+    for _ in range(20):
+        p_status, p_res = api_request(f"https://api.netlify.com/api/v1/deploys/{deploy_id}", headers=auth_headers)
+        if p_status == 200:
+            final_deploy = p_res
+            if p_res.get("state") == "ready":
+                break
+        time.sleep(1.5)
+
+    links = final_deploy.get("links") or {}
     return {
         "mode": "PRODUCTION (15 credits)" if production else "DRAFT PREVIEW (0 deploy credits)",
-        "deploy_id": deploy_res.get("id"),
-        "context": deploy_res.get("context"),
-        "deploy_ssl_url": deploy_ssl_url,
-        "branch_url": branch_url,
-        "prod_url": prod_url,
+        "deploy_id": deploy_id,
+        "state": final_deploy.get("state"),
+        "draft": final_deploy.get("draft"),
+        "context": final_deploy.get("context"),
+        "permalink_url": links.get("permalink") or f"https://{deploy_id}--{site_obj['name']}.netlify.app",
+        "alias_url": links.get("alias") or final_deploy.get("deploy_ssl_url"),
+        "locked_prod_url": site_obj.get("ssl_url") or f"https://{site_obj['name']}.netlify.app",
     }
 
 
