@@ -8,12 +8,13 @@ export const QuotePage: React.FC = () => {
   const { openCheckout, items } = useOrderCart();
 
   return (
-    <div className="bg-[#F7F8FA] pb-24">
-      {/* Clean Header */}
-      <section className="bg-white border-b border-gray-200 py-14">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+    <div className="bg-canvas-tonal pb-24">
+      {/* Balanced Architectural Header */}
+      <section className="relative bg-hero-architectural bg-subtle-grid overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-16 flex flex-col lg:flex-row lg:items-end justify-between gap-6">
           <div className="max-w-3xl space-y-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#DC2626]">
+            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-red-200/80 text-xs font-bold uppercase tracking-wider text-[#DC2626]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#DC2626]" />
               Zero-Tooling Digital CNC Desk
             </span>
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#0F1115] tracking-tight">
@@ -34,6 +35,18 @@ export const QuotePage: React.FC = () => {
             <ShoppingBag className="w-4 h-4" />
             Open Checkout & Offers ({items.length})
           </button>
+        </div>
+
+        <div className="w-full overflow-hidden leading-none pointer-events-none">
+          <svg
+            viewBox="0 0 1440 40"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-full h-7 sm:h-9"
+            preserveAspectRatio="none"
+          >
+            <path d="M0 16C420 42 900 -4 1440 20V40H0V16Z" fill="#EEF1F6" />
+          </svg>
         </div>
       </section>
 

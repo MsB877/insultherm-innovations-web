@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """
-Autonomous GitHub Repository & Netlify Subdomain Deployment Orchestrator
-Enforces Phase 4 Subdomain Naming Protocol:
-  Primary:  insultherminnovations.netlify.app
-  Fallbacks: insultherminv -> insultherm-inv -> insultherminn -> insultherminno
+Credit-Safe GitHub & Netlify Deployment Orchestrator (V4)
+- Default Mode (0 Netlify Deploy Credits):
+  1. Keeps the published production deploy LOCKED so zero 15-credit production deploys occur accidentally.
+  2. Uploads dist/ via `?draft=true&branch=preview` (0 deploy credits!) returning a permanent shareable preview URL.
+  3. Pushes source code cleanly to GitHub (`main` & `preview` branches).
+- Pass `--production` ONLY when explicitly ready to spend 15 Netlify credits to update the main production URL.
 """
 
-import hashlib
 import json
 import os
 import subprocess
@@ -31,7 +32,7 @@ SUBDOMAIN_CANDIDATES = [
 def api_request(url, method="GET", headers=None, data=None):
     req = urllib.request.Request(url, data=data, headers=headers or {}, method=method)
     try:
-        with urllib.request.urlopen(req, timeout=60) as resp:
+        with urllib.request.urlopen(req, timeout=90) as resp:
             raw = resp.read()
             return resp.status, json.loads(raw.decode("utf-8")) if raw else {}
     except urllib.error.HTTPError as e:
@@ -52,12 +53,11 @@ def deploy_github(gh_token, repo_name="insultherm-innovations-web"):
         raise RuntimeError(f"GitHub authentication failed ({status}): {user_info}")
     owner = user_info["login"]
 
-    # Check if repo already exists
     r_status, repo_info = api_request(f"https://api.github.com/repos/{owner}/{repo_name}", headers=headers)
     if r_status == 404:
         payload = json.dumps({
             "name": repo_name,
-            "description": "InsulTherm Innovations — Enterprise B2B Advanced Interface Materials & Digital Converting Portal",
+            "description": "InsulTherm Innovations — Advanced Thermal, Fire-Barrier & Dielectric Materials Portal",
             "private": False,
             "auto_init": False,
         }).encode("utf-8")
@@ -70,22 +70,21 @@ def deploy_github(gh_token, repo_name="insultherm-innovations-web"):
     auth_remote = f"https://x-access-token:{urllib.parse.quote(gh_token, safe='')}@github.com/{owner}/{repo_name}.git"
 
     try:
+        subprocess.run(["git", "push", "--force", auth_remote, "HEAD:refs/heads/preview"], cwd=BASE_DIR, check=True, capture_output=True, text=True)
         subprocess.run(["git", "push", "--force", auth_remote, "HEAD:refs/heads/main"], cwd=BASE_DIR, check=True, capture_output=True, text=True)
     finally:
-        # Ensure only clean non-credential remote URL is stored
         subprocess.run(["git", "remote", "remove", "origin"], cwd=BASE_DIR, capture_output=True)
         subprocess.run(["git", "remote", "add", "origin", clean_remote], cwd=BASE_DIR, capture_output=True)
 
     return html_url
 
 
-def deploy_netlify(nf_token):
+def deploy_netlify(nf_token, production=False):
     auth_headers = {
         "Authorization": f"Bearer {nf_token}",
         "User-Agent": "InsulTherm-Deploy-Agent",
     }
 
-    # Check existing sites in user's Netlify account first
     s_status, existing_sites = api_request("https://api.netlify.com/api/v1/sites?per_page=100", headers=auth_headers)
     if s_status != 200:
         raise RuntimeError(f"Netlify authentication failed ({s_status}): {existing_sites}")
@@ -100,25 +99,13 @@ def deploy_netlify(nf_token):
         if site_obj:
             break
 
-    # Create site trying exact priority subdomain list
     if not site_obj:
-        json_headers = {**auth_headers, "Content-Type": "application/json"}
-        for cand in SUBDOMAIN_CANDIDATES:
-            payload = json.dumps({"name": cand}).encode("utf-8")
-            c_status, res = api_request("https://api.netlify.com/api/v1/sites", method="POST", headers=json_headers, data=payload)
-            if c_status in (200, 201):
-                site_obj = res
-                print(f"Created Netlify site with subdomain: {cand}")
-                break
-            else:
-                print(f"Subdomain '{cand}' unavailable ({c_status}), trying next fallback...")
-
-    if not site_obj:
-        raise RuntimeError("All 5 priority Netlify subdomains were unavailable.")
+        raise RuntimeError("Owned Netlify site not found.")
 
     site_id = site_obj["id"]
+    published_deploy_id = (site_obj.get("published_deploy") or {}).get("id")
 
-    # Ensure public visitor access (disable Netlify SSO login gate)
+    # Ensure public visitor access (no SSO password wall)
     json_headers = {**auth_headers, "Content-Type": "application/json"}
     api_request(
         f"https://api.netlify.com/api/v1/sites/{site_id}",
@@ -127,7 +114,15 @@ def deploy_netlify(nf_token):
         data=json.dumps({"sso_login": False}).encode("utf-8"),
     )
 
-    # Build ZIP of dist/ and deploy atomically
+    # Lock published production deploy when running in 0-credit preview mode
+    if not production and published_deploy_id:
+        l_status, _ = api_request(
+            f"https://api.netlify.com/api/v1/deploys/{published_deploy_id}/lock",
+            method="POST",
+            headers=auth_headers,
+        )
+        print(f"Locked published production deploy ({published_deploy_id}) -> HTTP {l_status} (0-Credit Safe Mode)")
+
     zip_path = "/tmp/insultherm_netlify_deploy.zip"
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
         for root, _, files in os.walk(DIST_DIR):
@@ -143,25 +138,41 @@ def deploy_netlify(nf_token):
         **auth_headers,
         "Content-Type": "application/zip",
     }
-    d_status, deploy_res = api_request(
-        f"https://api.netlify.com/api/v1/sites/{site_id}/deploys",
-        method="POST",
-        headers=zip_headers,
-        data=zip_bytes,
-    )
+
+    if production:
+        if published_deploy_id:
+            api_request(f"https://api.netlify.com/api/v1/deploys/{published_deploy_id}/unlock", method="POST", headers=auth_headers)
+        endpoint = f"https://api.netlify.com/api/v1/sites/{site_id}/deploys"
+    else:
+        # 0-CREDIT DRAFT PREVIEW DEPLOY!
+        endpoint = f"https://api.netlify.com/api/v1/sites/{site_id}/deploys?draft=true&branch=preview&title=v4-credit-safe-preview"
+
+    d_status, deploy_res = api_request(endpoint, method="POST", headers=zip_headers, data=zip_bytes)
     if d_status not in (200, 201):
         raise RuntimeError(f"Netlify ZIP deploy failed ({d_status}): {deploy_res}")
 
-    ssl_url = site_obj.get("ssl_url") or f"https://{site_obj['name']}.netlify.app"
-    return ssl_url, deploy_res.get("id")
+    os.remove(zip_path)
+
+    deploy_ssl_url = deploy_res.get("deploy_ssl_url") or f"https://{deploy_res.get('id')}--{site_obj['name']}.netlify.app"
+    branch_url = f"https://preview--{site_obj['name']}.netlify.app"
+    prod_url = site_obj.get("ssl_url") or f"https://{site_obj['name']}.netlify.app"
+    return {
+        "mode": "PRODUCTION (15 credits)" if production else "DRAFT PREVIEW (0 deploy credits)",
+        "deploy_id": deploy_res.get("id"),
+        "context": deploy_res.get("context"),
+        "deploy_ssl_url": deploy_ssl_url,
+        "branch_url": branch_url,
+        "prod_url": prod_url,
+    }
 
 
 if __name__ == "__main__":
+    is_prod = "--production" in sys.argv
     gh = os.environ.get("GITHUB_TOKEN", "").strip()
     nf = os.environ.get("NETLIFY_TOKEN", "").strip()
     if gh:
         repo_url = deploy_github(gh)
         print("GITHUB_REPO_URL:", repo_url)
     if nf:
-        live_url, dep_id = deploy_netlify(nf)
-        print("NETLIFY_LIVE_URL:", live_url, "DEPLOY_ID:", dep_id)
+        info = deploy_netlify(nf, production=is_prod)
+        print("NETLIFY_DEPLOY_RESULT:", json.dumps(info, indent=2))

@@ -110,19 +110,21 @@ export const COMPANY_INFO = {
   founders: [
     {
       name: 'Manav',
-      role: 'Co-Founder — Commercial Strategy & OEM Accounts',
-      focus: 'Leads BESS, EV, and Defense qualification programs, transparent area-pricing schedules, and direct R&D procurement.',
+      role: 'Founder — Commercial Strategy & OEM Accounts',
+      focus: 'Leads BESS, industrial power, defense, and EV R&D qualification programs, transparent area-pricing schedules, and direct procurement.',
       email: 'manav.sb@inslthrm.in',
     },
     {
       name: 'Nikhil',
-      role: 'Co-Founder — Materials Formulation & Thermal Validation',
+      role: 'Founder — Materials Formulation & Thermal Validation',
       focus: 'Leads composite TIM architecture, ASTM D5470 / D149 characterization, and 4-quadrant thermal runaway FEA modeling.',
+      email: '',
     },
     {
       name: 'Sukhmeet',
-      role: 'Co-Founder — Digital CNC Converting & Operations',
+      role: 'Founder — Digital CNC Converting & Operations',
       focus: 'Directs zero-tooling oscillating-knife CNC cells, 50%-depth living-hinge scoring accuracy, and 24–48h dispatch.',
+      email: '',
     },
   ],
 };
@@ -226,7 +228,7 @@ export const PRODUCTS: ProductSpec[] = [
     dielectricSort: 15,
     operatingTemp: '-60°C to +1,100°C (>5 min Torch Hold)',
     maxTempSort: 1100,
-    flammability: 'UL 94 V-0 / UL 9540A / AIS-156 Amend. 3',
+    flammability: 'UL 94 V-0 Grade | Supports AIS-156 & UL 9540A Pack Designs',
     hardnessOrDensity: '25–35% Compressible Cell-Breathing Core',
     thicknessRange: '1.50 mm (Std), 1.65 mm (Kapton HV), 2.00 mm',
     defaultLengthMm: 100,
@@ -257,7 +259,7 @@ export const PRODUCTS: ProductSpec[] = [
       'Module Lid Vent-Channel Blast Deflectors & Exhaust Shields',
       'Industrial, Marine & Backup Energy Storage Enclosures',
     ],
-    standards: ['AIS-156 Amend. 3 (>5 min @ 1,100°C)', 'UL 9540A', 'ASTM C518', 'ASTM D149'],
+    standards: ['AIS-156 Amend. 3 Pack Support', 'UL 9540A Cell Firewall Design', 'ASTM C518', 'ASTM D149'],
   },
   {
     id: 'insultherm-graphite-flex',
@@ -326,7 +328,7 @@ export const PRODUCTS: ProductSpec[] = [
     dielectricSort: 14,
     operatingTemp: '-50°C to +200°C (50°C Anti-Bleed)',
     maxTempSort: 200,
-    flammability: 'UL 94 V-0 Certified Matrix',
+    flammability: 'UL 94 V-0 Matrix Target',
     hardnessOrDensity: '40 Shore 00 Soft Conformable',
     thicknessRange: '0.5 mm, 1.0 mm, 1.5 mm, 2.0 mm, 3.0 mm',
     defaultLengthMm: 100,
