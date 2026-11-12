@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { ProductSlugId } from '../utils/pricingEngine';
+import { calculatePartPrice, ProductSlugId } from '../utils/pricingEngine';
 import {
   CHECKOUT_COUPONS,
   CouponEvaluation,
@@ -14,6 +14,9 @@ export interface CartItem {
   title: string;
   itemType: 'custom-cad' | 'kit-bundle';
   dimensionsLabel: string;
+  lengthMm?: number;
+  widthMm?: number;
+  thicknessMm?: number;
   areaCm2?: number;
   unitPriceInr: number;
   quantity: number;
@@ -37,7 +40,6 @@ interface OrderCartContextValue {
   updateQuantity: (uid: string, quantity: number) => void;
   removeItem: (uid: string) => void;
   clearCart: () => void;
-  // Coupon & Totals
   couponEvaluations: CouponEvaluation[];
   appliedCoupon: OfferCoupon | null;
   couponDiscountInr: number;
@@ -51,8 +53,8 @@ interface OrderCartContextValue {
   distinctItemCount: number;
 }
 
-const STORAGE_KEY = 'insultherm_order_cart_v3';
-const COUPON_STORAGE_KEY = 'insultherm_applied_coupon_v3';
+const STORAGE_KEY = 'insultherm_order_cart_v5';
+const COUPON_STORAGE_KEY = 'insultherm_applied_coupon_v5';
 
 const OrderCartContext = createContext<OrderCartContextValue | undefined>(undefined);
 
@@ -77,7 +79,7 @@ export const OrderCartProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'configure' | 'checkout'>('checkout');
   const [preselectedProductId, setPreselectedProductId] =
-    useState<ProductSlugId>('insultherm-core');
+    useState<ProductSlugId>('insultherm-shield');
   const [attachedCadFile, setAttachedCadFile] = useState<File | null>(null);
 
   useEffect(() => {
@@ -178,7 +180,34 @@ export const OrderCartProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       removeItem(uid);
       return;
     }
-    setItems((prev) => prev.map((it) => (it.uid === uid ? { ...it, quantity } : it)));
+    setItems((prev) =>
+      prev.map((it) => {
+        if (it.uid !== uid) return it;
+        // Dynamically recalculate 3-tier unit price (Prototype / Pilot / Blanket) when quantity changes!
+        if (
+          it.itemType === 'custom-cad' &&
+          it.productId &&
+          it.lengthMm &&
+          it.widthMm
+        ) {
+          const recalc = calculatePartPrice({
+            productId: it.productId,
+            lengthMm: it.lengthMm,
+            widthMm: it.widthMm,
+            quantity,
+            thicknessMm: it.thicknessMm,
+            gradeSku: it.sku,
+          });
+          return {
+            ...it,
+            quantity,
+            unitPriceInr: recalc.unitPriceInr,
+            formulaNote: recalc.formulaExplanation,
+          };
+        }
+        return { ...it, quantity };
+      })
+    );
   };
 
   const removeItem = (uid: string) => {

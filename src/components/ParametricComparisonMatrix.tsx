@@ -1,125 +1,195 @@
-import React, { useState } from 'react';
-import { FileDown, ArrowUpDown, ShoppingBag } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { ArrowUpDown, Download, Filter, RotateCcw, ShoppingBag } from 'lucide-react';
 import { PRODUCTS, ProductSpec } from '../data/companyData';
 import { useOrderCart } from '../context/OrderCartContext';
 
 export const ParametricComparisonMatrix: React.FC = () => {
   const { openConfigurator } = useOrderCart();
-  const [onlyZeroOutgassing, setOnlyZeroOutgassing] = useState(false);
-  const [onlySiliconeFree, setOnlySiliconeFree] = useState(false);
-  const [sortBy, setSortBy] = useState<'default' | 'k' | 'dielectric' | 'temp'>('default');
 
-  const filtered: ProductSpec[] = PRODUCTS.filter((p) => {
-    if (onlyZeroOutgassing && !p.outgassingCompliant) return false;
-    if (onlySiliconeFree && !p.siliconeFreeAvailable) return false;
-    return true;
-  }).sort((a, b) => {
-    if (sortBy === 'k') return b.thermalConductivitySort - a.thermalConductivitySort;
-    if (sortBy === 'dielectric') return b.dielectricSort - a.dielectricSort;
-    if (sortBy === 'temp') return b.maxTempSort - a.maxTempSort;
-    return 0;
-  });
+  const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
+  const [onlyOutgassing, setOnlyOutgassing] = useState<boolean>(false);
+  const [onlySiliconeFree, setOnlySiliconeFree] = useState<boolean>(false);
+  const [sortBy, setSortBy] = useState<'default' | 'k_desc' | 'diel_desc' | 'temp_desc'>(
+    'default'
+  );
+
+  const filteredProducts = useMemo(() => {
+    let list: ProductSpec[] = [...PRODUCTS];
+    if (categoryFilter !== 'ALL') {
+      list = list.filter((p) => p.category === categoryFilter);
+    }
+    if (onlyOutgassing) {
+      list = list.filter((p) => p.outgassingCompliant);
+    }
+    if (onlySiliconeFree) {
+      list = list.filter((p) => p.siliconeFreeAvailable);
+    }
+    if (sortBy === 'k_desc') {
+      list.sort((a, b) => b.thermalConductivitySort - a.thermalConductivitySort);
+    } else if (sortBy === 'diel_desc') {
+      list.sort((a, b) => b.dielectricSort - a.dielectricSort);
+    } else if (sortBy === 'temp_desc') {
+      list.sort((a, b) => b.maxTempSort - a.maxTempSort);
+    }
+    return list;
+  }, [categoryFilter, onlyOutgassing, onlySiliconeFree, sortBy]);
+
+  const resetFilters = () => {
+    setCategoryFilter('ALL');
+    setOnlyOutgassing(false);
+    setOnlySiliconeFree(false);
+    setSortBy('default');
+  };
 
   return (
-    <div id="tds-downloads" className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-      <div className="p-6 bg-[#F7F8FA] border-b border-gray-200 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-[#DC2626]">
-            Search by Properties
+    <div className="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
+      {/* Filter Bar */}
+      <div className="p-5 sm:p-6 bg-slate-50 border-b border-slate-200 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-600">
+            <Filter className="w-3.5 h-3.5 text-red-600" />
+            Parametric Selector:
           </span>
-          <h3 className="text-xl font-bold text-[#0F1115] mt-0.5">
-            Parametric Material Comparison & Technical Data Sheets
-          </h3>
-        </div>
 
-        <div className="flex flex-wrap items-center gap-2.5">
-          <label className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-xs font-semibold text-gray-700 cursor-pointer">
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-semibold text-slate-800"
+          >
+            <option value="ALL">All 5 Material Families</option>
+            <option value="Dielectric Origami">Dielectric Origami (Shield™)</option>
+            <option value="Fire Barrier">Runaway Fire Barrier (Barrier™)</option>
+            <option value="Anisotropic Spreader">Anisotropic Spreader (Graphite-Flex™)</option>
+            <option value="Thermal Gap Pad">Thermal Gap Pad (Core™)</option>
+            <option value="High-Flux Hybrid TIM">High-Flux Hybrid TIM (Ultra™)</option>
+          </select>
+
+          <label className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-700 cursor-pointer bg-white px-3 py-1.5 rounded-lg border border-slate-300">
             <input
               type="checkbox"
-              checked={onlyZeroOutgassing}
-              onChange={(e) => setOnlyZeroOutgassing(e.target.checked)}
-              className="accent-[#DC2626]"
+              checked={onlyOutgassing}
+              onChange={(e) => setOnlyOutgassing(e.target.checked)}
+              className="accent-red-600"
             />
-            ASTM E595 Low-Outgassing
+            Low-Outgassing / Space Ready
           </label>
-          <label className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-xs font-semibold text-gray-700 cursor-pointer">
+
+          <label className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-700 cursor-pointer bg-white px-3 py-1.5 rounded-lg border border-slate-300">
             <input
               type="checkbox"
               checked={onlySiliconeFree}
               onChange={(e) => setOnlySiliconeFree(e.target.checked)}
-              className="accent-[#DC2626]"
+              className="accent-red-600"
             />
-            Silicone-Free Option
+            Siloxane-Free Grade
           </label>
+        </div>
 
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-            aria-label="Sort products"
-            className="px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-xs font-semibold text-[#0F1115]"
+        <div className="flex items-center gap-2.5">
+          <div className="inline-flex items-center gap-1.5 text-xs text-slate-600">
+            <ArrowUpDown className="w-3.5 h-3.5" />
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+              className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-semibold text-slate-800"
+            >
+              <option value="default">Sort: Portfolio Order</option>
+              <option value="k_desc">Thermal Conductivity (High → Low)</option>
+              <option value="diel_desc">Dielectric Strength (High → Low)</option>
+              <option value="temp_desc">Max Temperature (High → Low)</option>
+            </select>
+          </div>
+
+          <button
+            type="button"
+            onClick={resetFilters}
+            className="p-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-600"
+            title="Reset Filters"
           >
-            <option value="default">Sort: Portfolio Order</option>
-            <option value="k">Sort: Thermal Conductivity (High → Low)</option>
-            <option value="dielectric">Sort: Dielectric Breakdown (High → Low)</option>
-            <option value="temp">Sort: Max Temperature (High → Low)</option>
-          </select>
+            <RotateCcw className="w-3.5 h-3.5" />
+          </button>
         </div>
       </div>
 
+      {/* Responsive Table */}
       <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
+        <table className="w-full text-left border-collapse min-w-[980px]">
           <thead>
-            <tr className="bg-[#0F1115] text-gray-200 text-xs font-semibold">
-              <th className="py-3.5 px-5">Material</th>
-              <th className="py-3.5 px-4">
-                <span className="inline-flex items-center gap-1">
-                  Thermal Conductivity <ArrowUpDown className="w-3 h-3 text-gray-400" />
-                </span>
-              </th>
-              <th className="py-3.5 px-4">Dielectric Strength</th>
-              <th className="py-3.5 px-4">Operating Temp</th>
-              <th className="py-3.5 px-4">Prototype Price</th>
-              <th className="py-3.5 px-4">Volume Rate</th>
-              <th className="py-3.5 px-5 text-right">Actions</th>
+            <tr className="bg-slate-900 text-white text-[11px] uppercase tracking-wider">
+              <th className="py-3.5 px-4 font-bold">Material IP & Grades</th>
+              <th className="py-3.5 px-4 font-bold">Thermal Conductivity</th>
+              <th className="py-3.5 px-4 font-bold">Dielectric Breakdown</th>
+              <th className="py-3.5 px-4 font-bold">Operating Temp</th>
+              <th className="py-3.5 px-4 font-bold">Thickness Range</th>
+              <th className="py-3.5 px-4 font-bold">3-Tier Price (Proto • Pilot • Blanket)</th>
+              <th className="py-3.5 px-4 font-bold text-right">Datasheet & Order</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 text-sm">
-            {filtered.map((p) => (
-              <tr key={p.id} className="hover:bg-[#F7F8FA] transition-colors">
-                <td className="py-4 px-5">
-                  <div className="font-bold text-[#0F1115]">{p.trademarkName}</div>
-                  <div className="text-xs text-gray-500 mt-0.5">{p.thicknessRange}</div>
+          <tbody className="divide-y divide-slate-200 text-xs">
+            {filteredProducts.map((prod) => (
+              <tr key={prod.id} className="hover:bg-slate-50/90 transition-colors">
+                <td className="py-4 px-4">
+                  <div className="font-extrabold text-sm text-slate-950">
+                    {prod.trademarkName}
+                  </div>
+                  <div className="text-slate-500 mt-0.5">{prod.category}</div>
+                  <div className="flex flex-wrap gap-1 mt-1.5">
+                    {prod.keyGrades.map((g) => (
+                      <span
+                        key={g}
+                        className="text-[10px] font-mono bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded"
+                      >
+                        {g.split(' ')[0]}
+                      </span>
+                    ))}
+                  </div>
                 </td>
-                <td className="py-4 px-4 font-semibold text-[#0F1115] text-xs sm:text-sm">
-                  {p.thermalConductivity}
+                <td className="py-4 px-4 font-mono font-semibold text-slate-900">
+                  {prod.thermalConductivity}
+                  <div className="text-[11px] font-sans font-normal text-slate-500 mt-0.5">
+                    {prod.thermalImpedance}
+                  </div>
                 </td>
-                <td className="py-4 px-4 text-gray-700 text-xs sm:text-sm">
-                  {p.dielectricStrength}
+                <td className="py-4 px-4 font-mono font-semibold text-slate-900">
+                  {prod.dielectricStrength}
                 </td>
-                <td className="py-4 px-4 text-gray-700 text-xs sm:text-sm">{p.operatingTemp}</td>
-                <td className="py-4 px-4 font-semibold text-[#0F1115] text-xs sm:text-sm tabular-nums">
-                  {p.protoPriceLabel}
+                <td className="py-4 px-4 font-mono text-slate-800">
+                  {prod.operatingTemp}
+                  <div className="text-[11px] font-sans text-emerald-700 font-medium mt-0.5">
+                    {prod.flammability.split('|')[0]}
+                  </div>
                 </td>
-                <td className="py-4 px-4 font-semibold text-[#DC2626] text-xs sm:text-sm tabular-nums">
-                  {p.volumePriceLabel}
+                <td className="py-4 px-4 font-mono text-slate-700">{prod.thicknessRange}</td>
+                <td className="py-4 px-4">
+                  <div className="font-mono font-bold text-slate-950">
+                    Proto: {prod.protoPriceLabel}
+                  </div>
+                  <div className="text-[11px] font-mono text-blue-700 font-semibold mt-0.5">
+                    Pilot (100+): {prod.pilotPriceLabel}
+                  </div>
+                  <div className="text-[11px] font-mono text-emerald-700 font-semibold mt-0.5">
+                    Blanket (500+): {prod.volumePriceLabel}
+                  </div>
                 </td>
-                <td className="py-4 px-5 text-right">
+                <td className="py-4 px-4 text-right">
                   <div className="inline-flex items-center gap-2">
                     <a
-                      href={p.tdsUrl}
-                      download
-                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-200 bg-white hover:border-[#0F1115] text-xs font-semibold text-[#0F1115]"
+                      href={prod.tdsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-300 hover:border-slate-400 text-slate-700 font-semibold"
+                      title="Download 2-Page Technical Data Sheet PDF"
                     >
-                      <FileDown className="w-3.5 h-3.5 text-[#DC2626]" />
+                      <Download className="w-3.5 h-3.5" />
                       TDS
                     </a>
                     <button
                       type="button"
-                      onClick={() => openConfigurator(p.id)}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#DC2626] hover:bg-[#B91C1C] text-xs font-bold text-white"
+                      onClick={() => openConfigurator(prod.id)}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold"
                     >
                       <ShoppingBag className="w-3.5 h-3.5" />
-                      Buy
+                      Order
                     </button>
                   </div>
                 </td>

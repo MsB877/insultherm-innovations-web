@@ -21,11 +21,14 @@ export interface ProductPricingModel {
   referenceFootprintLabel: string;
   referenceAreaCm2: number;
   protoReferenceHeadline: string;
+  pilotRateHeadline: string;
   volumeRateHeadline: string;
+  competitorEdgeHeadline: string;
   areaTiersSummary: {
     band: string;
     exampleSize: string;
     protoRule: string;
+    pilotRule: string;
     volumeRule: string;
   }[];
   thicknessOptions: { label: string; mm: number; multiplier: number }[];
@@ -35,28 +38,33 @@ export interface ProductPricingModel {
 export const PRICING_MODELS: Record<ProductSlugId, ProductPricingModel> = {
   'insultherm-shield': {
     productId: 'insultherm-shield',
-    referenceFootprintLabel: '100 × 100 mm flat pattern (100 cm² folded shroud)',
+    referenceFootprintLabel: '100 × 100 mm flat pattern (100 cm² folded busbar sleeve)',
     referenceAreaCm2: 100,
-    protoReferenceHeadline: '₹45 / 100 cm² folded pc (₹0.45 / cm², min ₹25)',
-    volumeRateHeadline: '₹0.30 / cm² nested flat area (₹30 / 100 cm² pc)',
+    protoReferenceHeadline: '₹45.00 / pc @ 100 cm² (₹0.45/cm², min ₹25)',
+    pilotRateHeadline: '₹35.00 / pc @ 100 cm² (100–499 pcs)',
+    volumeRateHeadline: '₹30.00 / pc @ 100 cm² (500+ pcs OEM Blanket)',
+    competitorEdgeHeadline: 'Up to 50% lower than ₹90–₹200 prototype imports + ₹0 mold NRE',
     areaTiersSummary: [
       {
-        band: 'Small Terminal / Tab Cap (≤ 55 cm²)',
+        band: 'Compact Terminal / Tab Shroud (≤ 55 cm²)',
         exampleSize: 'e.g. 50 × 80 mm (40 cm²)',
-        protoRule: '₹25 – ₹28 / folded pc (min CNC setup floor)',
-        volumeRule: '₹0.30 / cm² nested (min ₹16 / pc)',
+        protoRule: '₹25.00 / pc (min CNC setup floor)',
+        pilotRule: '₹20.00 / pc (100–499 pcs)',
+        volumeRule: '₹0.30 / cm² (min ₹16.00 / pc)',
       },
       {
-        band: 'Standard Busbar Shroud (56 – 150 cm²)',
+        band: 'Standard 3D Busbar Sleeve (56 – 150 cm²)',
         exampleSize: '100 × 100 mm (100 cm² ref.)',
-        protoRule: '₹0.45 / cm² → ₹45 / folded pc @ 100 cm²',
-        volumeRule: '₹0.30 / cm² → ₹30 / folded pc @ 100 cm²',
+        protoRule: '₹0.45 / cm² → ₹45.00 / pc',
+        pilotRule: '₹0.35 / cm² → ₹35.00 / pc',
+        volumeRule: '₹0.30 / cm² → ₹30.00 / pc',
       },
       {
-        band: 'Full BESS / EV Pack Liner (> 150 cm²)',
+        band: '1,500V BESS / Rail Collector Liner (> 150 cm²)',
         exampleSize: 'e.g. 300 × 200 mm (600 cm²)',
-        protoRule: '₹0.42 / cm² flat-pattern area + living-hinge score',
-        volumeRule: '₹0.28 / cm² nested sheet area ( Blanket ≥500 pcs: ₹0.25/cm²)',
+        protoRule: '₹0.42 / cm² flat pattern + hinge score',
+        pilotRule: '₹0.33 / cm² nested sheet area',
+        volumeRule: '₹0.28 / cm² OEM blanket area',
       },
     ],
     thicknessOptions: [
@@ -75,26 +83,31 @@ export const PRICING_MODELS: Record<ProductSlugId, ProductPricingModel> = {
     productId: 'insultherm-barrier',
     referenceFootprintLabel: '100 × 100 mm cell firewall (100 cm² reference)',
     referenceAreaCm2: 100,
-    protoReferenceHeadline: '₹110 / 100 cm² custom sheet (₹1.10 / cm², min ₹55)',
-    volumeRateHeadline: '₹0.85 / cm² nested cell area (₹85 / 100 cm² sheet)',
+    protoReferenceHeadline: '₹110.00 / sheet @ 100 cm² (₹1.10/cm², min ₹55)',
+    pilotRateHeadline: '₹95.00 / sheet @ 100 cm² (100–499 pcs)',
+    volumeRateHeadline: '₹85.00 / sheet @ 100 cm² (500+ pcs OEM Blanket)',
+    competitorEdgeHeadline: '50% lower than ₹220–₹480 imported aerogel sheets + 100% India DVA',
     areaTiersSummary: [
       {
         band: 'Compact Cylindrical / Pouch Spacer (≤ 50 cm²)',
         exampleSize: 'e.g. 65 × 70 mm (45.5 cm²)',
-        protoRule: '₹55 / custom sheet (min sealed-edge floor)',
-        volumeRule: '₹0.85 / cm² nested (min ₹38 / sheet)',
+        protoRule: '₹55.00 / sheet (min dust-sealed floor)',
+        pilotRule: '₹46.00 / sheet (100–499 pcs)',
+        volumeRule: '₹0.85 / cm² (min ₹40.00 / sheet)',
       },
       {
         band: 'Standard EV Prismatic Cell (51 – 160 cm²)',
         exampleSize: '100 × 100 mm (100 cm² ref.)',
-        protoRule: '₹1.10 / cm² → ₹110 / custom sheet @ 100 cm²',
-        volumeRule: '₹0.85 / cm² → ₹85 / sheet @ 100 cm²',
+        protoRule: '₹1.10 / cm² → ₹110.00 / sheet',
+        pilotRule: '₹0.95 / cm² → ₹95.00 / sheet',
+        volumeRule: '₹0.85 / cm² → ₹85.00 / sheet',
       },
       {
         band: '280Ah / 314Ah Grid BESS Cell (> 160 cm²)',
         exampleSize: 'e.g. 174 × 204 mm (355 cm²)',
-        protoRule: '₹1.05 / cm² (₹373 / 280Ah firewall)',
-        volumeRule: '₹0.82 / cm² (₹291 / 280Ah sheet; ≥500 pcs ₹0.76/cm²)',
+        protoRule: '₹1.05 / cm² (₹372.75 / 280Ah sheet)',
+        pilotRule: '₹0.90 / cm² (₹319.50 / 280Ah sheet)',
+        volumeRule: '₹0.80 / cm² (₹284.00 / 280Ah sheet)',
       },
     ],
     thicknessOptions: [
@@ -110,28 +123,33 @@ export const PRICING_MODELS: Record<ProductSlugId, ProductPricingModel> = {
 
   'insultherm-graphite-flex': {
     productId: 'insultherm-graphite-flex',
-    referenceFootprintLabel: 'Area-Indexed Custom Spreader (1 cm² – 300+ cm²)',
+    referenceFootprintLabel: '50 × 50 mm (25 cm² = ₹350) to 150 × 150 mm (225 cm² = ₹1,800)',
     referenceAreaCm2: 25,
-    protoReferenceHeadline: '₹350 (≤25 cm²) to ₹1,800 (300 cm²) — Priced by Area (cm²)',
-    volumeRateHeadline: '₹3.20 / cm² nested (GFlex-1000) | ₹4.60 / cm² (GFlex-1500)',
+    protoReferenceHeadline: '₹350.00 (50×50mm) to ₹1,800.00 (150×150mm)',
+    pilotRateHeadline: '₹310.00 (50×50mm) to ₹1,650.00 (150×150mm)',
+    volumeRateHeadline: '₹280.00 (50×50mm) to ₹1,500.00 (150×150mm Blanket)',
+    competitorEdgeHeadline: '43.8%–46.2% lower than imported spreaders + <₹200 Cr GTE compliant',
     areaTiersSummary: [
       {
-        band: 'Band A — Compact IC / Optical Strip (≤ 25 cm²)',
-        exampleSize: 'e.g. 25 × 80 mm (20 cm²) or 50 × 50 mm',
-        protoRule: '₹350 / pc (GFlex-1000) | ₹550 / pc (GFlex-1500)',
-        volumeRule: '₹3.20 / cm² (min ₹28/pc — e.g. 10 cm² = ₹32/pc!)',
+        band: 'Standard UAV / Radar / Optical Spreader (≤ 25 cm²)',
+        exampleSize: '50 × 50 mm (25 cm² ref.)',
+        protoRule: '₹350.00 / part (Edge-sealed Kapton®)',
+        pilotRule: '₹310.00 / part (100–499 pcs)',
+        volumeRule: '₹280.00 / part (500+ pcs)',
       },
       {
-        band: 'Band B — Radar T/R & ADAS ECU Plane (26 – 100 cm²)',
+        band: 'Mid-Area Avionics / ADAS ECU Plane (26 – 150 cm²)',
         exampleSize: 'e.g. 100 × 100 mm (100 cm²)',
-        protoRule: '₹350 + ₹5.50/cm² above 25 cm² (100 cm² = ₹763 / pc)',
-        volumeRule: '₹3.20 / cm² nested (100 cm² = ₹320 / pc)',
+        protoRule: '₹350 + ₹7.25/cm² above 25 cm² (₹893.75)',
+        pilotRule: '₹310 + ₹6.70/cm² above 25 cm² (₹812.50)',
+        volumeRule: '₹280 + ₹6.10/cm² above 25 cm² (₹737.50)',
       },
       {
-        band: 'Band C — Avionics / Satellite Chassis (101 – 300 cm²)',
-        exampleSize: 'e.g. 200 × 150 mm (300 cm²)',
-        protoRule: '₹763 + ₹5.15/cm² above 100 cm² (300 cm² = ₹1,793 / pc)',
-        volumeRule: '₹2.95 / cm² nested (≥500 pcs Blanket: ₹2.65 / cm²)',
+        band: 'Large Defense / Satellite Payload Plane (151 – 300+ cm²)',
+        exampleSize: '150 × 150 mm (225 cm² ref.)',
+        protoRule: '₹1,800.00 @ 225 cm² (+₹6.80/cm² above)',
+        pilotRule: '₹1,650.00 @ 225 cm² (+₹6.20/cm² above)',
+        volumeRule: '₹1,500.00 @ 225 cm² (+₹5.60/cm² above)',
       },
     ],
     thicknessOptions: [
@@ -141,7 +159,7 @@ export const PRICING_MODELS: Record<ProductSlugId, ProductPricingModel> = {
     ],
     gradeOptions: [
       { sku: 'GFlex-1000', label: 'GFlex-1000 (1,000 W/m·K Edge-Sealed ASTM E595)', multiplier: 1.0 },
-      { sku: 'GFlex-1500', label: 'GFlex-1500 (1,500 W/m·K Satellite / Phased-Array Grade)', multiplier: 1.42 },
+      { sku: 'GFlex-1500', label: 'GFlex-1500 (1,500 W/m·K Satellite / Phased-Array Grade)', multiplier: 1.25 },
     ],
   },
 
@@ -149,26 +167,31 @@ export const PRICING_MODELS: Record<ProductSlugId, ProductPricingModel> = {
     productId: 'insultherm-core',
     referenceFootprintLabel: '100 × 100 mm pad (100 cm² = ₹80) | Std 50 × 50 mm = ₹20',
     referenceAreaCm2: 100,
-    protoReferenceHeadline: '₹80 / 100 cm² custom pad (₹0.80 / cm²) | ₹20 / std 50×50mm',
-    volumeRateHeadline: '₹0.68 / cm² (100+ pcs) → ₹0.612 / cm² (₹61.20 / 100 cm² blanket)',
+    protoReferenceHeadline: '₹80.00 / 100 cm² custom pad | ₹20.00 / std 50×50mm',
+    pilotRateHeadline: '₹68.00 / 100 cm² pad | ₹18.50 / std 50×50mm',
+    volumeRateHeadline: '₹61.20 / 100 cm² pad | ₹17.00 / std 50×50mm Blanket',
+    competitorEdgeHeadline: '55.6% lower in prototype (₹0 steel die) & 15%–29% lower in volume',
     areaTiersSummary: [
       {
         band: 'Standard Pre-Cut 50 × 50 mm BMS Pad (25 cm²)',
         exampleSize: 'Exact 50 × 50 × 1.0/1.5 mm stock SKU',
-        protoRule: '₹20 / pad (In-stock pre-cut SKU, ₹0.80 / cm²)',
-        volumeRule: '₹16.50 / pad (≥500 pcs)',
+        protoRule: '₹20.00 / pad (1–99 pcs)',
+        pilotRule: '₹18.50 / pad (100–499 pcs)',
+        volumeRule: '₹17.00 / pad (500+ pcs)',
       },
       {
-        band: 'Custom CNC Prototype Pad (1 – 150 cm²)',
+        band: 'Custom CNC Module Gap Pad (1 – 150 cm²)',
         exampleSize: '100 × 100 mm (100 cm² ref.)',
-        protoRule: '₹0.80 / cm² @ 1.0–1.5mm (min ₹35 / custom CAD pad)',
-        volumeRule: '₹0.68 / cm² (100–499 pcs) → ₹0.612 / cm² (500+ pcs)',
+        protoRule: '₹0.80 / cm² → ₹80.00 / pad (min ₹35)',
+        pilotRule: '₹0.68 / cm² → ₹68.00 / pad (min ₹28)',
+        volumeRule: '₹0.612 / cm² → ₹61.20 / pad (min ₹24)',
       },
       {
-        band: 'Large EV Module Bottom Cold-Plate Pad (> 150 cm²)',
+        band: 'Large EV Cold-Plate Base Pad (> 150 cm²)',
         exampleSize: 'e.g. 250 × 160 mm (400 cm²)',
-        protoRule: '₹0.76 / cm² (₹304 / 400 cm² custom pad)',
-        volumeRule: '₹0.59 / cm² nested cold-plate sheet',
+        protoRule: '₹0.76 / cm² (₹304.00 / 400 cm² pad)',
+        pilotRule: '₹0.65 / cm² (₹260.00 / 400 cm² pad)',
+        volumeRule: '₹0.59 / cm² nested rotary sheet',
       },
     ],
     thicknessOptions: [
@@ -181,34 +204,39 @@ export const PRICING_MODELS: Record<ProductSlugId, ProductPricingModel> = {
     gradeOptions: [
       { sku: 'Core-300', label: 'Core-300 (3.0 W/m·K Anti-Bleed + E-Glass Scrim)', multiplier: 1.0 },
       { sku: 'Core-350D', label: 'Core-350D (>14 kV/mm Heavy Dielectric Scrim)', multiplier: 1.1 },
-      { sku: 'Core-BMS-50x50', label: 'Core-BMS-50x50 (Std Pre-Cut 50×50mm Pad @ ₹20)', multiplier: 1.0 },
+      { sku: 'Core-BMS-50x50', label: 'Core-BMS-50x50 (Std Pre-Cut 50×50mm Pad @ ₹20→₹17)', multiplier: 1.0 },
     ],
   },
 
   'insultherm-ultra': {
     productId: 'insultherm-ultra',
-    referenceFootprintLabel: '100 × 100 mm high-flux pad (100 cm² = ₹140)',
+    referenceFootprintLabel: '100 × 100 mm 800V SiC / AI h-BN pad (100 cm² = ₹140)',
     referenceAreaCm2: 100,
-    protoReferenceHeadline: '₹140 / 100 cm² custom pad (₹1.40 / cm², min ₹50)',
-    volumeRateHeadline: '₹0.95 / cm² nested area (₹95 / 100 cm² pad)',
+    protoReferenceHeadline: '₹140.00 / pad @ 100 cm² (₹1.40/cm², min ₹50)',
+    pilotRateHeadline: '₹110.00 / pad @ 100 cm² (100–499 pcs)',
+    volumeRateHeadline: '₹95.00 / pad @ 100 cm² (500+ pcs OEM Blanket)',
+    competitorEdgeHeadline: '50% lower than ₹280–₹650 prototype imports & 17.4% lower in volume',
     areaTiersSummary: [
       {
-        band: 'Discrete SiC / Optical Module Pad (≤ 35 cm²)',
-        exampleSize: 'e.g. TO-247 / 40 × 50 mm (20 cm²)',
-        protoRule: '₹50 / custom pad (min precision CNC handling)',
-        volumeRule: '₹0.95 / cm² nested (min ₹28 / pad)',
+        band: 'Discrete TO-247 / Optical Module Pad (≤ 35 cm²)',
+        exampleSize: 'e.g. 40 × 50 mm (20 cm²)',
+        protoRule: '₹50.00 / pad (min precision CNC floor)',
+        pilotRule: '₹38.00 / pad (100–499 pcs)',
+        volumeRule: '₹0.95 / cm² (min ₹32.00 / pad)',
       },
       {
-        band: 'AI Accelerator / IGBT Brick Pad (36 – 150 cm²)',
+        band: '800V SiC / AI Cold-Plate Pad (36 – 150 cm²)',
         exampleSize: '100 × 100 mm (100 cm² ref.)',
-        protoRule: '₹1.40 / cm² → ₹140 / custom pad @ 100 cm²',
-        volumeRule: '₹0.95 / cm² → ₹95 / pad @ 100 cm²',
+        protoRule: '₹1.40 / cm² → ₹140.00 / pad',
+        pilotRule: '₹1.10 / cm² → ₹110.00 / pad',
+        volumeRule: '₹0.95 / cm² → ₹95.00 / pad',
       },
       {
-        band: 'Server Cold-Plate / Inverter Baseplate (> 150 cm²)',
+        band: 'Full Server / Traction Baseplate (> 150 cm²)',
         exampleSize: 'e.g. 200 × 150 mm (300 cm²)',
-        protoRule: '₹1.32 / cm² (₹396 / 300 cm² custom pad)',
-        volumeRule: '₹0.88 / cm² (Blanket ≥500 pcs: ₹0.82 / cm²)',
+        protoRule: '₹1.32 / cm² (₹396.00 / 300 cm² pad)',
+        pilotRule: '₹1.04 / cm² (₹312.00 / 300 cm² pad)',
+        volumeRule: '₹0.90 / cm² OEM blanket rotary run',
       },
     ],
     thicknessOptions: [
@@ -240,96 +268,131 @@ export function calculatePartPrice(params: {
 
   const model = PRICING_MODELS[productId];
   const thicknessObj =
-    model.thicknessOptions.find((t) => Math.abs(t.mm - (params.thicknessMm ?? 0)) < 0.05) ||
-    model.thicknessOptions[1] ||
+    (params.thicknessMm != null
+      ? model.thicknessOptions.find((t) => Math.abs(t.mm - params.thicknessMm!) < 0.05)
+      : undefined) ||
+    model.thicknessOptions.find((t) => t.multiplier === 1.0) ||
     model.thicknessOptions[0];
   const gradeObj =
     model.gradeOptions.find((g) => g.sku === params.gradeSku) || model.gradeOptions[0];
 
   const combinedMult = thicknessObj.multiplier * gradeObj.multiplier;
-  const isVolume = qty >= 100;
+  const isPilot = qty >= 100 && qty < 500;
   const isBlanket = qty >= 500;
 
   let rawUnit = 0;
   let tierName = isBlanket
-    ? 'OEM Blanket Nested Area Tier (500+ pcs)'
-    : isVolume
-    ? 'Production Nested Area Tier (100–499 pcs)'
-    : 'Prototype Digital CNC Tier (1–99 pcs, ₹0 NRE)';
+    ? 'Tier 3 — OEM Blanket Volume (500+ pcs)'
+    : isPilot
+    ? 'Tier 2 — Pilot Production Transition (100–499 pcs)'
+    : 'Tier 1 — Rapid CNC Prototype (1–99 pcs, ₹0 NRE)';
   let formulaExplanation = '';
 
-  // Special exact SKU shortcut: Core-BMS-50x50 at 50x50mm
+  // Special exact SKU shortcut: Core-BMS-50x50 at 50x50mm (₹20 -> ₹18.50 -> ₹17.00 per very imp.pdf)
   if (
     productId === 'insultherm-core' &&
-    (gradeObj.sku === 'Core-BMS-50x50' || (Math.abs(lengthMm - 50) <= 2 && Math.abs(widthMm - 50) <= 2 && thicknessObj.mm <= 1.5))
+    (gradeObj.sku === 'Core-BMS-50x50' ||
+      (Math.abs(lengthMm - 50) <= 2 && Math.abs(widthMm - 50) <= 2 && thicknessObj.mm <= 1.5))
   ) {
-    rawUnit = isBlanket ? 16.5 : isVolume ? 18 : 20;
-    tierName = 'In-Stock Pre-Cut 50×50 mm BMS SKU';
-    formulaExplanation = `Standard 50 × 50 mm (25.0 cm²) pre-cut BMS pad SKU @ ₹${rawUnit.toFixed(2)}/pad`;
+    rawUnit = isBlanket ? 17.0 : isPilot ? 18.5 : 20.0;
+    tierName = isBlanket
+      ? 'Std 50×50 mm BMS SKU — OEM Blanket (500+ pcs)'
+      : isPilot
+      ? 'Std 50×50 mm BMS SKU — Pilot Tier (100–499 pcs)'
+      : 'Std 50×50 mm BMS SKU — Prototype Tier (1–99 pcs)';
+    formulaExplanation = `Standard 50 × 50 mm (25.0 cm²) BMS pad @ ₹${rawUnit.toFixed(2)}/pad`;
   } else if (productId === 'insultherm-graphite-flex') {
-    if (!isVolume) {
-      let base1000 = 350;
-      if (areaCm2 <= 25) {
-        base1000 = 350;
-        formulaExplanation = `${areaCm2} cm² (Band A ≤25 cm² proto floor) = ₹350 base`;
-      } else if (areaCm2 <= 100) {
-        base1000 = 350 + (areaCm2 - 25) * 5.5;
-        formulaExplanation = `${areaCm2} cm² = ₹350 (first 25 cm²) + ${(areaCm2 - 25).toFixed(1)} cm² × ₹5.50/cm²`;
-      } else {
-        base1000 = 762.5 + (areaCm2 - 100) * 5.15;
-        formulaExplanation = `${areaCm2} cm² = ₹762.50 (first 100 cm²) + ${(areaCm2 - 100).toFixed(1)} cm² × ₹5.15/cm²`;
-      }
-      rawUnit = base1000 * combinedMult;
-      if (combinedMult !== 1) {
-        formulaExplanation += ` × ${combinedMult.toFixed(2)} (${gradeObj.sku} / ${thicknessObj.mm}mm)`;
-      }
+    // Exact calibration to very imp.pdf:
+    // 50x50mm (25 cm2): ₹350 (Proto) -> ₹310 (Pilot) -> ₹280 (Blanket)
+    // 150x150mm (225 cm2): ₹1,800 (Proto) -> ₹1,650 (Pilot) -> ₹1,500 (Blanket)
+    const base25 = isBlanket ? 280 : isPilot ? 310 : 350;
+    const slopeTo225 = isBlanket ? 6.1 : isPilot ? 6.7 : 7.25;
+    const slopeAbove225 = isBlanket ? 5.6 : isPilot ? 6.2 : 6.8;
+
+    let base1000 = base25;
+    if (areaCm2 <= 25) {
+      base1000 = base25;
+      formulaExplanation = `${areaCm2} cm² (≤25 cm² edge-sealed spreader) = ₹${base25.toFixed(2)} base`;
+    } else if (areaCm2 <= 225) {
+      base1000 = base25 + (areaCm2 - 25) * slopeTo225;
+      formulaExplanation = `₹${base25} (25 cm²) + ${(areaCm2 - 25).toFixed(1)} cm² × ₹${slopeTo225.toFixed(2)}/cm²`;
     } else {
-      const rate = (isBlanket ? 2.65 : areaCm2 > 100 ? 2.95 : 3.2) * combinedMult;
-      const minFloor = gradeObj.sku === 'GFlex-1500' ? 38 : 28;
-      rawUnit = Math.max(minFloor, areaCm2 * rate);
-      formulaExplanation = `Nested Volume Area: ${areaCm2} cm² × ₹${rate.toFixed(2)}/cm² (min ₹${minFloor}/pc)`;
+      const at225 = base25 + 200 * slopeTo225;
+      base1000 = at225 + (areaCm2 - 225) * slopeAbove225;
+      formulaExplanation = `₹${at225.toFixed(0)} (225 cm²) + ${(areaCm2 - 225).toFixed(1)} cm² × ₹${slopeAbove225.toFixed(2)}/cm²`;
+    }
+    rawUnit = base1000 * combinedMult;
+    if (combinedMult !== 1) {
+      formulaExplanation += ` × ${combinedMult.toFixed(2)} (${gradeObj.sku} / ${thicknessObj.mm}mm)`;
     }
   } else if (productId === 'insultherm-shield') {
-    if (!isVolume) {
-      const rate = (areaCm2 > 150 ? 0.42 : 0.45) * combinedMult;
-      rawUnit = Math.max(25, areaCm2 * rate);
-      formulaExplanation = `${areaCm2} cm² flat pattern × ₹${rate.toFixed(2)}/cm² (min ₹25/folded pc)`;
-    } else {
-      const rate = (isBlanket ? 0.25 : areaCm2 > 150 ? 0.28 : 0.3) * combinedMult;
-      rawUnit = Math.max(16, areaCm2 * rate);
-      formulaExplanation = `Nested Volume Area: ${areaCm2} cm² × ₹${rate.toFixed(2)}/cm² (min ₹16/pc)`;
-    }
+    // ₹45 -> ₹35 -> ₹30 at 100 cm2
+    const baseRate = isBlanket
+      ? areaCm2 > 150
+        ? 0.28
+        : 0.3
+      : isPilot
+      ? areaCm2 > 150
+        ? 0.33
+        : 0.35
+      : areaCm2 > 150
+      ? 0.42
+      : 0.45;
+    const minFloor = isBlanket ? 16 : isPilot ? 20 : 25;
+    const rate = baseRate * combinedMult;
+    rawUnit = Math.max(minFloor, areaCm2 * rate);
+    formulaExplanation = `${areaCm2} cm² flat pattern × ₹${rate.toFixed(2)}/cm² (min ₹${minFloor}/pc)`;
   } else if (productId === 'insultherm-barrier') {
-    if (!isVolume) {
-      const rate = (areaCm2 > 160 ? 1.05 : 1.1) * combinedMult;
-      rawUnit = Math.max(55, areaCm2 * rate);
-      formulaExplanation = `${areaCm2} cm² firewall area × ₹${rate.toFixed(2)}/cm² (min ₹55/sheet)`;
-    } else {
-      const rate = (isBlanket ? 0.76 : areaCm2 > 160 ? 0.82 : 0.85) * combinedMult;
-      rawUnit = Math.max(38, areaCm2 * rate);
-      formulaExplanation = `Nested Volume Area: ${areaCm2} cm² × ₹${rate.toFixed(2)}/cm² (min ₹38/sheet)`;
-    }
+    // ₹110 -> ₹95 -> ₹85 at 100 cm2
+    const baseRate = isBlanket
+      ? areaCm2 > 160
+        ? 0.8
+        : 0.85
+      : isPilot
+      ? areaCm2 > 160
+        ? 0.9
+        : 0.95
+      : areaCm2 > 160
+      ? 1.05
+      : 1.1;
+    const minFloor = isBlanket ? 40 : isPilot ? 46 : 55;
+    const rate = baseRate * combinedMult;
+    rawUnit = Math.max(minFloor, areaCm2 * rate);
+    formulaExplanation = `${areaCm2} cm² firewall sheet × ₹${rate.toFixed(2)}/cm² (min ₹${minFloor}/sheet)`;
   } else if (productId === 'insultherm-core') {
-    if (!isVolume) {
-      const rate = (areaCm2 > 150 ? 0.76 : 0.8) * combinedMult;
-      rawUnit = Math.max(35, areaCm2 * rate);
-      formulaExplanation = `${areaCm2} cm² pad area × ₹${rate.toFixed(2)}/cm² (min ₹35/custom pad)`;
-    } else {
-      const rate = (isBlanket ? 0.612 : 0.68) * combinedMult;
-      rawUnit = Math.max(20, areaCm2 * rate);
-      formulaExplanation = `Nested Volume Area: ${areaCm2} cm² × ₹${rate.toFixed(3)}/cm² (min ₹20/pad)`;
-    }
+    // ₹80 -> ₹68 -> ₹61.20 at 100 cm2
+    const baseRate = isBlanket
+      ? areaCm2 > 150
+        ? 0.59
+        : 0.612
+      : isPilot
+      ? areaCm2 > 150
+        ? 0.65
+        : 0.68
+      : areaCm2 > 150
+      ? 0.76
+      : 0.8;
+    const minFloor = isBlanket ? 24 : isPilot ? 28 : 35;
+    const rate = baseRate * combinedMult;
+    rawUnit = Math.max(minFloor, areaCm2 * rate);
+    formulaExplanation = `${areaCm2} cm² pad area × ₹${rate.toFixed(3)}/cm² (min ₹${minFloor}/pad)`;
   } else {
-    // insultherm-ultra
-    if (!isVolume) {
-      const rate = (areaCm2 > 150 ? 1.32 : 1.4) * combinedMult;
-      rawUnit = Math.max(50, areaCm2 * rate);
-      formulaExplanation = `${areaCm2} cm² high-flux area × ₹${rate.toFixed(2)}/cm² (min ₹50/pad)`;
-    } else {
-      const rate = (isBlanket ? 0.82 : areaCm2 > 150 ? 0.88 : 0.95) * combinedMult;
-      rawUnit = Math.max(28, areaCm2 * rate);
-      formulaExplanation = `Nested Volume Area: ${areaCm2} cm² × ₹${rate.toFixed(2)}/cm² (min ₹28/pad)`;
-    }
+    // insultherm-ultra: ₹140 -> ₹110 -> ₹95 at 100 cm2
+    const baseRate = isBlanket
+      ? areaCm2 > 150
+        ? 0.9
+        : 0.95
+      : isPilot
+      ? areaCm2 > 150
+        ? 1.04
+        : 1.1
+      : areaCm2 > 150
+      ? 1.32
+      : 1.4;
+    const minFloor = isBlanket ? 32 : isPilot ? 38 : 50;
+    const rate = baseRate * combinedMult;
+    rawUnit = Math.max(minFloor, areaCm2 * rate);
+    formulaExplanation = `${areaCm2} cm² high-flux area × ₹${rate.toFixed(2)}/cm² (min ₹${minFloor}/pad)`;
   }
 
   const unitPriceInr = Number(rawUnit.toFixed(2));

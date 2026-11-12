@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
-  FileDown,
-  ShoppingBag,
-  Upload,
-  Maximize2,
-  CheckCircle2,
-  Tag,
   ArrowRight,
+  CheckCircle2,
+  Cpu,
+  FileDown,
+  Layers,
+  Maximize2,
+  ShoppingBag,
+  Tag,
+  Upload,
 } from 'lucide-react';
-import { PRODUCTS, RND_KITS, ProductSpec } from '../data/companyData';
+import { PRODUCTS, ProductSpec, RND_KITS } from '../data/companyData';
 import { calculatePartPrice, PRICING_MODELS } from '../utils/pricingEngine';
 import { useOrderCart } from '../context/OrderCartContext';
 import { ParametricComparisonMatrix } from '../components/ParametricComparisonMatrix';
@@ -26,6 +28,7 @@ const ProductDetailSection: React.FC<{
   const { addItem, openConfigurator } = useOrderCart();
   const model = PRICING_MODELS[product.id];
 
+  const [visualMode, setVisualMode] = useState<'installed' | 'material'>('installed');
   const [activeTab, setActiveTab] = useState<'specs' | 'layers' | 'pricing'>('specs');
   const [len, setLen] = useState<number>(product.defaultLengthMm);
   const [wid, setWid] = useState<number>(product.defaultWidthMm);
@@ -39,30 +42,68 @@ const ProductDetailSection: React.FC<{
     thicknessMm: product.defaultThicknessMm,
   });
 
+  const shownImg = visualMode === 'installed' ? product.installedImage : product.heroImage;
+  const shownCaption =
+    visualMode === 'installed' ? product.installedCaption : product.summary;
+
   return (
     <article
       id={product.id}
       className="bg-white border border-gray-200/90 rounded-2xl shadow-sm overflow-hidden scroll-mt-28"
     >
       <div className="p-6 sm:p-8 lg:p-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
-        {/* Left 5 Cols: Clean Uncropped Image + Quick Price Card */}
+        {/* Left 5 Cols: Dual-Mode Visual (Installed Hardware <-> Material Stack) + 3-Tier Price Card */}
         <div className="lg:col-span-5 space-y-4">
+          {/* Visual Toggle Bar */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="inline-flex rounded-xl bg-[#F4F6FA] p-1 border border-gray-200 text-xs font-bold">
+              <button
+                type="button"
+                onClick={() => setVisualMode('installed')}
+                className={`px-3 py-1.5 rounded-lg inline-flex items-center gap-1.5 transition-colors ${
+                  visualMode === 'installed'
+                    ? 'bg-[#0F1115] text-white shadow-2xs'
+                    : 'text-gray-600 hover:text-[#0F1115]'
+                }`}
+              >
+                <Cpu className="w-3.5 h-3.5 text-[#DC2626]" />
+                Installed in Hardware
+              </button>
+              <button
+                type="button"
+                onClick={() => setVisualMode('material')}
+                className={`px-3 py-1.5 rounded-lg inline-flex items-center gap-1.5 transition-colors ${
+                  visualMode === 'material'
+                    ? 'bg-[#0F1115] text-white shadow-2xs'
+                    : 'text-gray-600 hover:text-[#0F1115]'
+                }`}
+              >
+                <Layers className="w-3.5 h-3.5" />
+                Material Stack
+              </button>
+            </div>
+          </div>
+
           <div
             onClick={() =>
               onOpenLightbox({
-                src: product.heroImage,
-                title: product.trademarkName,
-                description: product.summary,
+                src: shownImg,
+                title: `${product.trademarkName} — ${
+                  visualMode === 'installed' ? 'Installed in Hardware' : 'Material Cross-Section'
+                }`,
+                description: shownCaption,
                 badge: product.category,
               })
             }
-            className="group relative bg-[#F4F6FA] border border-gray-200 rounded-xl p-4 flex items-center justify-center min-h-[250px] cursor-zoom-in"
+            className="group relative bg-[#F4F6FA] border border-gray-200 rounded-xl p-3 flex items-center justify-center min-h-[250px] cursor-zoom-in overflow-hidden"
           >
             <img
-              src={product.heroImage}
+              src={shownImg}
               alt={product.trademarkName}
               loading="lazy"
-              className="max-h-[250px] w-auto max-w-full object-contain group-hover:scale-105 transition-transform duration-300"
+              className={`max-h-[260px] max-w-full ${
+                visualMode === 'installed' ? 'w-full object-cover rounded-lg' : 'w-auto object-contain'
+              } group-hover:scale-105 transition-transform duration-300`}
             />
             <span className="absolute bottom-3 right-3 px-2.5 py-1 rounded-lg bg-[#0F1115]/85 group-hover:bg-[#DC2626] text-white text-xs font-semibold inline-flex items-center gap-1 transition-colors">
               <Maximize2 className="w-3.5 h-3.5" />
@@ -70,13 +111,17 @@ const ProductDetailSection: React.FC<{
             </span>
           </div>
 
+          <p className="text-xs text-gray-600 leading-relaxed bg-[#F8FAFC] border border-gray-200/80 rounded-lg px-3.5 py-2.5">
+            {shownCaption}
+          </p>
+
           {product.secondaryImage && (
             <button
               type="button"
               onClick={() =>
                 onOpenLightbox({
                   src: product.secondaryImage!,
-                  title: `${product.trademarkName} — Validation / Geometry View`,
+                  title: `${product.trademarkName} — Companion Engineering Plate`,
                   badge: 'Full Uncropped Plate',
                 })
               }
@@ -91,7 +136,7 @@ const ProductDetailSection: React.FC<{
                 />
                 <div className="min-w-0">
                   <div className="text-xs font-bold text-[#0F1115] truncate">
-                    View Companion Engineering Plate
+                    View Companion FEA / CAD Plate
                   </div>
                   <div className="text-xs text-gray-500">Opens uncropped in lightbox</div>
                 </div>
@@ -100,18 +145,23 @@ const ProductDetailSection: React.FC<{
             </button>
           )}
 
+          {/* Published 3-Tier Price Box */}
           <div className="bg-[#F4F6FA] border border-gray-200 rounded-xl p-4 space-y-2 text-xs tabular-nums">
             <div className="flex justify-between">
-              <span className="text-gray-500">Prototype Base:</span>
+              <span className="text-gray-500">Tier 1 — Prototype (1–99 pcs):</span>
               <span className="font-bold text-[#0F1115]">{product.protoPriceLabel}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-500">Volume Rate:</span>
-              <span className="font-bold text-[#DC2626]">{product.volumePriceLabel}</span>
+              <span className="text-gray-500">Tier 2 — Pilot (100–499 pcs):</span>
+              <span className="font-bold text-blue-700">{product.pilotPriceLabel}</span>
             </div>
             <div className="flex justify-between">
+              <span className="text-gray-500">Tier 3 — Blanket (500+ pcs):</span>
+              <span className="font-bold text-[#DC2626]">{product.volumePriceLabel}</span>
+            </div>
+            <div className="flex justify-between pt-1.5 border-t border-gray-200/80">
               <span className="text-gray-500">MOQ & Lead Time:</span>
-              <span className="font-semibold text-gray-800">1 Pc • {product.leadTime}</span>
+              <span className="font-semibold text-gray-800">1 Pc (₹0 Die) • {product.leadTime}</span>
             </div>
           </div>
         </div>
@@ -145,9 +195,9 @@ const ProductDetailSection: React.FC<{
             {/* Clean Progressive Disclosure Tabs */}
             <div className="flex flex-wrap gap-1.5 border-b border-gray-200 pb-3">
               {[
-                { id: 'specs', label: 'Key Specifications' },
+                { id: 'specs', label: 'Key Specifications & Hardware Zones' },
                 { id: 'layers', label: `Layer Architecture (${product.layers.length})` },
-                { id: 'pricing', label: 'Area (cm²) Pricing & Calculator' },
+                { id: 'pricing', label: '3-Tier Area Pricing & Calculator' },
               ].map((t) => (
                 <button
                   key={t.id}
@@ -194,6 +244,21 @@ const ProductDetailSection: React.FC<{
                   </div>
                 </div>
 
+                {/* Exact Hardware Installation Zones */}
+                <div className="p-4 rounded-xl bg-[#F8FAFC] border border-gray-200 space-y-2">
+                  <div className="text-xs font-bold uppercase tracking-wider text-gray-500">
+                    Primary Hardware Fitment Locations
+                  </div>
+                  <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs text-gray-700">
+                    {product.applications.map((app) => (
+                      <li key={app} className="flex items-start gap-1.5">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-[#DC2626] shrink-0 mt-0.5" />
+                        <span>{app}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
                 <div className="flex flex-wrap gap-2 pt-1">
                   {product.standards.map((st) => (
                     <span
@@ -227,7 +292,7 @@ const ProductDetailSection: React.FC<{
               </div>
             )}
 
-            {/* Tab 3: Area Pricing Schedule + Inline Quick Calculator */}
+            {/* Tab 3: 3-Tier Area Pricing Schedule + Inline Quick Calculator */}
             {activeTab === 'pricing' && (
               <div className="space-y-4">
                 <p className="text-xs text-gray-600 leading-relaxed">
@@ -239,16 +304,20 @@ const ProductDetailSection: React.FC<{
                     <thead>
                       <tr className="bg-[#F4F6FA] border-b border-gray-200 text-gray-600">
                         <th className="py-2.5 px-3 font-semibold">Part Area Band</th>
-                        <th className="py-2.5 px-3 font-semibold">Prototype (1–99 pcs)</th>
-                        <th className="py-2.5 px-3 font-semibold">Volume (100+ pcs)</th>
+                        <th className="py-2.5 px-3 font-semibold">Proto (1–99)</th>
+                        <th className="py-2.5 px-3 font-semibold">Pilot (100–499)</th>
+                        <th className="py-2.5 px-3 font-semibold">Blanket (500+)</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
                       {model.areaTiersSummary.map((row) => (
                         <tr key={row.band}>
                           <td className="py-2.5 px-3 font-semibold text-[#0F1115]">{row.band}</td>
-                          <td className="py-2.5 px-3 text-gray-700">{row.protoRule}</td>
-                          <td className="py-2.5 px-3 font-semibold text-[#DC2626]">
+                          <td className="py-2.5 px-3 font-mono text-gray-800">{row.protoRule}</td>
+                          <td className="py-2.5 px-3 font-mono text-blue-700 font-semibold">
+                            {row.pilotRule}
+                          </td>
+                          <td className="py-2.5 px-3 font-mono font-semibold text-[#DC2626]">
                             {row.volumeRule}
                           </td>
                         </tr>
@@ -288,7 +357,7 @@ const ProductDetailSection: React.FC<{
                       min={1}
                       max={100000}
                       value={qty}
-                      onChange={(e) => setQty(Number(e.target.value))}
+                      onChange={(e) => setQty(Math.max(1, Number(e.target.value)))}
                       className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white font-mono text-xs font-bold"
                     />
                   </div>
@@ -315,6 +384,9 @@ const ProductDetailSection: React.FC<{
                     title: `${product.trademarkName} (${model.gradeOptions[0].sku})`,
                     itemType: 'custom-cad',
                     dimensionsLabel: `${len} × ${wid} × ${product.defaultThicknessMm} mm (${livePrice.areaCm2} cm²)`,
+                    lengthMm: len,
+                    widthMm: wid,
+                    thicknessMm: product.defaultThicknessMm,
                     areaCm2: livePrice.areaCm2,
                     unitPriceInr: livePrice.unitPriceInr,
                     quantity: qty,
@@ -356,11 +428,11 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({ onOpenLightbox }) =>
     return true;
   });
 
-  // Auto-advance header material preview card every 4 seconds so header feels balanced & alive
+  // Scroll-proof continuous 4.2s auto-cycling preview card
   useEffect(() => {
     const timer = window.setInterval(() => {
       setSpotlightIdx((prev) => (prev + 1) % PRODUCTS.length);
-    }, 4000);
+    }, 4200);
     return () => window.clearInterval(timer);
   }, []);
 
@@ -368,7 +440,7 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({ onOpenLightbox }) =>
 
   return (
     <div className="bg-canvas-tonal pb-24">
-      {/* Balanced Tonal Architectural Header + Smooth Wave Transition (Eliminates Empty White Space) */}
+      {/* Balanced Tonal Architectural Header + Smooth Wave Transition */}
       <section className="relative bg-hero-architectural bg-subtle-grid overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-16 lg:pt-14 lg:pb-20">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
@@ -376,7 +448,7 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({ onOpenLightbox }) =>
             <div className="lg:col-span-7 space-y-4">
               <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-red-200/80 text-xs font-bold uppercase tracking-wider text-[#DC2626]">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#DC2626]" />
-                Product Hierarchy & Specifications
+                Product Hierarchy, Hardware Fitment & 3-Tier Pricing
               </span>
 
               <h1 className="text-3xl sm:text-5xl font-extrabold text-[#0F1115] tracking-tight leading-[1.12]">
@@ -384,8 +456,9 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({ onOpenLightbox }) =>
               </h1>
 
               <p className="text-base text-gray-600 max-w-2xl leading-relaxed">
-                Explore full material specifications, downloadable 2-page Technical Data Sheets, and
-                transparent area-based pricing—converted directly from your CAD with zero tooling NRE.
+                Inspect real hardware installations, full material layer stacks, downloadable 2-page
+                Technical Data Sheets, and transparent 3-tier pricing—converted directly from your
+                CAD with zero tooling NRE.
               </p>
 
               {/* Capability Summary Strip */}
@@ -393,7 +466,7 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({ onOpenLightbox }) =>
                 {[
                   { label: 'Core Laminates', val: '5 Platforms' },
                   { label: 'Hard-Die NRE', val: '₹0 Tooling' },
-                  { label: 'Min. Order', val: 'MOQ = 1 Pc' },
+                  { label: 'Price Tiers', val: '1 • 100 • 500+' },
                   { label: 'CNC Dispatch', val: '24–48 Hours' },
                 ].map((stat) => (
                   <div
@@ -439,12 +512,12 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({ onOpenLightbox }) =>
               </div>
             </div>
 
-            {/* Right 5 Cols: Auto-Cycling Material Preview Card */}
+            {/* Right 5 Cols: Auto-Cycling Installed Hardware Preview Card */}
             <div className="lg:col-span-5">
               <div className="bg-white border border-gray-200/90 rounded-2xl p-5 shadow-md space-y-4">
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-[11px] font-bold uppercase tracking-wider text-[#DC2626]">
-                    Live Material Preview • 0{spotlightIdx + 1}/0{PRODUCTS.length}
+                    Installed Hardware Preview • 0{spotlightIdx + 1}/0{PRODUCTS.length}
                   </span>
                   <div className="flex gap-1">
                     {PRODUCTS.map((p, i) => (
@@ -461,12 +534,22 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({ onOpenLightbox }) =>
                   </div>
                 </div>
 
-                <div className="h-44 rounded-xl bg-[#F4F6FA] border border-gray-100 p-3 flex items-center justify-center overflow-hidden">
+                <div
+                  onClick={() =>
+                    onOpenLightbox({
+                      src: spotlightProduct.installedImage,
+                      title: `${spotlightProduct.trademarkName} — Installed View`,
+                      description: spotlightProduct.installedCaption,
+                      badge: spotlightProduct.category,
+                    })
+                  }
+                  className="h-48 rounded-xl bg-[#F4F6FA] border border-gray-100 overflow-hidden cursor-zoom-in"
+                >
                   <img
                     key={spotlightProduct.id}
-                    src={spotlightProduct.heroImage}
+                    src={spotlightProduct.installedImage}
                     alt={spotlightProduct.trademarkName}
-                    className="max-h-full max-w-full object-contain animate-showcase-visual"
+                    className="w-full h-full object-cover animate-showcase-visual"
                   />
                 </div>
 
@@ -476,7 +559,7 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({ onOpenLightbox }) =>
                       {spotlightProduct.trademarkName}
                     </div>
                     <div className="text-xs text-gray-500 mt-0.5">
-                      {spotlightProduct.shortTagline}
+                      {spotlightProduct.protoPriceLabel} → {spotlightProduct.volumePriceLabel}
                     </div>
                   </div>
                   <a
@@ -491,7 +574,7 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({ onOpenLightbox }) =>
           </div>
         </div>
 
-        {/* Subtle Architectural Wave Divider flowing into Slate-Tinted Canvas */}
+        {/* Subtle Architectural Wave Divider */}
         <div className="w-full overflow-hidden leading-none pointer-events-none">
           <svg
             viewBox="0 0 1440 44"
@@ -524,7 +607,7 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({ onOpenLightbox }) =>
         </div>
       </div>
 
-      {/* Subtle Tonal Wave Section for Turnkey <₹15k R&D Kits & Starter Packs */}
+      {/* Turnkey <₹15k R&D Kits & Starter Packs with Hardware Photos */}
       <div className="mt-16">
         <div className="w-full overflow-hidden leading-none pointer-events-none">
           <svg
@@ -534,14 +617,14 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({ onOpenLightbox }) =>
             className="w-full h-6 sm:h-9"
             preserveAspectRatio="none"
           >
-            <path
-              d="M0 24C420 -4 880 42 1440 12V40H0V24Z"
-              fill="#E5E9F2"
-            />
+            <path d="M0 24C420 -4 880 42 1440 12V40H0V24Z" fill="#E5E9F2" />
           </svg>
         </div>
 
-        <section id="rnd-kits" className="bg-[#E5E9F2]/75 py-16 border-y border-gray-200/90 scroll-mt-20">
+        <section
+          id="rnd-kits"
+          className="bg-[#E5E9F2]/75 py-16 border-y border-gray-200/90 scroll-mt-20"
+        >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
               <div>
@@ -563,36 +646,56 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({ onOpenLightbox }) =>
               {RND_KITS.map((kit) => (
                 <div
                   key={kit.id}
-                  className="bg-white border border-gray-200/90 rounded-2xl p-7 flex flex-col justify-between shadow-sm"
+                  className="bg-white border border-gray-200/90 rounded-2xl overflow-hidden flex flex-col justify-between shadow-sm"
                 >
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs font-bold text-[#DC2626]">{kit.sector}</span>
-                      <span className="text-xs font-medium px-2.5 py-1 rounded-md bg-[#F4F6FA] border border-gray-200 text-gray-700">
+                  <div>
+                    <div
+                      onClick={() =>
+                        onOpenLightbox({
+                          src: kit.image,
+                          title: `${kit.name} (${kit.priceLabel})`,
+                          description: kit.procurementAdvantage,
+                          badge: kit.sector,
+                        })
+                      }
+                      className="h-48 bg-[#F4F6FA] overflow-hidden relative cursor-zoom-in group"
+                    >
+                      <img
+                        src={kit.image}
+                        alt={kit.name}
+                        loading="lazy"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      <span className="absolute top-3 left-3 px-2.5 py-1 rounded-md bg-[#0F1115]/85 text-white text-xs font-bold">
+                        {kit.sector}
+                      </span>
+                      <span className="absolute top-3 right-3 px-2.5 py-1 rounded-md bg-white/95 text-[#0F1115] text-xs font-semibold">
                         {kit.leadTime}
                       </span>
                     </div>
 
-                    <h3 className="text-xl font-bold text-[#0F1115]">{kit.name}</h3>
+                    <div className="p-7 space-y-4">
+                      <h3 className="text-xl font-bold text-[#0F1115]">{kit.name}</h3>
 
-                    <ul className="space-y-2 text-sm text-gray-600">
-                      {kit.contents.map((c, i) => (
-                        <li key={i} className="flex items-start gap-2">
-                          <CheckCircle2 className="w-4 h-4 text-[#DC2626] shrink-0 mt-0.5" />
-                          <span>{c}</span>
-                        </li>
-                      ))}
-                    </ul>
+                      <ul className="space-y-2 text-sm text-gray-600">
+                        {kit.contents.map((c, i) => (
+                          <li key={i} className="flex items-start gap-2">
+                            <CheckCircle2 className="w-4 h-4 text-[#DC2626] shrink-0 mt-0.5" />
+                            <span>{c}</span>
+                          </li>
+                        ))}
+                      </ul>
 
-                    {kit.starterSummary && (
-                      <div className="p-3.5 rounded-lg bg-[#F4F6FA] border border-gray-200 text-xs text-gray-600">
-                        <strong className="text-[#0F1115]">Starter Option:</strong>{' '}
-                        {kit.starterSummary}
-                      </div>
-                    )}
+                      {kit.starterSummary && (
+                        <div className="p-3.5 rounded-lg bg-[#F4F6FA] border border-gray-200 text-xs text-gray-600">
+                          <strong className="text-[#0F1115]">Starter Option:</strong>{' '}
+                          {kit.starterSummary}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="pt-6 mt-6 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3 tabular-nums">
+                  <div className="px-7 pb-7 pt-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3 tabular-nums">
                     <div>
                       <div className="text-2xl font-extrabold text-[#0F1115]">{kit.priceLabel}</div>
                       <div className="text-xs text-gray-500">Full Qualification Kit</div>

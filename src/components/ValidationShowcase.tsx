@@ -13,7 +13,6 @@ export const ValidationShowcase: React.FC<ValidationShowcaseProps> = ({ onOpenLi
   >('ALL');
   const [activeId, setActiveId] = useState<string>(VALIDATION_PLATES[0].id);
   const [autoPlay, setAutoPlay] = useState<boolean>(true);
-  const [isHovered, setIsHovered] = useState<boolean>(false);
 
   const filteredPlates =
     filter === 'ALL' ? VALIDATION_PLATES : VALIDATION_PLATES.filter((p) => p.category === filter);
@@ -21,8 +20,9 @@ export const ValidationShowcase: React.FC<ValidationShowcaseProps> = ({ onOpenLi
   const activePlate: ValidationPlate =
     filteredPlates.find((p) => p.id === activeId) || filteredPlates[0] || VALIDATION_PLATES[0];
 
+  // Scroll-proof continuous timer (controlled strictly by explicit Auto/Paused button)
   useEffect(() => {
-    if (!autoPlay || isHovered || filteredPlates.length <= 1) return;
+    if (!autoPlay || filteredPlates.length <= 1) return;
     const timer = window.setInterval(() => {
       setActiveId((prev) => {
         const idx = filteredPlates.findIndex((p) => p.id === prev);
@@ -31,27 +31,23 @@ export const ValidationShowcase: React.FC<ValidationShowcaseProps> = ({ onOpenLi
       });
     }, 5000);
     return () => window.clearInterval(timer);
-  }, [autoPlay, isHovered, filteredPlates]);
+  }, [autoPlay, filteredPlates]);
 
   return (
-    <div
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      className="bg-white border border-gray-200/90 rounded-2xl shadow-sm overflow-hidden"
-    >
+    <div className="bg-white border border-gray-200/90 rounded-2xl shadow-sm overflow-hidden">
       {/* Clean Header & Category Filter */}
       <div className="px-6 py-5 bg-[#F4F6FA] border-b border-gray-200 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <span className="text-xs font-bold uppercase tracking-wider text-[#DC2626]">
-            Uncropped Engineering Gallery
+            Uncropped Engineering & Hardware Gallery
           </span>
           <h3 className="text-xl font-bold text-[#0F1115] mt-0.5">
-            4-Quadrant Thermal FEA, 3D Pack CAD & Physical Prototypes
+            4-Quadrant Thermal FEA, Installed Hardware & 3D Pack CAD
           </h3>
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5">
-          {(['ALL', 'FEA Simulation', 'CAD Architecture', 'Physical Hardware'] as const).map(
+          {(['ALL', 'Physical Hardware', 'FEA Simulation', 'CAD Architecture'] as const).map(
             (tab) => (
               <button
                 key={tab}
@@ -70,7 +66,7 @@ export const ValidationShowcase: React.FC<ValidationShowcaseProps> = ({ onOpenLi
                     : 'bg-white text-gray-700 border border-gray-200 hover:border-gray-400'
                 }`}
               >
-                {tab === 'ALL' ? 'All Views (8)' : tab}
+                {tab === 'ALL' ? `All Views (${VALIDATION_PLATES.length})` : tab}
               </button>
             )
           )}
@@ -110,7 +106,7 @@ export const ValidationShowcase: React.FC<ValidationShowcaseProps> = ({ onOpenLi
               key={activePlate.id}
               src={activePlate.src}
               alt={activePlate.title}
-              className="max-h-[400px] w-auto max-w-full object-contain animate-showcase-visual"
+              className="max-h-[400px] w-auto max-w-full object-contain rounded animate-showcase-visual"
             />
             <span className="absolute bottom-3 right-3 px-3 py-1.5 rounded-lg bg-[#0F1115]/90 group-hover:bg-[#DC2626] text-white text-xs font-semibold inline-flex items-center gap-1.5 transition-colors">
               <Maximize2 className="w-3.5 h-3.5" />
@@ -152,7 +148,7 @@ export const ValidationShowcase: React.FC<ValidationShowcaseProps> = ({ onOpenLi
       </div>
 
       {/* Clean Thumbnail Selector */}
-      <div className="p-4 bg-[#F4F6FA] border-t border-gray-200 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5">
+      <div className="p-4 bg-[#F4F6FA] border-t border-gray-200 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2.5">
         {filteredPlates.map((plate) => {
           const isSelected = plate.id === activePlate.id;
           return (
