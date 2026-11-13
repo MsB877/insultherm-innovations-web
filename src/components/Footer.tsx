@@ -1,11 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Phone, Mail, MapPin, FileDown, ShieldCheck } from 'lucide-react';
+import { Phone, Mail, MapPin, FileDown, Upload } from 'lucide-react';
 import { COMPANY_INFO, PRODUCTS } from '../data/companyData';
 import { useOrderCart } from '../context/OrderCartContext';
 
 export const Footer: React.FC = () => {
-  const { openCheckout } = useOrderCart();
+  const { openCheckout, openConfigurator } = useOrderCart();
 
   return (
     <footer className="bg-[#0F1115] text-gray-300">
@@ -30,8 +30,18 @@ export const Footer: React.FC = () => {
               </div>
             </div>
             <p className="text-sm text-gray-400 leading-relaxed">
-              Precision thermal interface materials, 1,100°C runaway fire barriers, pyrolytic graphite spreaders, and 3D living-hinge dielectric shrouds—custom CNC-converted in 24–48 hours with zero tooling NRE.
+              Indigenous thermal interface materials, 1,100°C aerogel-mica runaway barriers,
+              zero-outgassing pyrolytic graphite spreaders, and 3D living-hinge dielectric
+              shrouds—custom CNC-converted in 24–48 hours with zero tooling NRE.
             </p>
+            <button
+              type="button"
+              onClick={() => openConfigurator()}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-[#DC2626] text-white text-xs font-bold transition-colors"
+            >
+              <Upload className="w-3.5 h-3.5" />
+              Upload CAD & Instant Quote
+            </button>
           </div>
 
           {/* Products & TDS */}
@@ -76,13 +86,18 @@ export const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
+                <Link to="/knowledge" className="hover:text-white transition-colors">
+                  Knowledge Centre
+                </Link>
+              </li>
+              <li>
                 <Link to="/products#rnd-kits" className="hover:text-white transition-colors">
                   R&D & Starter Kits
                 </Link>
               </li>
               <li>
                 <Link to="/about" className="hover:text-white transition-colors">
-                  FEA & CAD Validation
+                  Origin & FEA Validation
                 </Link>
               </li>
               <li>
@@ -100,7 +115,7 @@ export const Footer: React.FC = () => {
           {/* Contact & Gujarat Facility */}
           <div className="lg:col-span-3 space-y-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-white">
-              Facility & Direct Desk
+              Facility & Direct Order Desk
             </h3>
             <div className="space-y-2.5 text-xs text-gray-400">
               <div className="flex items-start gap-2.5">
@@ -118,20 +133,14 @@ export const Footer: React.FC = () => {
               <div className="flex items-center gap-2.5 font-mono">
                 <Mail className="w-4 h-4 text-[#DC2626] shrink-0" />
                 <a
-                  href={`mailto:${COMPANY_INFO.officialEmail}`}
-                  className="text-gray-200 hover:text-white transition-colors"
+                  href={`mailto:${COMPANY_INFO.routingEmail}`}
+                  className="text-white hover:text-[#DC2626] font-semibold transition-colors"
                 >
-                  {COMPANY_INFO.officialEmail}
+                  {COMPANY_INFO.routingEmail}
                 </a>
               </div>
-              <div className="flex items-center gap-2.5 font-mono">
-                <ShieldCheck className="w-4 h-4 text-gray-400 shrink-0" />
-                <a
-                  href={`mailto:${COMPANY_INFO.routingEmail}`}
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  Orders: {COMPANY_INFO.routingEmail}
-                </a>
+              <div className="text-[11px] text-gray-500 leading-snug pt-0.5">
+                Official Order, CAD & Proforma Invoice Desk (24–48h Sanand Dispatch)
               </div>
             </div>
           </div>

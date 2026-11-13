@@ -10,7 +10,7 @@ import {
   Gauge,
   PackageCheck,
 } from 'lucide-react';
-import { COMPANY_INFO } from '../data/companyData';
+import { COMPANY_INFO, ORIGIN_BACKSTORY } from '../data/companyData';
 import { ValidationShowcase } from '../components/ValidationShowcase';
 import { LightboxImagePayload } from '../components/ImageLightbox';
 
@@ -172,7 +172,87 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onOpenLightbox }) => {
       </section>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 space-y-20">
-        {/* Section 2: Full Uncropped 8-Plate Validation Showcase */}
+        {/* Section 1B: Authentic Indigenous Origin Story & India Market Bottleneck */}
+        <section className="bg-white border border-gray-200/90 rounded-2xl p-7 sm:p-10 space-y-8 shadow-sm">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            <div className="lg:col-span-7 space-y-4">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#DC2626]">
+                {ORIGIN_BACKSTORY.eyebrow}
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0F1115] leading-snug">
+                {ORIGIN_BACKSTORY.headline}
+              </h2>
+              <div className="space-y-3.5 text-sm sm:text-base text-gray-600 leading-relaxed">
+                {ORIGIN_BACKSTORY.narrativeParagraphs.map((para, idx) => (
+                  <p key={idx}>{para}</p>
+                ))}
+              </div>
+              <div className="pt-1">
+                <Link
+                  to="/knowledge"
+                  className="inline-flex items-center gap-1.5 text-sm font-bold text-[#DC2626] hover:underline"
+                >
+                  Read Our Polymer Chemistry & Regulatory Primers in the Knowledge Centre{' '}
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+            </div>
+
+            <div className="lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {ORIGIN_BACKSTORY.keyStats.map((st) => (
+                <div
+                  key={st.label}
+                  className="rounded-xl border border-gray-200 bg-[#F8FAFC] p-5 space-y-1.5"
+                >
+                  <div className="text-xl sm:text-2xl font-extrabold font-mono text-[#DC2626]">
+                    {st.value}
+                  </div>
+                  <div className="text-xs font-bold text-[#0F1115]">{st.label}</div>
+                  <p className="text-[11px] text-gray-600 leading-relaxed">{st.detail}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* India Domestic Market Context Table */}
+          <div className="pt-2">
+            <div className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">
+              India Domestic Specialty Thermal & Dielectric Market Context (Synthesized @ ₹84/USD)
+            </div>
+            <div className="overflow-x-auto rounded-xl border border-gray-200">
+              <table className="w-full text-left text-xs sm:text-sm">
+                <thead>
+                  <tr className="bg-[#0F1115] text-white">
+                    <th className="py-3 px-4 font-bold">Market Segment</th>
+                    <th className="py-3 px-4 font-semibold text-gray-300">Current India Scale</th>
+                    <th className="py-3 px-4 font-bold bg-[#DC2626] text-white">
+                      2030 Projected India Scale
+                    </th>
+                    <th className="py-3 px-4 font-semibold text-gray-300">
+                      Included Hardware & Demand Drivers
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 bg-white">
+                  {ORIGIN_BACKSTORY.marketSizingTable.map((m, i) => (
+                    <tr key={m.metric} className={i % 2 === 1 ? 'bg-[#F8FAFC]' : 'bg-white'}>
+                      <td className="py-3.5 px-4 font-bold text-[#0F1115]">{m.metric}</td>
+                      <td className="py-3.5 px-4 font-mono font-semibold text-gray-800">
+                        {m.currentInr}
+                      </td>
+                      <td className="py-3.5 px-4 font-mono font-bold text-[#0F1115] bg-red-50/50">
+                        {m.projected2030Inr}
+                      </td>
+                      <td className="py-3.5 px-4 text-gray-600">{m.scope}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        {/* Section 2: Full Uncropped Validation Showcase */}
         <section>
           <ValidationShowcase onOpenLightbox={onOpenLightbox} />
         </section>

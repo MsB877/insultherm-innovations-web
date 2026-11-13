@@ -6,6 +6,7 @@ import {
   evaluateAllCoupons,
   OfferCoupon,
 } from '../utils/couponEngine';
+import { clampDimensionMm, clampQuantityPcs } from '../utils/validation';
 
 export interface CartItem {
   uid: string;
@@ -53,15 +54,16 @@ interface OrderCartContextValue {
   distinctItemCount: number;
 }
 
-const STORAGE_KEY = 'insultherm_order_cart_v5';
-const COUPON_STORAGE_KEY = 'insultherm_applied_coupon_v5';
+const STORAGE_KEY = 'insultherm_order_cart_v6';
+const COUPON_STORAGE_KEY = 'insultherm_applied_coupon_v6';
 
 const OrderCartContext = createContext<OrderCartContextValue | undefined>(undefined);
 
 export const OrderCartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [items, setItems] = useState<CartItem[]>(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
+      const saved =
+        localStorage.getItem(STORAGE_KEY) || localStorage.getItem('insultherm_order_cart_v5');
       return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
@@ -70,7 +72,10 @@ export const OrderCartProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const [appliedCode, setAppliedCode] = useState<string | null>(() => {
     try {
-      return localStorage.getItem(COUPON_STORAGE_KEY);
+      return (
+        localStorage.getItem(COUPON_STORAGE_KEY) ||
+        localStorage.getItem('insultherm_applied_coupon_v5')
+      );
     } catch {
       return null;
     }
@@ -166,9 +171,60 @@ export const OrderCartProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const closeDrawer = () => setIsOpen(false);
 
-  const addItem = (item: Omit<CartItem, 'uid'>, openAfter = true) => {
-    const uid = `${item.sku}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-    setItems((prev) => [...prev, { ...item, uid }]);
+  const addItem = (rawItem: Omit<CartItem, 'uid'>, openAfter = true) => {
+    const safeQty = clampQuantityPcs(rawItem.quantity, 1);
+    const safeLen =
+      rawItem.lengthMm != null ? clampDimensionMm(rawItem.lengthMm, 100) : undefined;
+    const safeWid =
+      rawItem.widthMm != null ? clampDimensionMm(rawItem.widthMm, 100) : undefined;
+
+    setItems((prev) => {
+      const existingIdx = prev.findIndex(
+        (p) =>
+          p.sku === rawItem.sku &&
+          p.itemType === rawItem.itemType &&
+          p.dimensionsLabel === rawItem.dimensionsLabel &&
+          (p.finishOption || '') === (rawItem.finishOption || '')
+      );
+
+      if (existingIdx >= 0) {
+        return prev.map((it, idx) => {
+          if (idx !== existingIdx) return it;
+          const mergedQty = clampQuantityPcs(it.quantity + safeQty, 1);
+          if (it.itemType === 'custom-cad' && it.productId && it.lengthMm && it.widthMm) {
+            const recalc = calculatePartPrice({
+              productId: it.productId,
+              lengthMm: it.lengthMm,
+              widthMm: it.widthMm,
+              quantity: mergedQty,
+              thicknessMm: it.thicknessMm,
+              gradeSku: it.sku,
+            });
+            return {
+              ...it,
+              quantity: mergedQty,
+              unitPriceInr: recalc.unitPriceInr,
+              formulaNote: recalc.formulaExplanation,
+              cadFileName: rawItem.cadFileName || it.cadFileName,
+            };
+          }
+          return { ...it, quantity: mergedQty };
+        });
+      }
+
+      const uid = `${rawItem.sku}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+      return [
+        ...prev,
+        {
+          ...rawItem,
+          uid,
+          quantity: safeQty,
+          lengthMm: safeLen,
+          widthMm: safeWid,
+        },
+      ];
+    });
+
     if (openAfter) {
       setActiveTab('checkout');
       setIsOpen(true);
@@ -176,14 +232,14 @@ export const OrderCartProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const updateQuantity = (uid: string, quantity: number) => {
-    if (quantity < 1) {
+    if (!Number.isFinite(quantity) || quantity < 1) {
       removeItem(uid);
       return;
     }
+    const safeQty = clampQuantityPcs(quantity, 1);
     setItems((prev) =>
       prev.map((it) => {
         if (it.uid !== uid) return it;
-        // Dynamically recalculate 3-tier unit price (Prototype / Pilot / Blanket) when quantity changes!
         if (
           it.itemType === 'custom-cad' &&
           it.productId &&
@@ -194,18 +250,18 @@ export const OrderCartProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             productId: it.productId,
             lengthMm: it.lengthMm,
             widthMm: it.widthMm,
-            quantity,
+            quantity: safeQty,
             thicknessMm: it.thicknessMm,
             gradeSku: it.sku,
           });
           return {
             ...it,
-            quantity,
+            quantity: safeQty,
             unitPriceInr: recalc.unitPriceInr,
             formulaNote: recalc.formulaExplanation,
           };
         }
-        return { ...it, quantity };
+        return { ...it, quantity: safeQty };
       })
     );
   };

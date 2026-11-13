@@ -41,8 +41,8 @@ WHITE = colors.white
 
 COMPANY_NAME = "InsulTherm Innovations"
 PHONE_MASKED = "+91 78148 XXXXX"
-EMAIL_PRIMARY = "manav.sb@inslthrm.in"
-EMAIL_OPS = "manavsb9719@gmail.com"
+EMAIL_PRIMARY = "manav.sb9719@gmail.com"
+EMAIL_OPS = "manav.sb9719@gmail.com"
 FACILITY_ADDRESS = (
     "InsulTherm Innovations, Advanced Materials & Digital Converting Wing, "
     "Block C-14, Sanand GIDC Industrial Estate (Near iCreate Campus), Ahmedabad, Gujarat – 382110, India"
@@ -395,7 +395,7 @@ def make_header_footer(product):
         canvas.setFont("DVSans-Bold", 6.1)
         canvas.drawString(
             14 * mm, 16.2 * mm,
-            f"{COMPANY_NAME} | Tel: {PHONE_MASKED} | Official: {EMAIL_PRIMARY} | Orders/RFQ: {EMAIL_OPS}"
+            f"{COMPANY_NAME} | Tel: {PHONE_MASKED} | Orders, CAD & RFQ Desk: {EMAIL_OPS}"
         )
         canvas.drawRightString(w - 14 * mm, 16.2 * mm, f"Page {doc.page} of 2")
 
@@ -587,8 +587,8 @@ def generate_single_tds(product):
     cta_text = (
         f"<b>RAPID 24–48 HOUR CAD-TO-PART PROTOTYPING &amp; OEM PROCUREMENT DESK</b><br/>"
         f"Submit .DXF / .STEP drawings, request &lt;₹15,000 Petty-Cash R&amp;D Sampler Kits, or schedule an engineering review:<br/>"
-        f"<b>Primary Official Desk:</b> {escape(EMAIL_PRIMARY)}  |  <b>Active Operations &amp; Order Routing:</b> {escape(EMAIL_OPS)}<br/>"
-        f"<b>Engineering Helpline:</b> {escape(PHONE_MASKED)}  |  <b>Manufacturing Wing:</b> {escape(FACILITY_ADDRESS)}"
+        f"<b>Official Orders, CAD &amp; RFQ Desk:</b> {escape(EMAIL_OPS)}  |  <b>Engineering Helpline:</b> {escape(PHONE_MASKED)}<br/>"
+        f"<b>Manufacturing Wing:</b> {escape(FACILITY_ADDRESS)}"
     )
     cta_tbl = Table([[Paragraph(cta_text, ParagraphStyle("CTA", fontName="DVSans", fontSize=7.8, leading=12.5, textColor=WHITE))]], colWidths=[182 * mm])
     cta_tbl.setStyle(TableStyle([

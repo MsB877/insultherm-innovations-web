@@ -8,6 +8,7 @@ import { ImageLightbox, LightboxImagePayload } from './components/ImageLightbox'
 import { HomePage } from './pages/HomePage';
 import { ProductsPage } from './pages/ProductsPage';
 import { QuotePage } from './pages/QuotePage';
+import { KnowledgeCentrePage } from './pages/KnowledgeCentrePage';
 import { AboutPage } from './pages/AboutPage';
 import { ContactPage } from './pages/ContactPage';
 
@@ -40,6 +41,7 @@ export const App: React.FC = () => {
               <Route path="/" element={<HomePage onOpenLightbox={setLightboxImage} />} />
               <Route path="/products" element={<ProductsPage onOpenLightbox={setLightboxImage} />} />
               <Route path="/quote" element={<QuotePage />} />
+              <Route path="/knowledge" element={<KnowledgeCentrePage />} />
               <Route path="/about" element={<AboutPage onOpenLightbox={setLightboxImage} />} />
               <Route path="/contact" element={<ContactPage />} />
               <Route path="*" element={<HomePage onOpenLightbox={setLightboxImage} />} />

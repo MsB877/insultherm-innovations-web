@@ -1,20 +1,21 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   CheckCircle2,
-  FileCode2,
+  Mail,
   Plus,
   Ruler,
   ShoppingBag,
   Sparkles,
-  UploadCloud,
 } from 'lucide-react';
-import { PRODUCTS } from '../data/companyData';
+import { COMPANY_INFO, PRODUCTS } from '../data/companyData';
 import {
   calculatePartPrice,
   PRICING_MODELS,
   ProductSlugId,
 } from '../utils/pricingEngine';
 import { useOrderCart } from '../context/OrderCartContext';
+import { CadFileUploadBox } from './CadFileUploadBox';
+import { clampDimensionMm, clampQuantityPcs } from '../utils/validation';
 
 interface CadQuoteEngineProps {
   initialProductId?: ProductSlugId;
@@ -40,11 +41,9 @@ export const CadQuoteEngine: React.FC<CadQuoteEngineProps> = ({
   const [gradeSku, setGradeSku] = useState<string>('Shield-FGK-043');
   const [quantity, setQuantity] = useState<number>(20);
   const [finishOption, setFinishOption] = useState<string>(
-    'Kiss-Cut on Carrier Sheet + Peel Tabs'
+    'Kiss-Cut on Carrier Sheet + Extended Peel Tabs'
   );
-  const [dragActive, setDragActive] = useState(false);
   const [addedToast, setAddedToast] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     setSelectedId(initialProductId);
@@ -70,7 +69,6 @@ export const CadQuoteEngine: React.FC<CadQuoteEngineProps> = ({
     }
   }, [selectedId]);
 
-  // Auto-sync dimensions to 50x50 when Core-BMS-50x50 is picked
   useEffect(() => {
     if (gradeSku === 'Core-BMS-50x50') {
       setLengthMm(50);
@@ -81,34 +79,37 @@ export const CadQuoteEngine: React.FC<CadQuoteEngineProps> = ({
   const currentModel = PRICING_MODELS[selectedId];
   const currentProduct = PRODUCTS.find((p) => p.id === selectedId) || PRODUCTS[0];
 
+  const safeLengthMm = clampDimensionMm(lengthMm, 100);
+  const safeWidthMm = clampDimensionMm(widthMm, 100);
+  const safeQuantity = clampQuantityPcs(quantity, 1);
+
   const quote = calculatePartPrice({
     productId: selectedId,
-    lengthMm,
-    widthMm,
-    quantity,
+    lengthMm: safeLengthMm,
+    widthMm: safeWidthMm,
+    quantity: safeQuantity,
     thicknessMm,
     gradeSku,
   });
 
-  const handleFilePick = (file: File | null) => {
-    if (!file) return;
-    setAttachedCadFile(file);
-  };
-
   const handleAddPartToOrder = (openDrawerAfter: boolean) => {
+    setLengthMm(safeLengthMm);
+    setWidthMm(safeWidthMm);
+    setQuantity(safeQuantity);
+
     addItem(
       {
         sku: gradeSku,
         productId: selectedId,
         title: `${currentProduct.trademarkName} — Custom CNC Part`,
         itemType: 'custom-cad',
-        dimensionsLabel: `${lengthMm} × ${widthMm} × ${thicknessMm} mm (${quote.areaCm2} cm²)`,
-        lengthMm,
-        widthMm,
+        dimensionsLabel: `${safeLengthMm} × ${safeWidthMm} × ${thicknessMm} mm (${quote.areaCm2} cm²)`,
+        lengthMm: safeLengthMm,
+        widthMm: safeWidthMm,
         thicknessMm,
         areaCm2: quote.areaCm2,
         unitPriceInr: quote.unitPriceInr,
-        quantity,
+        quantity: safeQuantity,
         formulaNote: quote.formulaExplanation,
         finishOption,
         cadFileName: attachedCadFile ? attachedCadFile.name : undefined,
@@ -132,7 +133,7 @@ export const CadQuoteEngine: React.FC<CadQuoteEngineProps> = ({
             3-Tier Custom Part Area Calculator • Zero Steel-Die Tooling
           </div>
           <h3 className="text-xl sm:text-2xl font-extrabold tracking-tight">
-            Configure Custom Geometry & Instant 3-Tier INR Pricing
+            Upload CAD Geometry & Calculate Instant 3-Tier INR Pricing
           </h3>
         </div>
         <div className="flex flex-wrap items-center gap-2.5 text-xs">
@@ -224,7 +225,7 @@ export const CadQuoteEngine: React.FC<CadQuoteEngineProps> = ({
             </div>
           </div>
 
-          {/* Step 3: Dimensions & Quantity */}
+          {/* Step 3: Dimensions & Quantity (Clamped 10–1,000 mm & 1–100,000 pcs) */}
           <div>
             <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
               <label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
@@ -241,7 +242,7 @@ export const CadQuoteEngine: React.FC<CadQuoteEngineProps> = ({
                       setWidthMm(p.w);
                     }}
                     className={`text-[11px] px-2.5 py-1 rounded-md border font-medium transition-colors ${
-                      lengthMm === p.l && widthMm === p.w
+                      safeLengthMm === p.l && safeWidthMm === p.w
                         ? 'bg-slate-900 text-white border-slate-900'
                         : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
                     }`}
@@ -254,35 +255,38 @@ export const CadQuoteEngine: React.FC<CadQuoteEngineProps> = ({
 
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <span className="block text-xs text-slate-500 mb-1">Length (mm)</span>
+                <span className="block text-xs text-slate-500 mb-1">Length (10–1000 mm)</span>
                 <input
                   type="number"
                   min={10}
                   max={1000}
                   value={lengthMm}
                   onChange={(e) => setLengthMm(Number(e.target.value))}
+                  onBlur={() => setLengthMm(clampDimensionMm(lengthMm, 100))}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-mono font-bold text-slate-900 focus:outline-none focus:border-red-600"
                 />
               </div>
               <div>
-                <span className="block text-xs text-slate-500 mb-1">Width (mm)</span>
+                <span className="block text-xs text-slate-500 mb-1">Width (10–1000 mm)</span>
                 <input
                   type="number"
                   min={10}
                   max={1000}
                   value={widthMm}
                   onChange={(e) => setWidthMm(Number(e.target.value))}
+                  onBlur={() => setWidthMm(clampDimensionMm(widthMm, 100))}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-mono font-bold text-slate-900 focus:outline-none focus:border-red-600"
                 />
               </div>
               <div>
-                <span className="block text-xs text-slate-500 mb-1">Quantity (pcs)</span>
+                <span className="block text-xs text-slate-500 mb-1">Quantity (1–100k pcs)</span>
                 <input
                   type="number"
                   min={1}
                   max={100000}
                   value={quantity}
-                  onChange={(e) => setQuantity(Math.max(1, Number(e.target.value)))}
+                  onChange={(e) => setQuantity(Number(e.target.value))}
+                  onBlur={() => setQuantity(clampQuantityPcs(quantity, 1))}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-mono font-bold text-slate-900 focus:outline-none focus:border-red-600"
                 />
               </div>
@@ -301,9 +305,9 @@ export const CadQuoteEngine: React.FC<CadQuoteEngineProps> = ({
                   type="button"
                   onClick={() => setQuantity(tierBtn.q)}
                   className={`text-[11px] px-2.5 py-1 rounded-md font-semibold border transition-colors ${
-                    (tierBtn.q === 20 && quantity < 100) ||
-                    (tierBtn.q === 100 && quantity >= 100 && quantity < 500) ||
-                    (tierBtn.q === 500 && quantity >= 500)
+                    (tierBtn.q === 20 && safeQuantity < 100) ||
+                    (tierBtn.q === 100 && safeQuantity >= 100 && safeQuantity < 500) ||
+                    (tierBtn.q === 500 && safeQuantity >= 500)
                       ? 'bg-red-600 text-white border-red-600'
                       : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
                   }`}
@@ -314,86 +318,41 @@ export const CadQuoteEngine: React.FC<CadQuoteEngineProps> = ({
             </div>
           </div>
 
-          {/* Step 4: CNC Converting Finish & CAD Upload */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-                5. CNC Converting Finish
-              </label>
-              <select
-                value={finishOption}
-                onChange={(e) => setFinishOption(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-sm font-medium text-slate-900 focus:outline-none focus:border-red-600"
-              >
-                <option value="Kiss-Cut on Carrier Sheet + Extended Peel Tabs">
-                  Kiss-Cut on Carrier Sheet + Peel Tabs
-                </option>
-                <option value="50%-Depth Living-Hinge Crease + Snap-Lock Tabs">
-                  50%-Depth Living-Hinge Crease + Snap Tabs
-                </option>
-                <option value="Through-Cut Individual Parts + Bolt Holes">
-                  Through-Cut Individual Parts + Bolt Holes
-                </option>
-                <option value="1.5 mm Oversize Kapton® Edge-Seal + ASTM E595 PSA">
-                  Oversize Kapton® Edge-Seal + ASTM E595 PSA
-                </option>
-                <option value="Dust-Consolidated CNC Cut + UL 94 V-0 FR-PSA">
-                  Dust-Consolidated Edge + UL 94 V-0 FR-PSA
-                </option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-                6. Attach CAD Drawing (Optional)
-              </label>
-              <div
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setDragActive(true);
-                }}
-                onDragLeave={() => setDragActive(false)}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  setDragActive(false);
-                  if (e.dataTransfer.files?.[0]) {
-                    handleFilePick(e.dataTransfer.files[0]);
-                  }
-                }}
-                onClick={() => fileInputRef.current?.click()}
-                className={`cursor-pointer rounded-xl border border-dashed px-3.5 py-2.5 flex items-center gap-2.5 transition-colors ${
-                  dragActive
-                    ? 'border-red-600 bg-red-50'
-                    : attachedCadFile
-                    ? 'border-emerald-500 bg-emerald-50/60'
-                    : 'border-slate-300 hover:border-slate-400 bg-slate-50'
-                }`}
-              >
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".dxf,.step,.stp,.dwg,.pdf,.zip,.igs"
-                  className="hidden"
-                  onChange={(e) => handleFilePick(e.target.files?.[0] || null)}
-                />
-                {attachedCadFile ? (
-                  <>
-                    <FileCode2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <span className="text-xs font-semibold text-emerald-900 truncate">
-                      {attachedCadFile.name}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <UploadCloud className="w-4 h-4 text-slate-500 shrink-0" />
-                    <span className="text-xs text-slate-600 truncate">
-                      Drop <strong>.DXF / .STEP / .PDF</strong>
-                    </span>
-                  </>
-                )}
-              </div>
-            </div>
+          {/* Step 5: CNC Converting Finish */}
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+              5. CNC Converting Finish
+            </label>
+            <select
+              value={finishOption}
+              onChange={(e) => setFinishOption(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-sm font-medium text-slate-900 focus:outline-none focus:border-red-600"
+            >
+              <option value="Kiss-Cut on Carrier Sheet + Extended Peel Tabs">
+                Kiss-Cut on Carrier Sheet + Peel Tabs
+              </option>
+              <option value="50%-Depth Living-Hinge Crease + Snap-Lock Tabs">
+                50%-Depth Living-Hinge Crease + Snap Tabs
+              </option>
+              <option value="Through-Cut Individual Parts + Bolt Holes">
+                Through-Cut Individual Parts + Bolt Holes
+              </option>
+              <option value="1.5 mm Oversize Kapton® Edge-Seal + ASTM E595 PSA">
+                Oversize Kapton® Edge-Seal + ASTM E595 PSA
+              </option>
+              <option value="Dust-Consolidated CNC Cut + UL 94 V-0 FR-PSA">
+                Dust-Consolidated Edge + UL 94 V-0 FR-PSA
+              </option>
+            </select>
           </div>
+
+          {/* Step 6: Validated Shared CAD Upload Box */}
+          <CadFileUploadBox
+            file={attachedCadFile}
+            onFileChange={setAttachedCadFile}
+            label="6. Upload Custom CAD File or Drawing (.DXF, .STEP, .IGES, .DWG, .PDF, .ZIP)"
+            helperText="Max 10 MB • Syncs directly into your Order Cart & routes to manav.sb9719@gmail.com"
+          />
 
           {/* Transparent 3-Tier Rate Schedule Table */}
           <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200/90">
@@ -462,7 +421,9 @@ export const CadQuoteEngine: React.FC<CadQuoteEngineProps> = ({
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-xs text-slate-500">Line Subtotal ({quantity} pcs)</div>
+                  <div className="text-xs text-slate-500">
+                    Line Subtotal ({safeQuantity.toLocaleString('en-IN')} pcs)
+                  </div>
                   <div className="text-xl font-extrabold font-mono text-red-600 mt-0.5">
                     ₹{quote.lineSubtotalInr.toLocaleString('en-IN')}
                   </div>
@@ -473,7 +434,7 @@ export const CadQuoteEngine: React.FC<CadQuoteEngineProps> = ({
                 <div className="flex justify-between">
                   <span>Computed Part Area:</span>
                   <strong className="font-mono text-slate-900">
-                    {lengthMm} × {widthMm} mm = {quote.areaCm2} cm²
+                    {safeLengthMm} × {safeWidthMm} mm = {quote.areaCm2} cm²
                   </strong>
                 </div>
                 <div className="flex justify-between gap-3">
@@ -491,6 +452,18 @@ export const CadQuoteEngine: React.FC<CadQuoteEngineProps> = ({
                 <div className="flex justify-between">
                   <span>Standard CNC Lead Time:</span>
                   <strong className="text-slate-900">24–48 Hours (Ex-Works Sanand)</strong>
+                </div>
+                <div className="flex justify-between items-center pt-1 border-t border-slate-100">
+                  <span className="inline-flex items-center gap-1">
+                    <Mail className="w-3.5 h-3.5 text-red-600" />
+                    Order & CAD Desk:
+                  </span>
+                  <a
+                    href={`mailto:${COMPANY_INFO.routingEmail}`}
+                    className="font-mono font-bold text-red-600 hover:underline"
+                  >
+                    {COMPANY_INFO.routingEmail}
+                  </a>
                 </div>
               </div>
             </div>

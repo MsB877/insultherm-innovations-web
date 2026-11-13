@@ -58,13 +58,13 @@ def main():
     errors = []
 
     # 1. Check Root & SPA Routes
-    for route in ["/", "/products", "/quote", "/about", "/contact"]:
+    for route in ["/", "/products", "/quote", "/knowledge", "/about", "/contact"]:
         status, _, body = fetch(BASE_URL + route)
         text = body.decode("utf-8", errors="ignore")
         if status != 200 or '<div id="root"></div>' not in text:
             errors.append(f"Route {route} failed: status={status}")
         else:
-            print(f"  [PASS] Route {route:<10} -> HTTP {status} ({len(body)} bytes)")
+            print(f"  [PASS] Route {route:<12} -> HTTP {status} ({len(body)} bytes)")
 
     # Verify Netlify hidden multipart forms in index.html
     _, _, root_bytes = fetch(BASE_URL + "/")
@@ -82,15 +82,22 @@ def main():
         js_text = js_bytes.decode("utf-8", errors="ignore")
         for required_literal in [
             "+91 78148 XXXXX",
-            "manav.sb@inslthrm.in",
-            "manavsb9719@gmail.com",
+            "manav.sb9719@gmail.com",
+            "https://formsubmit.co/ajax/manav.sb9719@gmail.com",
             "Sanand GIDC",
             "PROTO10",
             "RNDKIT1000",
             "MULTISTACK8",
             "PILOT12",
             "Founder — Commercial Strategy",
-            "Digital CAD-to-Part Converting Workflow",
+            "Knowledge Centre",
+            "By Chemistry",
+            "By Application",
+            "By Industry",
+            "Upload CAD & Configure",
+            "Confirm Email (Cross-Check)",
+            "15-Character Indian GSTIN",
+            "75% – 85%",
             "drone-graphite-flex-installed.jpg",
             "bess-barrier-lfp-installed.jpg",
             "inverter-shield-busbar-installed.jpg",
@@ -108,6 +115,8 @@ def main():
                 errors.append(f"Missing mandatory literal in JS bundle: {required_literal}")
 
         for forbidden_literal in [
+            "manav.sb@inslthrm.in",
+            "manav.sb@insultherm.in",
             "Co-Founder",
             "competitor-benchmark.jpg",
             "Seamless Transition From 1-Piece Prototype to OEM Volume",

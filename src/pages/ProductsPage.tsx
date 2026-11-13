@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { PRODUCTS, ProductSpec, RND_KITS } from '../data/companyData';
 import { calculatePartPrice, PRICING_MODELS } from '../utils/pricingEngine';
+import { clampDimensionMm, clampQuantityPcs } from '../utils/validation';
 import { useOrderCart } from '../context/OrderCartContext';
 import { ParametricComparisonMatrix } from '../components/ParametricComparisonMatrix';
 import { LightboxImagePayload } from '../components/ImageLightbox';
@@ -34,11 +35,15 @@ const ProductDetailSection: React.FC<{
   const [wid, setWid] = useState<number>(product.defaultWidthMm);
   const [qty, setQty] = useState<number>(product.id === 'insultherm-graphite-flex' ? 10 : 25);
 
+  const safeLen = clampDimensionMm(len, product.defaultLengthMm);
+  const safeWid = clampDimensionMm(wid, product.defaultWidthMm);
+  const safeQty = clampQuantityPcs(qty, 1);
+
   const livePrice = calculatePartPrice({
     productId: product.id,
-    lengthMm: len,
-    widthMm: wid,
-    quantity: qty,
+    lengthMm: safeLen,
+    widthMm: safeWid,
+    quantity: safeQty,
     thicknessMm: product.defaultThicknessMm,
   });
 
@@ -329,35 +334,38 @@ const ProductDetailSection: React.FC<{
                 {/* Quick Size Calculator */}
                 <div className="p-4 rounded-lg bg-[#F4F6FA] border border-gray-200 grid grid-cols-3 sm:grid-cols-4 gap-3 items-end tabular-nums">
                   <div>
-                    <label className="block text-xs text-gray-600 mb-1">Length (mm)</label>
+                    <label className="block text-xs text-gray-600 mb-1">Length (10–1000 mm)</label>
                     <input
                       type="number"
                       min={10}
                       max={1000}
                       value={len}
                       onChange={(e) => setLen(Number(e.target.value))}
+                      onBlur={() => setLen(clampDimensionMm(len, product.defaultLengthMm))}
                       className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white font-mono text-xs font-bold"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-gray-600 mb-1">Width (mm)</label>
+                    <label className="block text-xs text-gray-600 mb-1">Width (10–1000 mm)</label>
                     <input
                       type="number"
                       min={10}
                       max={1000}
                       value={wid}
                       onChange={(e) => setWid(Number(e.target.value))}
+                      onBlur={() => setWid(clampDimensionMm(wid, product.defaultWidthMm))}
                       className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white font-mono text-xs font-bold"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-gray-600 mb-1">Quantity</label>
+                    <label className="block text-xs text-gray-600 mb-1">Quantity (1–100k)</label>
                     <input
                       type="number"
                       min={1}
                       max={100000}
                       value={qty}
-                      onChange={(e) => setQty(Math.max(1, Number(e.target.value)))}
+                      onChange={(e) => setQty(Number(e.target.value))}
+                      onBlur={() => setQty(clampQuantityPcs(qty, 1))}
                       className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white font-mono text-xs font-bold"
                     />
                   </div>
@@ -376,29 +384,32 @@ const ProductDetailSection: React.FC<{
           <div className="pt-5 border-t border-gray-100 flex flex-wrap items-center gap-3">
             <button
               type="button"
-              onClick={() =>
+              onClick={() => {
+                setLen(safeLen);
+                setWid(safeWid);
+                setQty(safeQty);
                 addItem(
                   {
                     sku: model.gradeOptions[0].sku,
                     productId: product.id,
                     title: `${product.trademarkName} (${model.gradeOptions[0].sku})`,
                     itemType: 'custom-cad',
-                    dimensionsLabel: `${len} × ${wid} × ${product.defaultThicknessMm} mm (${livePrice.areaCm2} cm²)`,
-                    lengthMm: len,
-                    widthMm: wid,
+                    dimensionsLabel: `${safeLen} × ${safeWid} × ${product.defaultThicknessMm} mm (${livePrice.areaCm2} cm²)`,
+                    lengthMm: safeLen,
+                    widthMm: safeWid,
                     thicknessMm: product.defaultThicknessMm,
                     areaCm2: livePrice.areaCm2,
                     unitPriceInr: livePrice.unitPriceInr,
-                    quantity: qty,
+                    quantity: safeQty,
                     formulaNote: livePrice.formulaExplanation,
                   },
                   true
-                )
-              }
+                );
+              }}
               className="px-5 py-3 rounded-lg bg-[#DC2626] hover:bg-[#B91C1C] text-white text-xs sm:text-sm font-bold inline-flex items-center gap-2 transition-colors tabular-nums"
             >
               <ShoppingBag className="w-4 h-4" />
-              Add {qty} pcs (₹{livePrice.lineSubtotalInr.toLocaleString('en-IN')})
+              Add {safeQty} pcs (₹{livePrice.lineSubtotalInr.toLocaleString('en-IN')})
             </button>
             <button
               type="button"

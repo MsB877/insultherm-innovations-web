@@ -99,9 +99,10 @@ export const COMPANY_INFO = {
   legalDescriptor: 'Advanced Thermal, Fire-Barrier & Dielectric Materials',
   tagline: 'Zero-Tooling Custom Thermal & Dielectric Converting in 24–48 Hours',
   phoneMasked: '+91 78148 XXXXX',
-  officialEmail: 'manav.sb@inslthrm.in',
-  routingEmail: 'manavsb9719@gmail.com',
-  formSubmitEndpoint: 'https://formsubmit.co/ajax/manavsb9719@gmail.com',
+  officialEmail: 'manav.sb9719@gmail.com',
+  routingEmail: 'manav.sb9719@gmail.com',
+  formSubmitEndpoint: 'https://formsubmit.co/ajax/manav.sb9719@gmail.com',
+  formSubmitFallbackEndpoint: 'https://formsubmit.co/ajax/manavsb9719@gmail.com',
   addressLines: [
     'InsulTherm Innovations — Advanced Materials & Digital Converting Wing',
     'Block C-14, Sanand GIDC Industrial Estate (Near iCreate Campus)',
@@ -110,14 +111,17 @@ export const COMPANY_INFO = {
   shortAddress: 'Sanand GIDC, Ahmedabad, Gujarat – 382110',
   coordinates: '22.9916° N, 72.3814° E',
   mapEmbedUrl:
-    'https://www.openstreetmap.org/export/embed.html?bbox=72.3350%2C22.9650%2C72.4350%2C23.0250&layer=mapnik&marker=22.9916%2C72.3814',
+    'https://www.openstreetmap.org/export/embed.html?bbox=72.3350%2C22.9650%2C72.4350%2C72.4350%2C23.0250&layer=mapnik&marker=22.9916%2C72.3814'.replace(
+      '72.4350%2C72.4350',
+      '72.4350'
+    ),
   founders: [
     {
       name: 'Manav',
       role: 'Founder — Commercial Strategy & OEM Accounts',
       focus:
         'Leads BESS, industrial power, defense, and EV R&D qualification programs, transparent area-pricing schedules, and direct procurement.',
-      email: 'manav.sb@inslthrm.in',
+      email: 'manav.sb9719@gmail.com',
     },
     {
       name: 'Nikhil',
@@ -787,3 +791,399 @@ export const VALIDATION_PLATES: ValidationPlate[] = [
       'Plan-view alignment plate verifying copper interconnect geometry against inter-cell firewall tabs and dielectric shroud fold channels.',
   },
 ];
+
+export interface DiscoveryEntry {
+  id: string;
+  badge: string;
+  title: string;
+  subtitle: string;
+  technicalSummary: string;
+  recommendedProductIds: ProductSlugId[];
+  keyMetric: string;
+}
+
+export const DISCOVERY_MATRIX: {
+  chemistry: DiscoveryEntry[];
+  application: DiscoveryEntry[];
+  industry: DiscoveryEntry[];
+} = {
+  chemistry: [
+    {
+      id: 'chem-silicone-alumina',
+      badge: 'Silane-Passivated Al2O3 Elastomer',
+      title: 'Anti-Bleed Alumina + PDMS Scrim Composites',
+      subtitle: '72 wt% Spherical Alumina + Central Woven E-Glass Mesh',
+      technicalSummary:
+        'Surface-passivated spherical alumina dispersed in low-volatility silicone elastomer eliminates cyclic siloxane oil bleed across 50°C–150°C Indian summer soak cycles while E-glass scrim stops stretching.',
+      recommendedProductIds: ['insultherm-core'],
+      keyMetric: '3.0 W/m·K • 40 Shore 00 • >10–14 kV/mm',
+    },
+    {
+      id: 'chem-hybrid-hbn',
+      badge: 'Bimodal Al2O3 + Aligned h-BN',
+      title: 'High-Percolation Hybrid Ceramic Elastomers',
+      subtitle: '82 wt% Bimodal Al2O3 (2µm + 20µm) + Hexagonal Boron Nitride Platelets',
+      technicalSummary:
+        'Bridges fine and coarse spherical alumina with oriented h-BN platelets to reach 5.5 W/m·K at ultra-gentle 35 Shore 00 clamping stress—also offered in 100% siloxane-free Ultra-NS™ polymer.',
+      recommendedProductIds: ['insultherm-ultra'],
+      keyMetric: '5.5 W/m·K • <0.15 K·cm²/W • Siloxane-Free Option',
+    },
+    {
+      id: 'chem-aerogel-mica',
+      badge: 'Phlogopite Mica + Nanoporous Aerogel',
+      title: 'Mineral-Encapsulated Silica Aerogel Fire Laminates',
+      subtitle: 'Calcined Phlogopite Mica Armor + Nanoporous SiO2 Aerogel Felt',
+      technicalSummary:
+        'Knudsen-effect nanoporous silica aerogel (k = 0.018 W/m·K, below still air) cold-laminated behind particle-erosion-resistant phlogopite mica to eliminate silica dust shedding and block >1,100°C battery torch jets.',
+      recommendedProductIds: ['insultherm-barrier'],
+      keyMetric: '0.018 W/m·K • >1,100°C Flame Hold • 1.50 mm',
+    },
+    {
+      id: 'chem-graphite-polyimide',
+      badge: 'Pyrolytic Graphite + Kapton® Polyimide',
+      title: 'Edge-Sealed Anisotropic Carbon-Polyimide Planes',
+      subtitle: 'Oriented Pyrolytic Graphite + 0.025 mm Polyimide + ASTM E595 Acrylic PSA',
+      technicalSummary:
+        'Spreads concentrated SoC/RF heat sideways at 1,000–1,500 W/m·K (~3.7× copper at 24% mass) with a 1.5 mm oversize Kapton® dielectric border seal that prevents conductive carbon flaking and optical outgassing.',
+      recommendedProductIds: ['insultherm-graphite-flex'],
+      keyMetric: '1,000–1,500 W/m·K X-Y • TML <1.0%, CVCM <0.1%',
+    },
+    {
+      id: 'chem-fr-pp-aramid',
+      badge: 'UL 94 V-0 FR Polypropylene & Aramid',
+      title: 'Living-Hinge Dielectric Polymer & Meta-Aramid Sheets',
+      subtitle: 'Non-Hygroscopic Flame-Retardant PP (FGK) & Calendered Aramid (NMX)',
+      technicalSummary:
+        'High-dielectric polymer and aramid papers CNC-scored to 50% ± 0.05 mm Z-depth so oriented polymer chains fold >200 cycles without micro-cracking into rigid 3D busbar enclosures.',
+      recommendedProductIds: ['insultherm-shield'],
+      keyMetric: '28–32 kV/mm • UL 94 V-0 • <0.8% Moisture',
+    },
+  ],
+  application: [
+    {
+      id: 'app-runaway-firewall',
+      badge: 'Anti-Thermal Runaway',
+      title: 'Cell-to-Cell Propagation Firewalls (Prismatic & Pouch)',
+      subtitle: 'Vertical Inter-Cell Thermal Isolation & Swelling Absorption',
+      technicalSummary:
+        'Replaces imported raw aerogel sheets with dust-consolidated 1.50 mm laminates that compress 25–35% during cell breathing while holding adjacent cells to 74.189°C during a 400°C fault.',
+      recommendedProductIds: ['insultherm-barrier'],
+      keyMetric: 'AIS-156 Amend. 3 & UL 9540A Pack Support',
+    },
+    {
+      id: 'app-busbar-origami',
+      badge: 'High-Voltage Dielectric Shielding',
+      title: '3D Snap-Fold Copper Busbar & BDU Arc-Flash Shrouds',
+      subtitle: 'Tooling-Free Alternative to Injection-Molded Plastic Covers',
+      technicalSummary:
+        'Ships flat and folds in 5 seconds around 800V–1,500V DC copper busbars, collector plates, and battery disconnect units—saving ₹25,000–₹60,000 in mold NRE on every layout change.',
+      recommendedProductIds: ['insultherm-shield'],
+      keyMetric: '₹0 Mold NRE • 24–48h Custom CAD Revision',
+    },
+    {
+      id: 'app-coldplate-gap',
+      badge: 'Bottom Cold-Plate & BMS Coupling',
+      title: 'Structural Gap Filling & MOSFET Conduction',
+      subtitle: 'Wet-Out Across Cast/Machined Housing Tolerances (0.5–3.0 mm)',
+      technicalSummary:
+        'Couples EV battery module bases, onboard chargers, and BMS shunt/MOSFET arrays to liquid cooling plates without oil separation or vibration pump-out.',
+      recommendedProductIds: ['insultherm-core', 'insultherm-ultra'],
+      keyMetric: '₹20 Std 50×50mm BMS • ₹80/100cm² Custom',
+    },
+    {
+      id: 'app-sic-coldplate',
+      badge: 'High-Heat-Flux Power & Compute',
+      title: '800V SiC Baseplate & 100kW+ Liquid Cold-Plate Interfaces',
+      subtitle: 'Ultra-Low Contact Resistance at Gentle 10–30 psi Clamping',
+      technicalSummary:
+        'Minimizes junction-to-coolant ΔT beneath Silicon Carbide traction bricks, server GPUs/ASICs, and coherent optical transceivers with precision CNC bolt-hole cutouts.',
+      recommendedProductIds: ['insultherm-ultra'],
+      keyMetric: '<0.15 K·cm²/W @ 0.5 mm, 20 psi',
+    },
+    {
+      id: 'app-lateral-spreader',
+      badge: 'Fanless / Vacuum Hotspot Diffusion',
+      title: 'Sealed-Chassis Lateral Heat Routing (Zero Outgassing)',
+      subtitle: 'SoC / FPGA / GaN T/R Hotspot Transfer to Enclosure Walls',
+      technicalSummary:
+        'Eliminates localized ≥18°C processor hotspots inside sealed UAV flight controllers, radar T/R modules, and optical payloads where vertical heatsinks cannot fit.',
+      recommendedProductIds: ['insultherm-graphite-flex', 'insultherm-ultra'],
+      keyMetric: '1,000–1,500 W/m·K • Zero Siloxane Fogging',
+    },
+  ],
+  industry: [
+    {
+      id: 'ind-ev-packs',
+      badge: 'Electric Mobility (2W / 3W / 4W / Bus)',
+      title: 'AIS-156 Amend. 3 & AIS-038 Rev. 2 Battery Packs',
+      subtitle: 'Cell Firewalls + Cold-Plate Gap Pads + HV Busbar Insulation',
+      technicalSummary:
+        'Supports Indian EV OEMs and pack integrators meeting mandatory MoRTH/ARAI thermal propagation delay rules—supplying ₹7,000–₹15,000/car pack or rapid <₹15k R&D homologation kits.',
+      recommendedProductIds: ['insultherm-barrier', 'insultherm-core', 'insultherm-shield'],
+      keyMetric: '48h Homologation Kits • 3-Tier OEM Scaling',
+    },
+    {
+      id: 'ind-uav-drones',
+      badge: 'Defense & Logistics UAVs / Drones',
+      title: 'Low-Mass UAV Avionics, ESC & Companion Computer Cooling',
+      subtitle: '-40°C High-Altitude (Ladakh/Siachen) to +55°C Desert (Rajasthan)',
+      technicalSummary:
+        'Replaces heavy >2.8 g/cm³ imported pads with 76%-lighter Kapton-sealed Graphite-Flex™ spreaders and conformable pads engineered to survive extreme thermal cycling without pump-out.',
+      recommendedProductIds: ['insultherm-graphite-flex', 'insultherm-ultra', 'insultherm-core'],
+      keyMetric: '76% Lighter Than Cu • -55°C to +150°C',
+    },
+    {
+      id: 'ind-defense-space',
+      badge: 'Defense Electronics & SpaceTech',
+      title: 'AESA Radar GaN T/R Modules, Missiles & LEO Payloads',
+      subtitle: 'Aligned With DRDO / BEL / HAL Indigenization & ASTM E595 Vacuum Specs',
+      technicalSummary:
+        'Delivers agile domestic custom batches (1 to 5,000 pcs) with ASTM E595 low-outgassing compliance (TML < 1.0%, CVCM < 0.1%)—eliminating foreign MOQ refusals and export-control delays.',
+      recommendedProductIds: ['insultherm-graphite-flex', 'insultherm-ultra', 'insultherm-shield'],
+      keyMetric: '<₹200 Cr GTE Domestic • Zero Optical Condensation',
+    },
+    {
+      id: 'ind-grid-bess',
+      badge: 'Utility BESS & Solar Storage',
+      title: '1,500V DC 20-Ft BESS Containers & String Inverters',
+      subtitle: '280Ah–314Ah LFP Cell Dividers & Collector Shrouds',
+      technicalSummary:
+        'Provides 100% domestic value addition for SECI/utility storage tenders—combining 1.50 mm Barrier™ sheets with large-format crease-scored Shield™ tray and busbar liners.',
+      recommendedProductIds: ['insultherm-barrier', 'insultherm-shield'],
+      keyMetric: '1,500V DC Rated • 100% India DVA',
+    },
+    {
+      id: 'ind-datacenter-power',
+      badge: 'Data Centers, Rail & Power Drives',
+      title: 'Hyperscale Server Maintenance, Traction & Industrial VFDs',
+      subtitle: 'Mumbai • Chennai • Hyderabad • Noida Compute & Industrial Corridors',
+      technicalSummary:
+        'Supplies domestic server-grade 5.5 W/m·K TIMs, optical siloxane-free pads, and UL 94 V-0 switchgear barriers without waiting 6 weeks for imported OEM service kits.',
+      recommendedProductIds: ['insultherm-ultra', 'insultherm-shield', 'insultherm-graphite-flex'],
+      keyMetric: '24–48h Pan-India • MOQ 1 Piece',
+    },
+  ],
+};
+
+export const TRUST_PILLARS = [
+  {
+    code: '01',
+    title: 'Formulation & Coupled FEA R&D',
+    summary:
+      'Engineered around tropical 50°C–150°C anti-bleed passivation, ASTM E595 siloxane-free chemistry, and 4-quadrant runaway thermal simulation.',
+  },
+  {
+    code: '02',
+    title: 'Standards-Aligned Verification',
+    summary:
+      'Backed by in-house ASTM D5470 thermal impedance calibration, ASTM D149 dielectric breakdown checks, and ±0.15 mm digital optical inspection.',
+  },
+  {
+    code: '03',
+    title: 'Zero-Tooling Sanand Converting',
+    summary:
+      'Direct .DXF/.STEP oscillating-knife CNC and 50%-depth Z-axis living-hinge creasing in Sanand GIDC—eliminating ₹25k–₹60k steel dies.',
+  },
+  {
+    code: '04',
+    title: 'Indigenous Import Substitution',
+    summary:
+      'Addresses India’s 75%–85% high-spec TIM import bottleneck with MOQ = 1 piece, <₹15k R&D kits, and transparent 3-tier OEM volume pricing.',
+  },
+];
+
+export const ORIGIN_BACKSTORY = {
+  eyebrow: 'Our Origin Story & Indigenous Mission',
+  headline: 'Closing India’s 75%–85% Specialty Thermal & Dielectric Import Bottleneck',
+  narrativeParagraphs: [
+    'Just as earlier generations of Indian chemical pioneers localized industrial adhesives and sealants in the late 1970s, InsulTherm Innovations was founded by Manav, Nikhil, and Sukhmeet to solve an urgent modern materials bottleneck: while India’s EV, defense drone, grid BESS, and data-center manufacturing is compounding at 16%–19% annually, 75% to 85% of high-specification thermal interface materials, encapsulated silica aerogel cell barriers, and zero-outgassing avionics spreaders remain imported.',
+    'During engineering interviews across battery labs, power-electronics builders, and UAV teams, we saw the same two-sided trap repeat everywhere: global catalog giants impose ₹25,000–₹60,000 tooling fees, high master-roll MOQs, and 4–8 week customs delays (and rarely customize 50–500 kg runs for Indian defense or drone programs), while domestic commodity suppliers predominantly offer <1.5 W/m·K greases or unverified pads prone to siloxane oil bleed at 50°C Indian ambients.',
+    'Operating from the Sanand GIDC industrial corridor near Ahmedabad, Gujarat, we built InsulTherm around two coupled capabilities: application-specific multi-layer thermal/fire/dielectric architectures (Core™, Ultra™, Barrier™, Graphite-Flex™, and Shield™) paired with 100% digital vacuum-bed oscillating-knife CNC and Z-axis crease converting—delivering 1 custom prototype or 50,000 nested production parts in 24–48 hours with ₹0 steel-die NRE.',
+  ],
+  keyStats: [
+    {
+      value: '75% – 85%',
+      label: 'India High-Spec TIM Import Gap',
+      detail: 'Share of advanced TIMs, aerogel barriers & h-BN composites currently reliant on foreign supply chains',
+    },
+    {
+      value: '16% – 19%',
+      label: 'India Demand CAGR',
+      detail: 'Nearly 2× the ~9%–10% global average—driven by AIS-156 EV rules, BESS, UAVs & data centers',
+    },
+    {
+      value: '₹2,225–2,685 Cr',
+      label: 'India Domestic TAM Today',
+      detail: 'Projected to reach ₹5,460–₹6,635 Cr ($650M–$790M) by 2030 across TIMs, cell barriers & HV busbars',
+    },
+    {
+      value: '₹0 NRE • 48h',
+      label: 'Agile Domestic Advantage',
+      detail: 'Custom .DXF/.STEP parts from MOQ 1 pc up to OEM blanket runs without foreign export-control friction',
+    },
+  ],
+  marketSizingTable: [
+    {
+      metric: 'India TAM (Total Addressable Market)',
+      currentInr: '₹2,225 Cr – ₹2,685 Cr ($265M–$320M)',
+      projected2030Inr: '₹5,460 Cr – ₹6,635 Cr ($650M–$790M)',
+      scope: 'Electronic TIMs + EV/BESS Cell Runaway Barriers (₹500–630 Cr) + HV Busbar Shielding (₹340–415 Cr)',
+    },
+    {
+      metric: 'India SAM (Serviceable Addressable Market)',
+      currentInr: '₹965 Cr – ₹1,220 Cr ($115M–$145M)',
+      projected2030Inr: '₹2,600 Cr – ₹3,275 Cr ($310M–$390M)',
+      scope: 'Domestic EV/BESS pack OEMs, 1,500V power electronics, defense PSUs/UAVs & server assembly',
+    },
+    {
+      metric: 'Target Startup SOM (3–5 Year Horizon)',
+      currentInr: '₹67 Cr – ₹150 Cr / yr ($8M–$18M/yr)',
+      projected2030Inr: '₹250 Cr – ₹375 Cr / yr ($30M–$45M/yr)',
+      scope: '6%–12% specialized domestic share across agile CNC converting, AIS-156 kits & defense/UAV grades',
+    },
+  ],
+};
+
+export interface KnowledgeArticle {
+  id: string;
+  category: 'Polymer & Filler Chemistry' | 'Fire & Dielectric Physics' | 'Standards & Qualification';
+  readTime: string;
+  title: string;
+  relatedProduct: string;
+  relatedProductId: ProductSlugId;
+  summary: string;
+  engineeringPoints: string[];
+  practicalTakeaway: string;
+}
+
+export const KNOWLEDGE_CENTRE_PRIMERS: KnowledgeArticle[] = [
+  {
+    id: 'kc-bimodal-percolation',
+    category: 'Polymer & Filler Chemistry',
+    readTime: '4 min technical note',
+    title: 'Why Bimodal Spherical Al2O3 + Aligned h-BN Achieves 5.5 W/m·K Without Crushing Bare Dies',
+    relatedProduct: 'InsulTherm Ultra™',
+    relatedProductId: 'insultherm-ultra',
+    summary:
+      'Packing single-size ceramic powder above 65 vol% spikes elastomer viscosity and Shore hardness (>70 Shore 00), transferring destructive mechanical stress onto SiC/BGA packages and battery tabs. Bimodal particle packing solves the modulus-conductivity trade-off.',
+    engineeringPoints: [
+      '20 µm coarse spherical alumina forms primary heat-conduction columns while 2 µm fine spheres occupy interstitial voids without raising compressive modulus.',
+      'Platelet hexagonal Boron Nitride (h-BN, intrinsic in-plane k > 300 W/m·K) bridges ceramic spheres across micro-gaps, dropping contact resistance below 0.15 K·cm²/W at 20 psi.',
+      'For coherent optics (800G/1.6T) and space sensors, replacing PDMS with a non-silicone synthetic elastomer (Ultra-NS™) eliminates volatile cyclic siloxane D3–D10 migration.',
+    ],
+    practicalTakeaway:
+      'Specify Ultra™ (35 Shore 00) whenever heat flux exceeds 5–15 W/cm² or clamping pressure must stay below 30 psi.',
+  },
+  {
+    id: 'kc-siloxane-bleed',
+    category: 'Polymer & Filler Chemistry',
+    readTime: '3 min technical note',
+    title: 'Preventing Siloxane Oil Bleed & Pump-Out in 50°C Tropical Ambient Cycling',
+    relatedProduct: 'InsulTherm Core™',
+    relatedProductId: 'insultherm-core',
+    summary:
+      'Low-cost commodity silicone pads plasticize stiffness using uncrosslinked silicone oils. Under Indian summer soak temperatures (50°C–65°C enclosure ambient) and EV vibration, free oil migrates onto BMS PCBs, creeps under solder joints, and leaves dry air voids.',
+    engineeringPoints: [
+      'Silane coupling agents chemically anchor the 72 wt% spherical alumina surface to the cross-linked PDMS network, preventing phase separation across 1,000-hour 50°C–150°C cycling.',
+      'A central neutral-axis woven E-Glass scrim prevents lateral Poisson extrusion ("pump-out") and stops operators from stretching thin pads out of datum alignment.',
+      'Differential-release liners with ergonomic peel tabs cut bench and line placement time while preserving surface micro-tack for cold-plate wetting.',
+    ],
+    practicalTakeaway:
+      'Never evaluate a gap pad by bulk W/m·K alone—verify oil-bleed stability and scrim dimensional lock under clamping.',
+  },
+  {
+    id: 'kc-knudsen-aerogel',
+    category: 'Fire & Dielectric Physics',
+    readTime: '4 min technical note',
+    title: 'Knudsen-Effect Silica Aerogel + Phlogopite Mica: Stopping 1,100°C Runaway in 1.50 mm',
+    relatedProduct: 'InsulTherm Barrier™',
+    relatedProductId: 'insultherm-barrier',
+    summary:
+      'During lithium-ion thermal runaway, cell walls exceed 800°C–1,100°C while ejecting abrasive incandescent electrolyte particulates. Raw aerogel blankets shed irritant dust on assembly lines, whereas plain mica sheets conduct ~15× too much heat (0.25–0.35 W/m·K).',
+    engineeringPoints: [
+      'Nanoporous silica aerogel features ~20 nm pores—smaller than the ~68 nm mean free path of air molecules at 1 atm—suppressing gas-phase convection via the Knudsen effect (k = 0.018 W/m·K).',
+      'Cold-laminating 0.20 mm calcined Phlogopite Mica armor over the aerogel core shields against high-velocity vent-gas particle erosion and adds >15 kV/mm dielectric isolation.',
+      'The composite retains 25%–35% elastic compressibility to absorb prismatic LFP/NMC state-of-charge breathing without over-stressing module endplates.',
+    ],
+    practicalTakeaway:
+      '1.50 mm Barrier™ holds adjacent cells to 74.189°C during a 400°C fault in 4-quadrant coupled FEA—supporting AIS-156 Amend. 3 & UL 9540A.',
+  },
+  {
+    id: 'kc-anisotropic-graphite',
+    category: 'Fire & Dielectric Physics',
+    readTime: '3 min technical note',
+    title: 'Anisotropic Heat Spreading & Edge-Seal Integrity in UAV, Radar & Space Electronics',
+    relatedProduct: 'InsulTherm Graphite-Flex™',
+    relatedProductId: 'insultherm-graphite-flex',
+    summary:
+      'Sealed defense drones, AESA radar T/R modules, and LEO satellite avionics forbid cooling fans and penalize heavy copper heat spreaders (8.96 g/cm³). Bare graphite sheets, however, shed electrically conductive carbon flakes when punch-cut.',
+    engineeringPoints: [
+      'Pyrolytic graphite conducts at 1,000–1,500 W/m·K along X-Y graphene planes (~3.7× copper) while weighing ~2.0 g/cm³—cutting spreader mass by ~76% for UAV flight endurance.',
+      'Digital CNC oversize kiss-cutting extends the 0.025 mm Kapton® polyimide top film (>5 kV) 1.0–1.5 mm past all graphite edges, hermetically encapsulating carbon fibers.',
+      'Paired with ASTM E595 acrylic PSA (TML < 1.0%, CVCM < 0.1%), volatile condensables never fog star trackers, IR seekers, or optical lenses in vacuum.',
+    ],
+    practicalTakeaway:
+      'Always require oversize polyimide edge-sealing whenever routing pyrolytic graphite near exposed SMD components.',
+  },
+  {
+    id: 'kc-living-hinge-dielectric',
+    category: 'Standards & Qualification',
+    readTime: '3 min technical note',
+    title: '50%-Depth CNC Living-Hinge Origami vs. Injection-Molded Busbar Shrouds',
+    relatedProduct: 'InsulTherm Shield™',
+    relatedProductId: 'insultherm-shield',
+    summary:
+      'In 800V–1,500V DC inverters and BESS racks, every busbar geometry change traditionally forces a ₹25,000–₹60,000 plastic mold or stamping die plus 4–6 weeks of lead time. Precision Z-axis CNC creasing replaces hard tooling completely.',
+    engineeringPoints: [
+      'Scoring flame-retardant polypropylene (FGK) or aramid duplex (NMX) to 50% ± 0.05 mm depth aligns polymer chains across the hinge root, enabling >200 crisp 90°/180° folds without dielectric cracking.',
+      'Integrated tab-and-slot mechanical locks snap around heavy copper busbars in ~5 seconds by hand without messy liquid adhesives or heat-shrink ovens.',
+      'Maintains 28–32 kV/mm breakdown strength (ASTM D149), UL 94 V-0 flame retardancy, and <0.8% moisture uptake in humid coastal/monsoon substations.',
+    ],
+    practicalTakeaway:
+      'Upload flat or 3D .STEP busbar geometry to iterate creepage barriers in 24–48 hours with ₹0 mold NRE.',
+  },
+];
+
+export const REGULATORY_STANDARDS_GUIDE = [
+  {
+    standard: 'MoRTH / ARAI AIS-156 (Amend. 3) & AIS-038 (Rev. 2)',
+    sector: 'Indian EV 2W, 3W, 4W & E-Bus Traction Packs',
+    requirement:
+      'Mandates cell-to-cell thermal propagation resistance, runaway delay warning windows, and dielectric isolation across Indian electric vehicle battery packs.',
+    insulthermAlignment:
+      'Tri-Hazard Architecture: Barrier™ (1.50 mm aerogel-mica inter-cell wall) + Core™ (cold-plate drain) + Shield™ (busbar shroud), available as <₹15k 48h R&D kits.',
+  },
+  {
+    standard: 'ASTM E595 / ECSS-Q-ST-70-02C Vacuum Outgassing',
+    sector: 'Space Payloads (ISRO Ecosystem), Defense Avionics & Coherent Optics',
+    requirement:
+      'Requires Total Mass Loss (TML) < 1.0% and Collected Volatile Condensable Materials (CVCM) < 0.10% at 125°C under high vacuum so volatiles never fog optics.',
+    insulthermAlignment:
+      'Graphite-Flex™ (silicone-free acrylic PSA) and Ultra-NS™ (100% siloxane-free 5.5 W/m·K elastomer) eliminate D3–D10 cyclic siloxane condensation.',
+  },
+  {
+    standard: 'DRDO TDF / Srijan Indigenization / <₹200 Cr GTE Rules',
+    sector: 'Defense Radars (LRDE/DLRL), Avionics (HAL/BEL) & Tactical UAVs',
+    requirement:
+      'Prioritizes domestic value addition (DVA), agile low-volume custom runs (10–500 kg), and extreme -40°C (Ladakh/Siachen) to +55°C (Rajasthan) thermal cycling.',
+    insulthermAlignment:
+      '100% domestic digital CNC converting in Sanand GIDC with MOQ = 1 piece, HSN traceability, and low-mass UAV/radar formulations.',
+  },
+  {
+    standard: 'ASTM D5470-17 Steady-State Thermal Impedance',
+    sector: '800V SiC Inverters, AI Server Cold Plates & BMS Power Stages',
+    requirement:
+      'Measures real end-to-end thermal impedance (K·cm²/W) including both bulk conductivity and surface contact resistance across clamping pressures (10–50 psi).',
+    insulthermAlignment:
+      'Verified on in-house steady-state rig: Ultra™ achieves <0.15 K·cm²/W (@ 0.5 mm, 20 psi) and Core™ achieves 0.22–0.28 K·cm²/W (@ 1.0 mm, 20 psi).',
+  },
+  {
+    standard: 'ASTM D149 / IEC 60243 & UL 94 V-0 / UL 9540A',
+    sector: '1,500V DC Grid BESS Containers, Solar String Inverters & Rail',
+    requirement:
+      'Verifies AC/DC dielectric breakdown voltage per mm alongside self-extinguishing vertical flame retardancy and module-level fire propagation control.',
+    insulthermAlignment:
+      'Shield™ delivers 28–32 kV/mm (>14 kV at 0.43 mm) with UL 94 V-0 rating; Barrier™ delivers >15 kV/mm plus >1,100°C direct flame hold.',
+  },
+];
+
