@@ -141,7 +141,7 @@ def deploy_netlify(nf_token, production=False):
     manifest_payload = {
         "files": file_hashes,
         "draft": (not production),
-        "title": "v4-production" if production else "v4-zero-credit-draft-preview",
+        "title": "v6-production" if production else "v6-zero-credit-draft-preview",
     }
     if not production:
         manifest_payload["branch"] = "preview"
